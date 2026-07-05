@@ -256,12 +256,10 @@
             }
             if (typeof updateStarredCount === 'function') updateStarredCount();
 
-            // Xóa phiên học cũ vì từ vựng đã thay đổi
-            try { currentFillList = []; } catch (e) { }
-            try { currentQuizList = []; } catch (e) { }
-            try { currentFlashcards = []; } catch (e) { }
-            const saveToggle = document.getElementById('saveSessionToggle');
-            if (saveToggle) saveToggle.checked = false;
+            // Phục hồi lại phiên học riêng của thư mục này (nếu có)
+            if (typeof aiDifficultyLevel !== 'undefined') {
+                restoreSessionForDifficulty(aiDifficultyLevel);
+            }
         }
 
         /** Tạo thư mục mới: Hỏi tên → tạo ID unique → lưu → chuyển sang thư mục mới */
@@ -2808,9 +2806,7 @@ ${jsonStructure}`;
         }
 
         function handleSaveSessionToggle(checkbox) {
-            if (!checkbox.checked) {
-                localStorage.removeItem('toeic_ai_cache');
-            }
+            // Không xóa cache AI khi tắt toggle, chỉ ảnh hưởng đến việc có reset index bài học hay không
         }
 
         function clearAiCache() {
