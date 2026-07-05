@@ -150,7 +150,7 @@
                             class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-2 rounded-lg text-sm transition-colors"
                             title="Đổi tên"><i class="fa-solid fa-pen"></i></button>
                         <button onclick="deleteCurrentGroup()"
-                            class="bg-rose-600/20 hover:bg-rose-600/40 text-rose-400 hover:text-rose-300 px-3 py-2 rounded-lg text-sm transition-colors"
+                            class="bg-rose-600 hover:bg-rose-500 text-white px-3 py-2 rounded-lg text-sm transition-colors shadow-sm"
                             title="Xóa"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 </div>
@@ -240,11 +240,11 @@
                     title="Bật để giữ nguyên tiến độ cũ khi chuyển qua lại giữa các chế độ. Tắt để luôn làm mới.">
                     <div class="relative flex shrink-0 items-center justify-center">
                         <input type="checkbox" id="saveSessionToggle" class="sr-only" checked
-                            onchange="document.getElementById('saveSessionTrack').className = this.checked ? 'w-9 h-5 rounded-full transition-colors duration-300 shadow-inner shadow-sm p-[2px] bg-brand-500 dark:bg-brand-600' : 'w-9 h-5 rounded-full transition-colors duration-300 shadow-inner shadow-sm p-[2px] bg-slate-400 dark:bg-slate-700'; document.getElementById('saveSessionThumb').className = this.checked ? 'bg-white rounded-full h-4 w-4 transition-all duration-300 transform translate-x-4 shadow-sm' : 'bg-white rounded-full h-4 w-4 transition-all duration-300 transform translate-x-0 shadow-sm'; document.getElementById('saveSessionText').className = this.checked ? 'text-[11px] font-bold transition-colors text-brand-400' : 'text-[11px] font-bold transition-colors text-slate-500'; document.getElementById('saveSessionIcon').className = this.checked ? 'fa-solid fa-floppy-disk text-[10px] transition-all text-brand-400 drop-shadow-[0_0_3px_rgba(59,130,246,0.6)]' : 'fa-solid fa-floppy-disk text-[10px] transition-all text-slate-500'; handleSaveSessionToggle(this);">
+                            onchange="document.getElementById('saveSessionTrack').className = this.checked ? 'w-9 h-5 rounded-full transition-colors duration-300 shadow-inner shadow-sm p-[2px] bg-brand-500 dark:bg-brand-600' : 'w-9 h-5 rounded-full transition-colors duration-300 shadow-inner shadow-sm p-[2px] bg-slate-400 dark:bg-slate-700'; document.getElementById('saveSessionThumb').className = this.checked ? 'bg-white rounded-full h-4 w-4 transition-all duration-300 transform translate-x-0 shadow-sm' : 'bg-white rounded-full h-4 w-4 transition-all duration-300 transform translate-x-4 shadow-sm'; document.getElementById('saveSessionText').className = this.checked ? 'text-[11px] font-bold transition-colors text-brand-400' : 'text-[11px] font-bold transition-colors text-slate-500'; document.getElementById('saveSessionIcon').className = this.checked ? 'fa-solid fa-floppy-disk text-[13px] transition-all text-brand-400 drop-shadow-[0_0_3px_rgba(59,130,246,0.6)]' : 'fa-solid fa-floppy-disk text-[13px] transition-all text-slate-500'; handleSaveSessionToggle(this);">
                         <div id="saveSessionTrack"
                             class="w-9 h-5 rounded-full transition-colors duration-300 shadow-inner shadow-sm p-[2px] bg-brand-500 dark:bg-brand-600 flex items-center">
                             <div id="saveSessionThumb"
-                                class="bg-white rounded-full h-4 w-4 transition-all duration-300 transform translate-x-4 shadow-sm">
+                                class="bg-white rounded-full h-4 w-4 transition-all duration-300 transform translate-x-0 shadow-sm">
                             </div>
                         </div>
                     </div>
@@ -252,9 +252,9 @@
                         <span id="saveSessionText" class="text-[11px] font-bold transition-colors text-brand-400">Lưu
                             tiến độ phiên học</span>
                         <div
-                            class="flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700/50 shadow-inner">
+                            class="flex items-center gap-1 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700/50 shadow-inner">
                             <i id="saveSessionIcon"
-                                class="fa-solid fa-floppy-disk text-[10px] transition-all text-brand-400 drop-shadow-[0_0_3px_rgba(59,130,246,0.6)]"></i>
+                                class="fa-solid fa-floppy-disk text-[13px] transition-all text-brand-400 drop-shadow-[0_0_3px_rgba(59,130,246,0.6)]"></i>
                         </div>
                     </div>
                 </label>
