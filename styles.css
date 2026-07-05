@@ -1,0 +1,700 @@
+body {
+            font-family: 'Nunito', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+        /* ===== LIGHT MODE OVERRIDES ===== */
+        html.light-mode {
+            background: #f1f5f9 !important;
+            color: #1e293b !important;
+        }
+
+        html.light-mode body,
+        html.light-mode header,
+        html.light-mode main,
+        html.light-mode section {
+            color: #1e293b;
+        }
+
+        /* Header */
+        html.light-mode header {
+            background: #ffffff !important;
+            border-color: #e2e8f0 !important;
+        }
+
+        /* Sidebar */
+        html.light-mode .bg-slate-900\/50,
+        html.light-mode [class*="bg-slate-9"] {
+            background-color: #f8fafc !important;
+        }
+
+        html.light-mode [class*="bg-slate-8"] {
+            background-color: #f1f5f9 !important;
+        }
+
+        html.light-mode [class*="bg-slate-95"] {
+            background-color: #e2e8f0 !important;
+        }
+
+        html.light-mode [class*="border-slate-7"] {
+            border-color: #cbd5e1 !important;
+        }
+
+        html.light-mode [class*="border-slate-8"] {
+            border-color: #e2e8f0 !important;
+        }
+
+        html.light-mode [class*="text-slate-4"] {
+            color: #64748b !important;
+        }
+
+        html.light-mode [class*="bg-slate-7"] {
+            background-color: #e2e8f0 !important;
+        }
+
+        html.light-mode [class*="bg-slate-6"] {
+            background-color: #cbd5e1 !important;
+        }
+
+        html.light-mode [class*="text-slate-3"] {
+            color: #475569 !important;
+        }
+
+        html.light-mode [class*="text-slate-2"] {
+            color: #334155 !important;
+        }
+
+        html.light-mode [class*="text-slate-1"] {
+            color: #1e293b !important;
+        }
+
+        html.light-mode [class*="text-white"] {
+            color: #1e293b !important;
+        }
+
+        html.light-mode h1,
+        html.light-mode h2,
+        html.light-mode h3,
+        html.light-mode h4,
+        html.light-mode h5 {
+            color: #1e293b !important;
+        }
+
+        /* Cards & panels */
+        html.light-mode .bg-slate-800,
+        html.light-mode [class*="bg-slate-800"] {
+            background-color: #f1f5f9 !important;
+        }
+
+        /* Secondary Buttons in Light Mode */
+        html.light-mode button.bg-slate-800 {
+            background-color: #e2e8f0 !important;
+            color: #475569 !important;
+        }
+
+        html.light-mode button.bg-slate-800:hover {
+            background-color: #cbd5e1 !important;
+            color: #0f172a !important;
+        }
+
+        html.light-mode button.bg-slate-800 i {
+            color: inherit !important;
+        }
+
+        html.light-mode .bg-slate-950,
+        html.light-mode [class*="bg-slate-950"] {
+            background-color: #e2e8f0 !important;
+        }
+
+        html.light-mode [class*="bg-indigo-950"] {
+            background-color: #ede9fe !important;
+        }
+
+        html.light-mode [class*="bg-emerald-950"] {
+            background-color: #d1fae5 !important;
+        }
+
+        html.light-mode [class*="bg-amber-950"] {
+            background-color: #fef3c7 !important;
+        }
+
+        html.light-mode [class*="bg-rose-950"] {
+            background-color: #ffe4e6 !important;
+        }
+
+        /* Explanation board */
+        html.light-mode #explanationBoard {
+            background: #f8fafc !important;
+            border-color: #e2e8f0 !important;
+        }
+
+        /* Option buttons */
+        html.light-mode .option-btn {
+            background: #f8fafc !important;
+            border-color: #cbd5e1 !important;
+        }
+
+        html.light-mode .option-btn:hover {
+            border-color: #94a3b8 !important;
+        }
+
+        /* Scrollbar */
+        html.light-mode ::-webkit-scrollbar-track {
+            background: #e2e8f0;
+        }
+
+        html.light-mode ::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+        }
+
+        /* Select & input */
+        html.light-mode select,
+        html.light-mode input,
+        html.light-mode textarea {
+            background: #f1f5f9 !important;
+            color: #1e293b !important;
+            border-color: #cbd5e1 !important;
+        }
+
+        /* API key input */
+        html.light-mode input[type="password"],
+        html.light-mode input[type="text"] {
+            background: #f1f5f9 !important;
+            color: #1e293b !important;
+        }
+
+        /* Deep explain output */
+        html.light-mode #deepExplainOutput code {
+            background: #e2e8f0 !important;
+        }
+
+        /* ===== LIGHT MODE: TEXT CONTRAST IN COLORED PANELS ===== */
+        /* Amber / trap warning */
+        html.light-mode [class*="text-amber-4"] {
+            color: #92400e !important;
+        }
+
+        html.light-mode [class*="text-amber-3"] {
+            color: #78350f !important;
+        }
+
+        html.light-mode [class*="bg-amber-5"] {
+            background-color: #fef3c7 !important;
+        }
+
+        html.light-mode [class*="border-amber-5"] {
+            border-color: #f59e0b !important;
+        }
+
+        /* Indigo panels */
+        html.light-mode [class*="text-indigo-4"] {
+            color: #3730a3 !important;
+        }
+
+        html.light-mode [class*="text-indigo-3"] {
+            color: #312e81 !important;
+        }
+
+        html.light-mode [class*="text-brand-4"] {
+            color: #1d4ed8 !important;
+        }
+
+        html.light-mode [class*="text-brand-3"] {
+            color: #1e40af !important;
+        }
+
+        html.light-mode [class*="border-indigo-5"] {
+            border-color: #6366f1 !important;
+        }
+
+        /* Emerald panels */
+        html.light-mode [class*="text-emerald-4"] {
+            color: #065f46 !important;
+        }
+
+        html.light-mode [class*="text-emerald-3"] {
+            color: #064e3b !important;
+        }
+
+        html.light-mode [class*="border-emerald-5"] {
+            border-color: #10b981 !important;
+        }
+
+        /* Rose / error panels */
+        html.light-mode [class*="text-rose-4"] {
+            color: #9f1239 !important;
+        }
+
+        html.light-mode [class*="text-rose-3"] {
+            color: #881337 !important;
+        }
+
+        html.light-mode [class*="border-rose-5"] {
+            border-color: #f43f5e !important;
+        }
+
+        /* Syntax token badges [S][V][O][M] */
+        html.light-mode [class*="bg-blue-5"] {
+            background-color: #dbeafe !important;
+        }
+
+        html.light-mode [class*="text-blue-3"] {
+            color: #1e40af !important;
+        }
+
+        html.light-mode [class*="bg-emerald-5"] {
+            background-color: #d1fae5 !important;
+        }
+
+        html.light-mode [class*="bg-purple-5"] {
+            background-color: #ede9fe !important;
+        }
+
+        html.light-mode [class*="text-purple-3"] {
+            color: #5b21b6 !important;
+        }
+
+        /* Keyword badge */
+        html.light-mode [class*="bg-indigo-9"] {
+            background-color: #e0e7ff !important;
+        }
+
+        /* General: any colored text that might be invisible */
+        html.light-mode [class*="text-fuchsia"] {
+            color: #7e22ce !important;
+        }
+
+        html.light-mode [class*="text-cyan"] {
+            color: #0e7490 !important;
+        }
+
+        html.light-mode [class*="text-sky"] {
+            color: #0369a1 !important;
+        }
+
+        html.light-mode [class*="text-teal"] {
+            color: #0f766e !important;
+        }
+
+        /* Fix opacity-based colors (text-amber-200/90, text-slate-200, etc.) */
+        html.light-mode #trapWarningText {
+            color: #78350f !important;
+        }
+
+        html.light-mode #structureAnalysisBox {
+            color: #1e293b !important;
+            background: #e2e8f0 !important;
+        }
+
+        html.light-mode #deepExplainOutput {
+            color: #1e293b !important;
+            background: #f8fafc !important;
+            border-color: #e2e8f0 !important;
+        }
+
+        html.light-mode [id^="text_"] {
+            color: #1e293b !important;
+        }
+
+        html.light-mode #vietnameseTranslationBox {
+            color: #1e293b !important;
+        }
+
+        html.light-mode #grammarRule,
+        html.light-mode #grammarKeywords,
+        html.light-mode #whyCorrectExplanation {
+            color: #1e293b !important;
+        }
+
+        html.light-mode [class*="text-amber-2"] {
+            color: #92400e !important;
+        }
+
+        html.light-mode [class*="text-slate-2"] {
+            color: #334155 !important;
+        }
+
+        html.light-mode [class*="text-indigo-2"] {
+            color: #3730a3 !important;
+        }
+
+        html.light-mode [class*="text-emerald-2"] {
+            color: #065f46 !important;
+        }
+
+        html.light-mode [class*="divide-slate"] {
+            border-color: #e2e8f0 !important;
+        }
+
+        html.light-mode #vocabInput::placeholder {
+            color: #94a3b8 !important;
+            opacity: 0.6 !important;
+        }
+
+        /* PROTECT PRIMARY BUTTONS: Make sure buttons with solid primary colored backgrounds retain their white text */
+        html.light-mode button.text-white,
+        html.light-mode .size-btn.text-white,
+        html.light-mode .keep-white {
+            color: #ffffff !important;
+        }
+
+        /* Flashcard Light Mode Overrides */
+        html.light-mode #fcBack {
+            background: #ffffff !important;
+            background-image: none !important;
+            border-color: #cbd5e1 !important;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+        }
+
+        html.light-mode #fcGoogleTrans {
+            color: #059669 !important;
+        }
+
+        html.light-mode #fcFront {
+            background: #f8fafc !important;
+            border-color: #e2e8f0 !important;
+        }
+
+        html.light-mode #fcAiExample {
+            background-color: #f1f5f9 !important;
+            border-color: #cbd5e1 !important;
+        }
+
+        html.light-mode #fcExVi {
+            color: #475569 !important;
+        }
+
+        html.light-mode #fcExEn {
+            color: #000000 !important;
+        }
+
+        /* Speaker Icons */
+        html.light-mode #fcFront button,
+        html.light-mode #fcBack button {
+            color: #64748b !important;
+        }
+
+        html.light-mode #fcFront button:hover,
+        html.light-mode #fcBack button:hover {
+            color: #1d4ed8 !important;
+        }
+
+        /* Force Flashcard Button visibility */
+        html.light-mode #flashcardBtn {
+            background-color: #059669 !important;
+            border-color: #047857 !important;
+        }
+
+        html.light-mode #flashcardBtn span,
+        html.light-mode #flashcardBtn i {
+            color: #ffffff !important;
+        }
+
+        .drag-over {
+            border-color: #3b82f6 !important;
+            background-color: rgba(59, 130, 246, 0.1) !important;
+        }
+
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+
+        .transform-style-3d {
+            transform-style: preserve-3d;
+        }
+
+        .backface-hidden {
+            backface-visibility: hidden;
+        }
+
+        .rotate-y-180 {
+            transform: rotateY(180deg) !important;
+        }
+
+        /* Quiz Light Mode Overrides */
+        html.light-mode #quizContainer {
+            background-color: #f1f5f9 !important;
+        }
+
+        html.light-mode #quizContainer .px-6.py-4 {
+            border-bottom-color: #e2e8f0 !important;
+        }
+
+        html.light-mode #quizContainer .text-indigo-400 {
+            color: #4f46e5 !important;
+        }
+
+        html.light-mode #quizContainer .text-indigo-500 {
+            color: #6366f1 !important;
+        }
+
+        html.light-mode #quizCounter {
+            color: #64748b !important;
+        }
+
+        html.light-mode #quizContainer button[onclick="exitQuizMode()"] {
+            background-color: #ffffff !important;
+            border-color: #cbd5e1 !important;
+            color: #475569 !important;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+        }
+
+        html.light-mode #quizContainer button[onclick="exitQuizMode()"]:hover {
+            background-color: #f8fafc !important;
+            color: #1e293b !important;
+        }
+
+        html.light-mode #quizAutoPlayBtn {
+            background-color: #ffffff !important;
+            border-color: #cbd5e1 !important;
+            color: #64748b !important;
+        }
+
+        html.light-mode #quizAutoPlayBtn:hover {
+            background-color: #f8fafc !important;
+        }
+
+        html.light-mode #quizRedoBtn {
+            background-color: #e0e7ff !important;
+            color: #4f46e5 !important;
+            border-color: #a5b4fc !important;
+        }
+
+        html.light-mode #quizRedoBtn:hover {
+            background-color: #c7d2fe !important;
+        }
+
+        html.light-mode #quizPrevBtn,
+        html.light-mode #quizNextBtn {
+            background-color: #ffffff !important;
+            border-color: #cbd5e1 !important;
+            color: #64748b !important;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+        }
+
+        html.light-mode #quizPrevBtn:hover:not(:disabled),
+        html.light-mode #quizNextBtn:hover:not(:disabled) {
+            background-color: #f8fafc !important;
+            color: #1e293b !important;
+            border-color: #94a3b8 !important;
+        }
+
+        html.light-mode #quizAutoPlayBtn.active-toggle {
+            color: #4f46e5 !important;
+            background-color: #e0e7ff !important;
+            border-color: #a5b4fc !important;
+        }
+
+        html.light-mode #quizQuestion {
+            color: #1e293b !important;
+        }
+
+        /* Quiz AI Details Light Mode */
+        html.light-mode #quizAiFamily,
+        html.light-mode #quizAiCollocations,
+        html.light-mode #quizAiHomophones {
+            background-color: #ffffff !important;
+            border-color: #e0e7ff !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+        }
+
+        html.light-mode #quizAiFamilyList,
+        html.light-mode #quizAiColList,
+        html.light-mode #quizAiHomList {
+            color: #475569 !important;
+        }
+
+        html.light-mode .text-white-light-override {
+            color: #1e293b !important;
+        }
+
+        html.light-mode .text-slate-400-light-override {
+            color: #64748b !important;
+        }
+
+        html.light-mode .quiz-opt-btn {
+            background-color: #ffffff !important;
+            border-color: #cbd5e1 !important;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1) !important;
+        }
+
+        html.light-mode .quiz-opt-btn:hover {
+            background-color: #f8fafc !important;
+            border-color: #818cf8 !important;
+        }
+
+        html.light-mode .quiz-opt-btn span[id^="quizOptIcon_"] {
+            background-color: #f1f5f9 !important;
+            color: #64748b !important;
+        }
+
+        html.light-mode .quiz-opt-btn:hover span[id^="quizOptIcon_"] {
+            color: #4f46e5 !important;
+        }
+
+        html.light-mode .quiz-opt-btn span[id^="quizOptText_"] {
+            color: #334155 !important;
+        }
+
+        html.light-mode .quiz-google-meaning {
+            color: #2563eb !important;
+        }
+
+        html.light-mode .quiz-opt-btn.border-emerald-500 {
+            background-color: #ecfdf5 !important;
+            border-color: #10b981 !important;
+        }
+
+        html.light-mode .quiz-opt-btn.border-orange-500 {
+            background-color: #fff1f2 !important;
+            border-color: #f43f5e !important;
+        }
+
+        /* Fill Mode Light Mode Overrides */
+        html.light-mode #fillContainer {
+            background-color: #f1f5f9 !important;
+        }
+
+        html.light-mode #fillContainer .px-6.py-4 {
+            border-bottom-color: #e2e8f0 !important;
+        }
+
+        html.light-mode #fillContainer .text-teal-400 {
+            color: #0d9488 !important;
+        }
+
+        html.light-mode #fillContainer .text-teal-500 {
+            color: #14b8a6 !important;
+        }
+
+        html.light-mode #fillCounter {
+            color: #64748b !important;
+        }
+
+        html.light-mode #fillContainer button[onclick="exitFillMode()"] {
+            background-color: #ffffff !important;
+            border-color: #cbd5e1 !important;
+            color: #475569 !important;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+        }
+
+        html.light-mode #fillContainer button[onclick="exitFillMode()"]:hover {
+            background-color: #f8fafc !important;
+            color: #1e293b !important;
+        }
+
+        html.light-mode #fillAutoPlayBtn {
+            background-color: #ffffff !important;
+            border-color: #cbd5e1 !important;
+            color: #64748b !important;
+        }
+
+        html.light-mode #fillAutoPlayBtn:hover {
+            background-color: #f8fafc !important;
+        }
+
+        html.light-mode #fillAutoPlayBtn.active-toggle {
+            color: #0d9488 !important;
+            background-color: #ccfbf1 !important;
+            border-color: #5eead4 !important;
+        }
+
+        html.light-mode #fillSentence {
+            color: #000000 !important;
+        }
+
+        html.light-mode #fillVietnamese {
+            color: #64748b !important;
+        }
+
+        html.light-mode #fillInput,
+        html.light-mode .fill-multi-input {
+            background-color: transparent !important;
+            color: #2563eb !important;
+            border-bottom-color: #94a3b8 !important;
+        }
+
+        html.light-mode #fillInput:focus,
+        html.light-mode .fill-multi-input:focus {
+            border-bottom-color: #0d9488 !important;
+        }
+
+        html.light-mode #fillInput.border-emerald-500,
+        html.light-mode .fill-multi-input.border-emerald-500 {
+            background-color: #ecfdf5 !important;
+            color: #047857 !important;
+            border-bottom-color: #10b981 !important;
+        }
+
+        html.light-mode #fillInput.border-orange-500,
+        html.light-mode .fill-multi-input.border-orange-500 {
+            background-color: #fff1f2 !important;
+            color: #be123c !important;
+            border-bottom-color: #f43f5e !important;
+        }
+
+        html.light-mode .quiz-opt-btn.border-emerald-500 span[id^="quizOptText_"] {
+            color: #047857 !important;
+        }
+
+        html.light-mode .quiz-opt-btn.border-orange-500 span[id^="quizOptText_"] {
+            color: #be123c !important;
+        }
+
+        html.light-mode .quiz-opt-btn.opacity-40 {
+            opacity: 0.6 !important;
+        }
+
+        html.light-mode #quizContinueHint {
+            color: #94a3b8 !important;
+        }
+
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: transparent;
+            border-radius: 10px;
+        }
+
+        .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+            background-color: #334155;
+        }
+
+        .custom-scrollbar:hover::-webkit-scrollbar-thumb:hover {
+            background-color: #475569;
+        }
+
+        html.light-mode .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+        }
+
+        html.light-mode .custom-scrollbar:hover::-webkit-scrollbar-thumb:hover {
+            background-color: #94a3b8;
+        }
