@@ -542,6 +542,7 @@
         /** Lưu tiến độ của độ khó hiện tại vào localStorage */
         function saveSessionForCurrentDifficulty() {
             if (!aiDifficultyLevel) return;
+            const groupKey = typeof currentGroupName !== 'undefined' ? currentGroupName : 'Mặc định';
             const state = {
                 fillList: currentFillList || [],
                 fillIndex: currentFillIndex || 0,
@@ -551,13 +552,14 @@
                 flashcardIndex: flashcardIndex || 0,
                 isFlipped: typeof isFlipped !== 'undefined' ? isFlipped : false
             };
-            localStorage.setItem(`toeic_session_${aiDifficultyLevel}`, JSON.stringify(state));
+            localStorage.setItem(`toeic_session_${aiDifficultyLevel}_${groupKey}`, JSON.stringify(state));
         }
 
         /** Phục hồi tiến độ tương ứng với độ khó */
         function restoreSessionForDifficulty(level) {
             try {
-                const saved = localStorage.getItem(`toeic_session_${level}`);
+                const groupKey = typeof currentGroupName !== 'undefined' ? currentGroupName : 'Mặc định';
+                const saved = localStorage.getItem(`toeic_session_${level}_${groupKey}`);
                 if (saved) {
                     const state = JSON.parse(saved);
                     currentFillList = state.fillList || [];
@@ -578,8 +580,12 @@
                 }
             } catch (e) {
                 currentFillList = [];
+                currentFillIndex = 0;
                 currentQuizList = [];
+                currentQuizIndex = 0;
                 currentFlashcards = [];
+                flashcardIndex = 0;
+                if (typeof isFlipped !== 'undefined') isFlipped = false;
             }
         }
 
@@ -3779,7 +3785,6 @@ LƯU Ý QUAN TRỌNG VÀ NGHIÊM NGẶT:
                     console.warn("429 Rate Limit Hit.", errorText);
                     const match = errorText.match(/try again in ([\d.]+)s/i);
                     let waitMs = (parseFloat(match ? match[1] : "10") + 1.5) * 1000;
-                    updateLoadingProgress(`Quá tải. Đang đợi ${Math.ceil(waitMs / 1000)}s rồi tự động thử lại...`, parseInt(document.getElementById('loadingProgress').style.width) || 50);
                     await new Promise(r => setTimeout(r, waitMs));
                     retries++;
                     continue;
@@ -4162,7 +4167,6 @@ LƯU Ý QUAN TRỌNG VÀ NGHIÊM NGẶT:
                         console.warn("429 Rate Limit Hit.", errorText);
                         const match = errorText.match(/try again in ([\d.]+)s/i);
                         let waitMs = (parseFloat(match ? match[1] : "10") + 1.5) * 1000;
-                        updateLoadingProgress(`Quá tải. Đang đợi ${Math.ceil(waitMs / 1000)}s rồi tự động thử lại...`, parseInt(document.getElementById('loadingProgress').style.width) || 50);
                         await new Promise(r => setTimeout(r, waitMs));
                         retries++;
                         continue;
