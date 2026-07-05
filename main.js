@@ -1254,6 +1254,12 @@
                     // Nhưng giữ lại Word Family và Collocations cũ nếu có để tiết kiệm.
                     sourceList.forEach(w => {
                         const hasFamily = w.aiExample && w.aiExample.family && w.aiExample.family.length > 0;
+                        
+                        // LƯU TẠM DỮ LIỆU ĐỂ KHÔNG BỊ MẤT KHI RE-GENERATE CHỈ CÂU VÍ DỤ
+                        w._tempInheritedFamily = hasFamily ? w.aiExample.family : null;
+                        w._tempInheritedCollocations = w.aiExample ? w.aiExample.collocations : null;
+                        w._tempInheritedHomophones = w.aiExample ? w.aiExample.homophones : null;
+
                         delete w.aiExample; // Xóa trong RAM để ép tạo mới
                         if (hasFamily) {
                             wordsNeedingOnlyExample.push(w);
@@ -1267,6 +1273,9 @@
                         if (!w.aiExample || !w.aiExample.en) {
                             const hasFamily = w.aiExample && w.aiExample.family && w.aiExample.family.length > 0;
                             if (hasFamily) {
+                                w._tempInheritedFamily = w.aiExample.family;
+                                w._tempInheritedCollocations = w.aiExample.collocations;
+                                w._tempInheritedHomophones = w.aiExample.homophones;
                                 wordsNeedingOnlyExample.push(w);
                             } else {
                                 wordsNeedingEverything.push(w);
@@ -1408,9 +1417,9 @@
                 }
 
                 let taskInstructions = `1. Viết 1 câu cho mỗi từ theo chuẩn: ${styleInstruction}`;
-                if (wantCol) taskInstructions += `\n2. TÌM 3-4 Collocations (cụm từ đi kèm).`;
-                if (wantFam) taskInstructions += `\n3. TÌM TẤT CẢ CÁC TỪ CÙNG GỐC (Word Family) CÓ THỂ CÓ của từ đó (bao gồm mọi dạng danh/động/tính/trạng từ). TÌM ĐƯỢC BAO NHIÊU GHI HẾT BẤY NHIÊU, TUYỆT ĐỐI KHÔNG ĐƯỢC LƯỢC BỎ HAY RÚT GỌN.`;
-                if (wantHom) taskInstructions += `\n4. BẮT BUỘC TÌM 3-4 TỪ DỄ NHẦM LẪN (đồng âm, viết hoặc đọc gần giống nhưng nghĩa khác).`;
+                if (wantCol) taskInstructions += `\n2. TÌM 3-4 Collocations (cụm từ đi kèm). BẮT BUỘC PHẢI TRẢ VỀ TRONG KEY 'collocations'.`;
+                if (wantFam) taskInstructions += `\n3. TÌM TẤT CẢ CÁC TỪ CÙNG GỐC (Word Family). BẮT BUỘC PHẢI TRẢ VỀ TRONG KEY 'family'. TUYỆT ĐỐI KHÔNG ĐƯỢC BỎ QUA.`;
+                if (wantHom) taskInstructions += `\n4. TÌM 3-4 TỪ DỄ NHẦM LẪN. BẮT BUỘC PHẢI TRẢ VỀ TRONG KEY 'homophones'.`;
 
                 let jsonStructure = `{
   "examples": [
@@ -1443,10 +1452,12 @@
   ]
 }`;
 
-                let systemPrompt = `Bạn là chuyên gia ngôn ngữ học. BẮT BUỘC trả về định dạng JSON, không có văn bản hay markdown nào khác.
+                let systemPrompt = `Bạn là chuyên gia ngôn ngữ học. BẮT BUỘC trả về định dạng JSON hợp lệ, không có markdown, không giải thích.
 Bạn sẽ nhận được 1 danh sách từ vựng và nghĩa tiếng Việt. 
 Nhiệm vụ: 
 ${taskInstructions}
+
+LƯU Ý CỰC KỲ QUAN TRỌNG: TUYỆT ĐỐI KHÔNG ĐƯỢC BỎ QUÊN HOẶC LƯỢC BỎ CÁC TRƯỜNG NHƯ 'collocations', 'family', 'homophones' TRONG KẾT QUẢ TRẢ VỀ!
 
 Cấu trúc JSON bắt buộc:
 ${jsonStructure}`;
@@ -1529,9 +1540,14 @@ ${jsonStructure}`;
                                 }
 
                                 if (onlyExample) {
-                                    ex.collocations = oldCache.collocations || [];
-                                    ex.family = oldCache.family || [];
-                                    ex.homophones = oldCache.homophones || [];
+                                    ex.collocations = wTarget._tempInheritedCollocations || oldCache.collocations || [];
+                                    ex.family = wTarget._tempInheritedFamily || oldCache.family || [];
+                                    ex.homophones = wTarget._tempInheritedHomophones || oldCache.homophones || [];
+                                    
+                                    // Dọn rác
+                                    delete wTarget._tempInheritedCollocations;
+                                    delete wTarget._tempInheritedFamily;
+                                    delete wTarget._tempInheritedHomophones;
                                 }
 
                                 // [AI BUGFIX] Kế thừa chéo: Nếu ex trống family (bất kể onlyExample là gì), lục tìm các cấu hình khác
