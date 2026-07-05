@@ -1159,8 +1159,8 @@
                 if (sourceList.length !== currentFlashcards.length) {
                     shouldResume = false;
                 } else {
-                    const sourceWords = sourceList.map(w => w.word).sort().join(',');
-                    const currentWords = currentFlashcards.map(w => w.word).sort().join(',');
+                    const sourceWords = sourceList.map(w => w.word + '|' + w.meaning).sort().join(',');
+                    const currentWords = currentFlashcards.map(w => w.word + '|' + w.meaning).sort().join(',');
                     if (sourceWords !== currentWords) {
                         shouldResume = false;
                     }
@@ -2250,7 +2250,7 @@ ${jsonStructure}`;
                             const pos = guessPartOfSpeech(word, meaning);
                             let newItem = { word, meaning, pos };
 
-                            const oldItem = oldList.find(o => o.word === word) || (typeof currentFlashcards !== 'undefined' ? currentFlashcards.find(fc => fc.word === word) : null);
+                            const oldItem = oldList.find(o => o.word === word && o.meaning === meaning) || (typeof currentFlashcards !== 'undefined' ? currentFlashcards.find(fc => fc.word === word && fc.meaning === meaning) : null);
                             let aiCache = {};
                             try { aiCache = JSON.parse(localStorage.getItem('toeic_ai_cache') || "{}"); } catch (e) { }
 
