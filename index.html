@@ -190,7 +190,7 @@
                                 <!-- Switch Track & Thumb (Bulletproof Pseudo-element approach) -->
                                 <div class="relative flex shrink-0">
                                     <input type="checkbox" id="onlyStarredToggle" class="sr-only peer"
-                                        onchange="toggleFilter(); try { currentFillList = []; currentQuizList = []; const st = document.getElementById('saveSessionToggle'); if (st) st.checked = false; } catch(e){}"
+                                        onchange="toggleFilter()"
                                         checked>
                                     <div id="starredToggleTrack"
                                         class="w-9 h-5 bg-slate-400 dark:bg-slate-700 rounded-full transition-colors duration-300 shadow-inner after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4 shadow-sm">
