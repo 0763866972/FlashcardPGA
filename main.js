@@ -4910,6 +4910,17 @@ Mục 2: Bẫy ETS & Mẹo Nhớ Lâu`;
                 btn.classList.remove('hover:bg-slate-700', 'hover:border-slate-500');
             });
 
+            // Hiển thị thêm nghĩa (hoặc từ tiếng Anh) cho TẤT CẢ các đáp án sau khi đã chọn
+            if (currentWord && currentWord.quizState && currentWord.quizState.options) {
+                currentWord.quizState.options.forEach((opt, idx) => {
+                    const textEl = document.getElementById(`quizOptText_${idx}`);
+                    if (textEl && !textEl.innerHTML.includes('quiz-reveal-meaning')) {
+                        const hintText = quizMode === 'vi_to_en' ? opt.meaning : opt.word;
+                        textEl.innerHTML += ` <span class="quiz-reveal-meaning opacity-75 text-[0.9em] ml-2 font-normal italic">(${hintText})</span>`;
+                    }
+                });
+            }
+
             // Correct Option
             correctBtn.classList.remove('border-slate-700', 'bg-slate-800/80');
             correctBtn.classList.add('border-emerald-500', 'border-2', 'bg-emerald-500/10');
