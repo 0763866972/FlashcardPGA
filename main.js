@@ -667,6 +667,20 @@
         let isListenModeEn = false;    // Ẩn câu ví dụ tiếng Anh?
         let isListenModeVi = false;    // Ẩn câu ví dụ tiếng Việt?
         let isFcWordListenMode = false; // Chế độ "Nghe & Gõ"?
+        let isFcMeaningBlurred = false; // Chế độ "ẩn tạm thời" tiếng Việt?
+
+        function toggleFcMeaningBlur(event) {
+            if (event) event.stopPropagation();
+            isFcMeaningBlurred = !isFcMeaningBlurred;
+            const meaningHint = document.getElementById('fcListenMeaningHint');
+            if (meaningHint) {
+                if (isFcMeaningBlurred) {
+                    meaningHint.classList.add('blur-[6px]', 'opacity-40');
+                } else {
+                    meaningHint.classList.remove('blur-[6px]', 'opacity-40');
+                }
+            }
+        }
 
         /**
          * toggleFcWordListenMode - Bật/tắt chế độ "Nghe & Gõ".
@@ -697,14 +711,25 @@
             const spellContainer = document.getElementById('fcSpellContainer'); // Container ô gõ từ
             const spellInput = document.getElementById('fcSpellInput');         // Ô input gõ từ
             const hint = document.getElementById('fcFrontHint');        // Hint "click để lật thẻ"
+            const meaningHint = document.getElementById('fcListenMeaningHint'); // Hint nghĩa tiếng Việt
 
             if (isFcWordListenMode) {
                 // Bật chế độ: blur từ, hiện ô input
                 wordEl.classList.add('blur-md', 'opacity-40', 'select-none', 'cursor-pointer');
                 wordEl.title = 'Click để xem từ vựng';
                 if (phoneticEl) {
-                    phoneticEl.classList.add('blur-md', 'opacity-40', 'select-none', 'cursor-pointer');
-                    phoneticEl.title = 'Click để xem phiên âm';
+                    phoneticEl.classList.add('hidden'); // Ẩn phiên âm để nhường chỗ cho nghĩa tiếng Việt
+                }
+                if (meaningHint) {
+                    meaningHint.classList.remove('hidden');
+                    if (typeof currentFlashcards !== 'undefined' && currentFlashcards[flashcardIndex]) {
+                        meaningHint.innerText = currentFlashcards[flashcardIndex].meaning;
+                    }
+                    if (isFcMeaningBlurred) {
+                        meaningHint.classList.add('blur-[6px]', 'opacity-40');
+                    } else {
+                        meaningHint.classList.remove('blur-[6px]', 'opacity-40');
+                    }
                 }
                 if (spellContainer) spellContainer.classList.remove('hidden');
                 if (hint) hint.classList.add('hidden');
@@ -720,9 +745,10 @@
                 wordEl.classList.remove('blur-md', 'opacity-40', 'select-none', 'cursor-pointer');
                 wordEl.title = '';
                 if (phoneticEl) {
-                    phoneticEl.classList.remove('blur-md', 'opacity-40', 'select-none', 'cursor-pointer');
+                    phoneticEl.classList.remove('hidden', 'blur-md', 'opacity-40', 'select-none', 'cursor-pointer');
                     phoneticEl.title = '';
                 }
+                if (meaningHint) meaningHint.classList.add('hidden');
                 if (spellContainer) spellContainer.classList.add('hidden');
                 if (hint) hint.classList.remove('hidden');
             }
@@ -733,7 +759,12 @@
                 if (event) event.stopPropagation();
                 document.getElementById('fcWord').classList.remove('blur-md', 'opacity-40', 'select-none', 'cursor-pointer');
                 const phoneticEl = document.getElementById('fcPhonetic');
-                if (phoneticEl) phoneticEl.classList.remove('blur-md', 'opacity-40', 'select-none', 'cursor-pointer');
+                if (phoneticEl) phoneticEl.classList.remove('hidden', 'blur-md', 'opacity-40', 'select-none', 'cursor-pointer');
+                const meaningHint = document.getElementById('fcListenMeaningHint');
+                if (meaningHint) {
+                    meaningHint.classList.add('hidden'); // Ẩn nghĩa đi khi đã reveal
+                    meaningHint.classList.remove('blur-[6px]', 'opacity-40');
+                }
             }
         }
 
@@ -752,10 +783,21 @@
             }
 
             if (userText === targetWord) {
+                const wasAlreadyCorrect = inputEl.classList.contains('border-emerald-500');
+
                 inputEl.className = "w-full bg-emerald-900/30 border-2 border-emerald-500 rounded-xl px-4 py-3 text-center text-xl text-emerald-400 outline-none font-bold transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)] relative z-10";
                 document.getElementById('fcWord').classList.remove('blur-md', 'opacity-40', 'select-none', 'cursor-pointer');
                 const phoneticEl = document.getElementById('fcPhonetic');
                 if (phoneticEl) phoneticEl.classList.remove('blur-md', 'opacity-40', 'select-none', 'cursor-pointer');
+                
+                // Tự động hiện rõ nghĩa tiếng Việt
+                const meaningHint = document.getElementById('fcListenMeaningHint');
+                if (meaningHint) meaningHint.classList.remove('blur-[6px]', 'opacity-40');
+
+                // Tự động đọc từ khi vừa gõ đúng xong (nếu bật Tự động đọc)
+                if (!wasAlreadyCorrect && typeof isFcAutoPlay !== 'undefined' && isFcAutoPlay) {
+                    setTimeout(() => speakWord(null), 50);
+                }
             } else {
                 // Chỉ reset style cơ bản nếu chưa báo lỗi (logic ẩn lỗi ở trên đã xử lý phần lớn)
                 if (!inputEl.classList.contains('border-rose-500')) {
@@ -807,10 +849,13 @@
                         inputEl.classList.remove('focus:border-brand-500', 'border-slate-600', 'text-white');
                         inputEl.classList.add('border-rose-500', 'focus:border-rose-500', 'text-rose-400');
 
-                        // Hiện từ gốc luôn để tiện đối chiếu
                         document.getElementById('fcWord').classList.remove('blur-md', 'opacity-40', 'select-none', 'cursor-pointer');
                         const phoneticEl = document.getElementById('fcPhonetic');
                         if (phoneticEl) phoneticEl.classList.remove('blur-md', 'opacity-40', 'select-none', 'cursor-pointer');
+                        
+                        // Tự động hiện rõ nghĩa tiếng Việt
+                        const meaningHint = document.getElementById('fcListenMeaningHint');
+                        if (meaningHint) meaningHint.classList.remove('blur-[6px]', 'opacity-40');
 
                         // Tự động đọc lại từ để người học nghe kỹ lại chỗ mình sai
                         setTimeout(() => speakWord(null), 50);
@@ -1945,8 +1990,13 @@ ${jsonStructure}`;
 
             if (isFcAutoPlay) {
                 // Tăng độ trễ lên 600ms (đủ lâu để TTS engine trên Windows khởi tạo thành công)
-                // Đây là lý do tại sao dùng AI (có độ trễ chờ API) thì âm thanh hoạt động bình thường
-                setTimeout(() => speakWord(null), 600);
+                if (isFcWordListenMode && !isFcMeaningBlurred) {
+                    // Chế độ Nghe & Gõ VÀ Nghĩa tiếng Việt ĐANG HIỆN RÕ:
+                    // -> Người dùng muốn tự dịch từ tiếng Việt sang tiếng Anh và gõ.
+                    // -> Không tự động đọc từ lúc này, đợi họ Enter kiểm tra thì mới đọc.
+                } else {
+                    setTimeout(() => speakWord(null), 600);
+                }
             }
         }
 

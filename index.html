@@ -765,8 +765,10 @@
                                 <!-- Phonetic Text -->
                                 <div id="fcPhonetic" class="text-slate-400 text-xl mt-3 font-medium transition-all"
                                     onclick="revealFcWord(event)"></div>
+                                <!-- Meaning Hint for Listen Mode -->
+                                <div id="fcListenMeaningHint" class="hidden text-emerald-400 text-2xl font-bold mt-4 mb-2 text-center transition-all cursor-pointer select-none" onclick="toggleFcMeaningBlur(event)" title="Click để che/hiện nghĩa"></div>
                                 <!-- Typing Input for Listen Mode -->
-                                <div id="fcSpellContainer" class="hidden mt-6 w-full max-w-sm relative"
+                                <div id="fcSpellContainer" class="hidden mt-2 w-full max-w-sm relative"
                                     onclick="event.stopPropagation()">
                                     <input type="text" id="fcSpellInput" placeholder="Gõ từ bạn nghe được..."
                                         class="w-full bg-slate-900 border-2 border-slate-600 focus:border-brand-500 rounded-xl px-4 py-3 text-center text-xl text-white outline-none font-bold placeholder-slate-500 transition-all shadow-inner relative z-10"
