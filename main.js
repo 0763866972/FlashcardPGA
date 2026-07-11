@@ -2067,8 +2067,14 @@ function renderFlashcard() {
             if (card.aiExample.synonyms && card.aiExample.synonyms.length > 0) {
                 synList.innerHTML = card.aiExample.synonyms.map(c => {
                     let textVi = c.vi || '';
-                    textVi = textVi.replace(/\[Đồng nghĩa\]/gi, '<span class="text-emerald-400 font-bold">[Đồng nghĩa]</span>');
-                    textVi = textVi.replace(/\[Trái nghĩa\]/gi, '<span class="text-rose-400 font-bold">[Trái nghĩa]</span>');
+                    if (/\[Đồng nghĩa\]/i.test(textVi)) {
+                        textVi = textVi.replace(/\[Đồng nghĩa\]\s*-?\s*/gi, '').trim() + ' <span class="text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded text-[10px] font-bold ml-2 uppercase">Đồng nghĩa</span>';
+                    } else if (/\[Trái nghĩa\]/i.test(textVi)) {
+                        textVi = textVi.replace(/\[Trái nghĩa\]\s*-?\s*/gi, '').trim() + ' <span class="text-rose-600 dark:text-rose-400 bg-rose-500/10 px-1.5 py-0.5 rounded text-[10px] font-bold ml-2 uppercase">Trái nghĩa</span>';
+                    } else {
+                        textVi = textVi.replace(/\[Đồng nghĩa\]/gi, '<span class="text-emerald-400 font-bold ml-2">[Đồng nghĩa]</span>');
+                        textVi = textVi.replace(/\[Trái nghĩa\]/gi, '<span class="text-rose-400 font-bold ml-2">[Trái nghĩa]</span>');
+                    }
                     return `<tr class="cursor-pointer hover:bg-slate-800/30 transition-colors group"
                             onclick="speakText('${c.word.replace(/'/g, "\\'")}', 'en-US')"
                             oncontextmenu="handleExtraRightClick(event, '${c.word.replace(/'/g, "\\'")}')"
@@ -5244,8 +5250,14 @@ function selectQuizAnswer(selectedIndex, isRestore = false) {
         if (ex.synonyms && ex.synonyms.length > 0) {
             const synHtml = ex.synonyms.map(c => {
                 let textVi = c.vi || '';
-                textVi = textVi.replace(/\[Đồng nghĩa\]/gi, '<span class="text-emerald-400 font-bold">[Đồng nghĩa]</span>');
-                textVi = textVi.replace(/\[Trái nghĩa\]/gi, '<span class="text-rose-400 font-bold">[Trái nghĩa]</span>');
+                if (/\[Đồng nghĩa\]/i.test(textVi)) {
+                    textVi = textVi.replace(/\[Đồng nghĩa\]\s*-?\s*/gi, '').trim() + ' <span class="text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded text-[10px] font-bold ml-2 uppercase">Đồng nghĩa</span>';
+                } else if (/\[Trái nghĩa\]/i.test(textVi)) {
+                    textVi = textVi.replace(/\[Trái nghĩa\]\s*-?\s*/gi, '').trim() + ' <span class="text-rose-500 bg-rose-500/10 px-1.5 py-0.5 rounded text-[10px] font-bold ml-2 uppercase">Trái nghĩa</span>';
+                } else {
+                    textVi = textVi.replace(/\[Đồng nghĩa\]/gi, '<span class="text-emerald-400 font-bold ml-2">[Đồng nghĩa]</span>');
+                    textVi = textVi.replace(/\[Trái nghĩa\]/gi, '<span class="text-rose-400 font-bold ml-2">[Trái nghĩa]</span>');
+                }
                 return `<tr class="cursor-pointer hover:bg-slate-800/30 transition-colors group" 
                         onclick="speakText('${c.word.replace(/'/g, "\\'")}', 'en-US')" 
                         oncontextmenu="handleExtraRightClick(event, '${c.word.replace(/'/g, "\\'")}')" title="Chuột trái: Đọc từ | Chuột phải: Tra từ">
@@ -5896,8 +5908,14 @@ function showFillAiDetails() {
     if (ex.synonyms && ex.synonyms.length > 0) {
         const synHtml = ex.synonyms.map(c => {
             let textVi = c.vi || '';
-            textVi = textVi.replace(/\[Đồng nghĩa\]/gi, '<span class="text-emerald-400 font-bold">[Đồng nghĩa]</span>');
-            textVi = textVi.replace(/\[Trái nghĩa\]/gi, '<span class="text-rose-400 font-bold">[Trái nghĩa]</span>');
+            if (/\[Đồng nghĩa\]/i.test(textVi)) {
+                textVi = textVi.replace(/\[Đồng nghĩa\]\s*-?\s*/gi, '').trim() + ' <span class="text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded text-[10px] font-bold ml-2 uppercase">Đồng nghĩa</span>';
+            } else if (/\[Trái nghĩa\]/i.test(textVi)) {
+                textVi = textVi.replace(/\[Trái nghĩa\]\s*-?\s*/gi, '').trim() + ' <span class="text-rose-500 bg-rose-500/10 px-1.5 py-0.5 rounded text-[10px] font-bold ml-2 uppercase">Trái nghĩa</span>';
+            } else {
+                textVi = textVi.replace(/\[Đồng nghĩa\]/gi, '<span class="text-emerald-400 font-bold ml-2">[Đồng nghĩa]</span>');
+                textVi = textVi.replace(/\[Trái nghĩa\]/gi, '<span class="text-rose-400 font-bold ml-2">[Trái nghĩa]</span>');
+            }
             return `<tr class="cursor-pointer hover:bg-slate-800/30 transition-colors group" 
                     onclick="speakText('${c.word.replace(/'/g, "\\'")}', 'en-US')" 
                     oncontextmenu="handleExtraRightClick(event, '${c.word.replace(/'/g, "\\'")}')" title="Chuột trái: Đọc từ | Chuột phải: Tra từ">
