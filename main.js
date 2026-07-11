@@ -5614,6 +5614,9 @@ function loadFillQuestion() {
     }
     let sentence = card.aiExample.en_dictation || card.aiExample.en;
     if (sentence.startsWith('"') && sentence.endsWith('"')) sentence = sentence.substring(1, sentence.length - 1);
+    
+    // Xóa dấu ngoặc vuông AI tạo ra (do người dùng yêu cầu không hiển thị ngoặc vuông)
+    sentence = sentence.replace(/\[/g, '').replace(/\]/g, '');
 
     const fillDifficulty = document.getElementById('fillDifficulty') ? document.getElementById('fillDifficulty').value : 'word';
     const coreWord = card.word.replace(/\s*\(.*?\)\s*/g, '').trim();
