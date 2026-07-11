@@ -1271,6 +1271,7 @@ async function startFlashcardMode() {
             }
 
             // [AI BUGFIX] Lục tìm Family và Collocation từ TẤT CẢ các cấu hình khác (long, short, easy, medium, hard) để kế thừa
+            let inheritedFamily = null;
             let inheritedSynonyms = null;
             let inheritedHomophones = null;
 
