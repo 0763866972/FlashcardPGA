@@ -1319,14 +1319,15 @@ async function startFlashcardMode() {
             // Nhưng giữ lại Word Family và Synonyms cũ nếu có để tiết kiệm.
             sourceList.forEach(w => {
                 const hasFamily = w.aiExample && w.aiExample.family && w.aiExample.family.length > 0;
+                const hasSynonyms = w.aiExample && w.aiExample.synonyms && w.aiExample.synonyms.length > 0;
 
                 // LƯU TẠM DỮ LIỆU ĐỂ KHÔNG BỊ MẤT KHI RE-GENERATE CHỈ CÂU VÍ DỤ
                 w._tempInheritedFamily = hasFamily ? w.aiExample.family : null;
-                w._tempInheritedSynonyms = w.aiExample ? w.aiExample.synonyms : null;
+                w._tempInheritedSynonyms = hasSynonyms ? w.aiExample.synonyms : null;
                 w._tempInheritedHomophones = w.aiExample ? w.aiExample.homophones : null;
 
                 delete w.aiExample; // Xóa trong RAM để ép tạo mới
-                if (hasFamily) {
+                if (hasFamily && hasSynonyms) {
                     wordsNeedingOnlyExample.push(w);
                 } else {
                     wordsNeedingEverything.push(w);
@@ -1337,7 +1338,8 @@ async function startFlashcardMode() {
             sourceList.forEach(w => {
                 if (!w.aiExample || !w.aiExample.en) {
                     const hasFamily = w.aiExample && w.aiExample.family && w.aiExample.family.length > 0;
-                    if (hasFamily) {
+                    const hasSynonyms = w.aiExample && w.aiExample.synonyms && w.aiExample.synonyms.length > 0;
+                    if (hasFamily && hasSynonyms) {
                         w._tempInheritedFamily = w.aiExample.family;
                         w._tempInheritedSynonyms = w.aiExample.synonyms;
                         w._tempInheritedHomophones = w.aiExample.homophones;
