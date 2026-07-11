@@ -510,7 +510,7 @@ body {
 
         /* Quiz AI Details Light Mode */
         html.light-mode #quizAiFamily,
-        html.light-mode #quizAiCollocations,
+        html.light-mode #quizAiSynonyms,
         html.light-mode #quizAiHomophones {
             background-color: #ffffff !important;
             border-color: #e0e7ff !important;
@@ -518,7 +518,7 @@ body {
         }
 
         html.light-mode #quizAiFamilyList,
-        html.light-mode #quizAiColList,
+        html.light-mode #quizAiSynList,
         html.light-mode #quizAiHomList {
             color: #475569 !important;
         }

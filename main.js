@@ -1271,8 +1271,7 @@ async function startFlashcardMode() {
             }
 
             // [AI BUGFIX] Lục tìm Family và Collocation từ TẤT CẢ các cấu hình khác (long, short, easy, medium, hard) để kế thừa
-            let inheritedFamily = null;
-            let inheritedCollocations = null;
+            let inheritedSynonyms = null;
             let inheritedHomophones = null;
 
             if (!w.aiExample || !w.aiExample.family || w.aiExample.family.length === 0) {
@@ -1293,7 +1292,7 @@ async function startFlashcardMode() {
                 for (let pk of possibleKeys) {
                     if (aiCache[pk] && aiCache[pk].family && aiCache[pk].family.length > 0) {
                         inheritedFamily = aiCache[pk].family;
-                        inheritedCollocations = aiCache[pk].collocations || [];
+                        inheritedSynonyms = aiCache[pk].synonyms || [];
                         inheritedHomophones = aiCache[pk].homophones || [];
                         break;
                     }
@@ -1303,7 +1302,7 @@ async function startFlashcardMode() {
             if (inheritedFamily) {
                 if (!w.aiExample) w.aiExample = {};
                 w.aiExample.family = inheritedFamily;
-                w.aiExample.collocations = inheritedCollocations;
+                w.aiExample.synonyms = inheritedSynonyms;
                 w.aiExample.homophones = inheritedHomophones;
             }
         });
@@ -1313,13 +1312,13 @@ async function startFlashcardMode() {
 
         if (saveSessionToggle && !saveSessionToggle.checked) {
             // Nếu tắt "Lưu tiến độ": TẠO MỚI ví dụ cho TẤT CẢ các từ.
-            // Nhưng giữ lại Word Family và Collocations cũ nếu có để tiết kiệm.
+            // Nhưng giữ lại Word Family và Synonyms cũ nếu có để tiết kiệm.
             sourceList.forEach(w => {
                 const hasFamily = w.aiExample && w.aiExample.family && w.aiExample.family.length > 0;
 
                 // LƯU TẠM DỮ LIỆU ĐỂ KHÔNG BỊ MẤT KHI RE-GENERATE CHỈ CÂU VÍ DỤ
                 w._tempInheritedFamily = hasFamily ? w.aiExample.family : null;
-                w._tempInheritedCollocations = w.aiExample ? w.aiExample.collocations : null;
+                w._tempInheritedSynonyms = w.aiExample ? w.aiExample.synonyms : null;
                 w._tempInheritedHomophones = w.aiExample ? w.aiExample.homophones : null;
 
                 delete w.aiExample; // Xóa trong RAM để ép tạo mới
@@ -1336,7 +1335,7 @@ async function startFlashcardMode() {
                     const hasFamily = w.aiExample && w.aiExample.family && w.aiExample.family.length > 0;
                     if (hasFamily) {
                         w._tempInheritedFamily = w.aiExample.family;
-                        w._tempInheritedCollocations = w.aiExample.collocations;
+                        w._tempInheritedSynonyms = w.aiExample.synonyms;
                         w._tempInheritedHomophones = w.aiExample.homophones;
                         wordsNeedingOnlyExample.push(w);
                     } else {
@@ -1407,7 +1406,7 @@ async function startFlashcardMode() {
 // - Xử lý theo lô (batchSize = 15) để tránh quá tải JSON output.
 // - Truyền system prompt nghiêm ngặt bắt AI trả về đúng schema JSON bao gồm:
 //   + Câu ví dụ (en) và dịch (vi).
-//   + Các cụm từ thường đi kèm (collocations).
+//   + Các cụm từ đồng nghĩa / trái nghĩa (synonyms).
 //   + Các từ cùng gốc (word family) và các từ dễ nhầm lẫn (homophones).
 // =====================================================================
 async function generateBulkExamples(wordsArray, assignedKey, onlyExample = false, targetMode = 'both') {
@@ -1469,12 +1468,12 @@ async function generateBulkExamples(wordsArray, assignedKey, onlyExample = false
         }
         styleInstruction += " (LƯU Ý: Giới hạn số lượng từ chỉ áp dụng cho câu Tiếng Anh. Câu dịch Tiếng Việt KHÔNG BỊ GIỚI HẠN độ dài, phải dịch trọn vẹn và thoát ý nhất có thể!).";
 
-        let wantCol = document.getElementById('aiColToggle') ? document.getElementById('aiColToggle').checked : true;
+        let wantSyn = document.getElementById('aiSynToggle') ? document.getElementById('aiSynToggle').checked : true;
         let wantFam = document.getElementById('aiFamToggle') ? document.getElementById('aiFamToggle').checked : true;
         let wantHom = document.getElementById('aiHomToggle') ? document.getElementById('aiHomToggle').checked : true;
 
         if (onlyExample || targetMode === 'dictation') {
-            wantCol = false;
+            wantSyn = false;
             wantFam = false;
             wantHom = false;
         }
@@ -1486,7 +1485,7 @@ async function generateBulkExamples(wordsArray, assignedKey, onlyExample = false
 - QUY TẮC NGOẶC NÀY **CHỈ ÁP DỤNG** BÊN TRONG mảng 'structures' (cho 4 trường: struct, vi, example, example_vi). Câu ví dụ trong structures PHẢI KHÁC HOÀN TOÀN với câu ví dụ chính, và PHẢI CÓ ĐẦY ĐỦ ngoặc ở cả câu tiếng Anh lẫn tiếng Việt!
 - VỚI trường 'en', 'vi', 'en_dictation', 'vi_dictation': BẮT BUỘC bọc ngoặc vuông [...] quanh từ vựng gốc (ở câu Anh) và phần dịch tương ứng (ở câu Việt). QUAN TRỌNG: CẤM TUYỆT ĐỐI việc nhét "Nghĩa" từ điển vào câu dịch nếu nó làm câu văn vô nghĩa! HÃY BỎ QUA NGHĨA GỐC VÀ DỊCH THẬT TỰ NHIÊN THEO ĐÚNG NGỮ CẢNH (VD: Từ 'domain' nghĩa gốc là 'thuộc quyền sở hữu', nhưng trong câu 'secured a new domain for website' thì BẮT BUỘC dịch là 'mua một [tên miền] mới' chứ CẤM dịch 'bảo vệ một [thuộc quyền sở hữu]'). TUYỆT ĐỐI không bọc sai từ.
 Ví dụ CHUẨN trong structures: struct: "[be eligible for] + {noun}", vi: "[đủ điều kiện cho] + {danh từ}", example: "She is [eligible for] {the scholarship}.", example_vi: "Cô ấy [đủ điều kiện cho] {học bổng}."`;
-        if (wantCol) taskInstructions += `\n3. TÌM 3-4 Collocations (cụm từ đi kèm). BẮT BUỘC PHẢI TRẢ VỀ TRONG KEY 'collocations'.`;
+        if (wantSyn) taskInstructions += `\n3. TÌM 3-4 Từ đồng nghĩa (Synonyms) hoặc Từ trái nghĩa (Antonyms). Phân loại rõ bằng cách thêm "[Đồng nghĩa]" hoặc "[Trái nghĩa]" ở đầu phần nghĩa tiếng Việt. BẮT BUỘC PHẢI TRẢ VỀ TRONG KEY 'synonyms_antonyms'.`;
         if (wantFam) taskInstructions += `\n4. TÌM TẤT CẢ CÁC TỪ CÙNG GỐC (Word Family). Đánh dấu "isSpecial": true nếu từ có dạng đuôi dễ nhầm lẫn (vd: danh từ nhưng đuôi -al, tính từ đuôi -ing/-ed). Đánh dấu "isDifferentMeaning": true nếu từ đó CÓ NGHĨA KHÁC HOÀN TOÀN so với từ gốc (vd: confidence là tự tin, nhưng confidential là tuyệt mật). BẮT BUỘC PHẢI TRẢ VỀ TRONG KEY 'family'.`;
         if (wantHom) taskInstructions += `\n5. TÌM 3-4 TỪ DỄ NHẦM LẪN. BẮT BUỘC PHẢI TRẢ VỀ TRONG KEY 'homophones'.`;
 
@@ -1501,10 +1500,10 @@ Ví dụ CHUẨN trong structures: struct: "[be eligible for] + {noun}", vi: "[�
       ],
       ${outputFields}`;
 
-        if (wantCol) {
+        if (wantSyn) {
             jsonStructure += `,
-      "collocations": [
-        { "col": "cụm từ tiếng anh", "vi": "nghĩa tiếng việt" }
+      "synonyms_antonyms": [
+        { "word": "từ tiếng anh", "vi": "[Đồng nghĩa/Trái nghĩa] nghĩa tiếng việt" }
       ]`;
         }
         if (wantFam) {
@@ -1530,7 +1529,7 @@ Bạn sẽ nhận được 1 danh sách từ vựng và nghĩa tiếng Việt.
 Nhiệm vụ: 
 ${taskInstructions}
 
-LƯU Ý CỰC KỲ QUAN TRỌNG: TUYỆT ĐỐI KHÔNG ĐƯỢC BỎ QUÊN HOẶC LƯỢC BỎ CÁC TRƯỜNG NHƯ 'collocations', 'family', 'homophones' TRONG KẾT QUẢ TRẢ VỀ!
+LƯU Ý CỰC KỲ QUAN TRỌNG: TUYỆT ĐỐI KHÔNG ĐƯỢC BỎ QUÊN HOẶC LƯỢC BỎ CÁC TRƯỜNG NHƯ 'synonyms_antonyms', 'family', 'homophones' TRONG KẾT QUẢ TRẢ VỀ!
 
 Cấu trúc JSON bắt buộc:
 ${jsonStructure}`;
@@ -1577,6 +1576,13 @@ ${jsonStructure}`;
                 const data = JSON.parse(cleanJson);
 
                 if (data.examples && Array.isArray(data.examples)) {
+                    data.examples.forEach(ex => {
+                        if (ex.synonyms_antonyms) {
+                            ex.synonyms = ex.synonyms_antonyms.map(s => ({ word: s.word || s.col, vi: s.vi }));
+                            delete ex.synonyms_antonyms;
+                        }
+                    });
+
                     let aiCache = {};
                     try { aiCache = JSON.parse(localStorage.getItem('toeic_ai_cache') || "{}"); } catch (e) { }
                     data.examples.forEach((ex, idx) => {
@@ -1613,12 +1619,12 @@ ${jsonStructure}`;
                         }
 
                         if (onlyExample) {
-                            ex.collocations = wTarget._tempInheritedCollocations || oldCache.collocations || [];
+                            ex.synonyms = wTarget._tempInheritedSynonyms || oldCache.synonyms || [];
                             ex.family = wTarget._tempInheritedFamily || oldCache.family || [];
                             ex.homophones = wTarget._tempInheritedHomophones || oldCache.homophones || [];
 
                             // Dọn rác
-                            delete wTarget._tempInheritedCollocations;
+                            delete wTarget._tempInheritedSynonyms;
                             delete wTarget._tempInheritedFamily;
                             delete wTarget._tempInheritedHomophones;
                         }
@@ -1642,8 +1648,12 @@ ${jsonStructure}`;
                             for (let pk of possibleKeys) {
                                 if (aiCache[pk] && aiCache[pk].family && aiCache[pk].family.length > 0) {
                                     ex.family = aiCache[pk].family;
-                                    ex.collocations = aiCache[pk].collocations || [];
-                                    ex.homophones = aiCache[pk].homophones || [];
+                                    if (!ex.synonyms || ex.synonyms.length === 0) {
+                                        ex.synonyms = aiCache[pk].synonyms || [];
+                                    }
+                                    if (!ex.homophones || ex.homophones.length === 0) {
+                                        ex.homophones = aiCache[pk].homophones || [];
+                                    }
                                     break;
                                 }
                             }
@@ -2045,20 +2055,25 @@ function renderFlashcard() {
                 famContainer.classList.add('hidden');
             }
 
-            // Render Collocations
-            const colContainer = document.getElementById('fcCollocations');
-            const colList = document.getElementById('fcColList');
-            if (card.aiExample.collocations && card.aiExample.collocations.length > 0) {
-                colList.innerHTML = card.aiExample.collocations.map(c => `<li class="cursor-pointer hover:bg-slate-800/30 p-2 rounded transition-colors group"
-                            onclick="speakText('${c.col.replace(/'/g, "\\'")}', 'en-US')"
-                            oncontextmenu="handleExtraRightClick(event, '${c.col.replace(/'/g, "\\'")}')"
-                            title="Chuột trái: Đọc cụm từ | Chuột phải: Tra từ">
-                            <span class="font-bold text-slate-200 group-hover:text-white transition-colors">${c.col}</span> <span class="text-slate-500">-</span> <span class="text-slate-300 italic">${c.vi}</span>
-                        </li>`).join('');
-                colContainer.classList.remove('hidden');
+            // Render Synonyms
+            const synContainer = document.getElementById('fcSynonyms');
+            const synList = document.getElementById('fcSynList');
+            if (card.aiExample.synonyms && card.aiExample.synonyms.length > 0) {
+                synList.innerHTML = card.aiExample.synonyms.map(c => {
+                    let textVi = c.vi || '';
+                    textVi = textVi.replace(/\[Đồng nghĩa\]/gi, '<span class="text-emerald-400 font-bold">[Đồng nghĩa]</span>');
+                    textVi = textVi.replace(/\[Trái nghĩa\]/gi, '<span class="text-rose-400 font-bold">[Trái nghĩa]</span>');
+                    return `<li class="cursor-pointer hover:bg-slate-800/30 p-2 rounded transition-colors group"
+                            onclick="speakText('${c.word.replace(/'/g, "\\'")}', 'en-US')"
+                            oncontextmenu="handleExtraRightClick(event, '${c.word.replace(/'/g, "\\'")}')"
+                            title="Chuột trái: Đọc từ | Chuột phải: Tra từ">
+                            <span class="font-bold text-slate-200 group-hover:text-white transition-colors">${c.word}</span> <span class="text-slate-500">-</span> <span class="text-slate-300 italic">${textVi}</span>
+                        </li>`;
+                }).join('');
+                synContainer.classList.remove('hidden');
                 hasExtra = true;
             } else {
-                colContainer.classList.add('hidden');
+                synContainer.classList.add('hidden');
             }
 
             // Render Homophones
@@ -2449,13 +2464,13 @@ function parseVocab(forceRender = false, noRender = false) {
                             const pk2 = `${baseOldKey}${suffix}`;
                             if (aiCache[pk1] && aiCache[pk1].family && aiCache[pk1].family.length > 0) {
                                 targetEx.family = aiCache[pk1].family;
-                                targetEx.collocations = aiCache[pk1].collocations || [];
+                                targetEx.synonyms = aiCache[pk1].synonyms || [];
                                 targetEx.homophones = aiCache[pk1].homophones || [];
                                 break;
                             }
                             if (aiCache[pk2] && aiCache[pk2].family && aiCache[pk2].family.length > 0) {
                                 targetEx.family = aiCache[pk2].family;
-                                targetEx.collocations = aiCache[pk2].collocations || [];
+                                targetEx.synonyms = aiCache[pk2].synonyms || [];
                                 targetEx.homophones = aiCache[pk2].homophones || [];
                                 break;
                             }
@@ -2887,6 +2902,10 @@ function applySpellingFix(index, correctedText, event, isSemantic = false) {
             setTimeout(() => tdWord.classList.remove('text-emerald-400'), 1000);
         }
     }
+
+    // Invalidate sessions so UI rebuilds and generates new AI examples if needed
+    try { currentFillList = []; } catch (e) { }
+    refreshActiveFlashcards();
 }
 
 /**
@@ -3779,7 +3798,7 @@ TUYỆT ĐỐI TUÂN THỦ: TẤT CẢ CÁC MỤC GIẢI THÍCH, PHÂN TÍCH, D�
                 "why_faulty": "BẮT BUỘC trình bày: \\nTại sao sai: [Giải thích] \\nVí dụ: [Câu ví dụ kèm dịch]. \\nTừ đồng nghĩa: [từ] \\nTừ trái nghĩa: [từ]"
               }
             },
-            "word_family_html": "Trình bày CHUYÊN SÂU Bằng HTML: Bảng Word Family của TỪ VỰNG GỐC. BẮT BUỘC BẢNG PHẢI CÓ ĐÚNG 3 CỘT: Loại từ (Noun/Verb/Adj/Adv) | Từ vựng tiếng Anh | Nghĩa tiếng Việt. Phía dưới bảng là danh sách các Collocations phổ biến (BẮT BUỘC phải dịch nghĩa tiếng Việt cho từng Collocation). BẮT BUỘC CHỈ dùng thẻ <table class='w-full text-sm text-left border-collapse'> với thẻ <thead>, <tbody>, các dòng <tr class='border-b border-slate-800'>, <td class='p-3'> và danh sách <ul class='list-disc pl-5 space-y-1 mt-4'> để hiển thị đẹp mắt. KHÔNG dùng định dạng markdown code block.",
+            "word_family_html": "Trình bày CHUYÊN SÂU Bằng HTML: Bảng Word Family của TỪ VỰNG GỐC. BẮT BUỘC BẢNG PHẢI CÓ ĐÚNG 3 CỘT: Loại từ (Noun/Verb/Adj/Adv) | Từ vựng tiếng Anh | Nghĩa tiếng Việt. Phía dưới bảng là danh sách các Từ đồng nghĩa & Trái nghĩa phổ biến (BẮT BUỘC phải dịch nghĩa tiếng Việt cho từng từ). BẮT BUỘC CHỈ dùng thẻ <table class='w-full text-sm text-left border-collapse'> với thẻ <thead>, <tbody>, các dòng <tr class='border-b border-slate-800'>, <td class='p-3'> và danh sách <ul class='list-disc pl-5 space-y-1 mt-4'> để hiển thị đẹp mắt. KHÔNG dùng định dạng markdown code block.",
             "trap_warning": "Cảnh báo bẫy ngữ cảnh."
           }
         }
@@ -4707,7 +4726,7 @@ function addWordToList(word, meaning) {
  * CHẾ ĐỘ TRẮc NGHIỆM (QUIZ MODE)
  * Người dùng được hỏi từ vựng với 4 lựa chọn (3 sai + 1 đúng).
  * Hỗ trợ 2 hướng: Hỏi Việt → chọn Anh, hoặc hỏi Anh → chọn Việt.
- * Hiển thị AI details (word family, collocations, homophones) sau khi trả lời.
+ * Hiển thị AI details (word family, synonyms, homophones) sau khi trả lời.
  * ============================================================================ */
 
 /** Mảng các câu nói động viên khi trả lời sai */
@@ -5046,7 +5065,7 @@ function loadQuizQuestion() {
     if (document.getElementById('quizAiDetails')) {
         document.getElementById('quizAiDetails').classList.add('hidden');
         document.getElementById('quizAiFamily').classList.add('hidden');
-        document.getElementById('quizAiCollocations').classList.add('hidden');
+        document.getElementById('quizAiSynonyms').classList.add('hidden');
         const homBlock = document.getElementById('quizAiHomophones');
         if (homBlock) homBlock.classList.add('hidden');
         const exBlock = document.getElementById('quizAiExample');
@@ -5168,13 +5187,13 @@ function selectQuizAnswer(selectedIndex, isRestore = false) {
                 const pk2 = `${baseOldKey}${suffix}`;
                 if (aiCache[pk1] && aiCache[pk1].family && aiCache[pk1].family.length > 0) {
                     ex.family = aiCache[pk1].family;
-                    ex.collocations = aiCache[pk1].collocations || [];
+                    ex.synonyms = aiCache[pk1].synonyms || [];
                     ex.homophones = aiCache[pk1].homophones || [];
                     break;
                 }
                 if (aiCache[pk2] && aiCache[pk2].family && aiCache[pk2].family.length > 0) {
                     ex.family = aiCache[pk2].family;
-                    ex.collocations = aiCache[pk2].collocations || [];
+                    ex.synonyms = aiCache[pk2].synonyms || [];
                     ex.homophones = aiCache[pk2].homophones || [];
                     break;
                 }
@@ -5208,14 +5227,19 @@ function selectQuizAnswer(selectedIndex, isRestore = false) {
             showAi = true;
         }
 
-        if (ex.collocations && ex.collocations.length > 0) {
-            const colHtml = ex.collocations.map(c => `<li class="cursor-pointer hover:bg-slate-800/30 p-1.5 rounded transition-colors group" 
-                        onclick="speakText('${c.col.replace(/'/g, "\\'")}', 'en-US')" 
-                        oncontextmenu="handleExtraRightClick(event, '${c.col.replace(/'/g, "\\'")}')" title="Chuột trái: Đọc cụm từ | Chuột phải: Tra từ">
-                        <span class="font-bold text-white text-white-light-override group-hover:text-amber-200 transition-colors">${c.col}</span>: <span class="text-slate-400 text-slate-400-light-override">${c.vi}</span>
-                    </li>`).join('');
-            document.getElementById('quizAiColList').innerHTML = colHtml;
-            document.getElementById('quizAiCollocations').classList.remove('hidden');
+        if (ex.synonyms && ex.synonyms.length > 0) {
+            const synHtml = ex.synonyms.map(c => {
+                let textVi = c.vi || '';
+                textVi = textVi.replace(/\[Đồng nghĩa\]/gi, '<span class="text-emerald-400 font-bold">[Đồng nghĩa]</span>');
+                textVi = textVi.replace(/\[Trái nghĩa\]/gi, '<span class="text-rose-400 font-bold">[Trái nghĩa]</span>');
+                return `<li class="cursor-pointer hover:bg-slate-800/30 p-1.5 rounded transition-colors group" 
+                        onclick="speakText('${c.word.replace(/'/g, "\\'")}', 'en-US')" 
+                        oncontextmenu="handleExtraRightClick(event, '${c.word.replace(/'/g, "\\'")}')" title="Chuột trái: Đọc từ | Chuột phải: Tra từ">
+                        <span class="font-bold text-white text-white-light-override group-hover:text-amber-200 transition-colors">${c.word}</span>: <span class="text-slate-400 text-slate-400-light-override">${textVi}</span>
+                    </li>`;
+            }).join('');
+            document.getElementById('quizAiSynList').innerHTML = synHtml;
+            document.getElementById('quizAiSynonyms').classList.remove('hidden');
             showAi = true;
         }
 
@@ -5829,11 +5853,11 @@ function showFillAiDetails() {
     let showAi = false;
     const elDetails = document.getElementById('fillAiDetails');
     const elFamily = document.getElementById('fillAiFamily');
-    const elCollocations = document.getElementById('fillAiCollocations');
+    const elSynonyms = document.getElementById('fillAiSynonyms');
     const elHomophones = document.getElementById('fillAiHomophones');
 
     if (elFamily) elFamily.classList.add('hidden');
-    if (elCollocations) elCollocations.classList.add('hidden');
+    if (elSynonyms) elSynonyms.classList.add('hidden');
     if (elHomophones) elHomophones.classList.add('hidden');
     if (elDetails) elDetails.classList.add('hidden');
 
@@ -5850,14 +5874,20 @@ function showFillAiDetails() {
         showAi = true;
     }
 
-    if (ex.collocations && ex.collocations.length > 0) {
-        const colHtml = ex.collocations.map(c => `<li class="cursor-pointer hover:bg-slate-800/30 p-1.5 rounded transition-colors group" 
-                    onclick="speakText('${c.col.replace(/'/g, "\\'")}', 'en-US')" 
-                    oncontextmenu="handleExtraRightClick(event, '${c.col.replace(/'/g, "\\'")}')" title="Chuột trái: Đọc cụm từ | Chuột phải: Tra từ">
-                    <span class="font-bold text-white text-white-light-override group-hover:text-amber-200 transition-colors">${c.col}</span>: <span class="text-slate-400 text-slate-400-light-override">${c.vi}</span>
-                </li>`).join('');
-        document.getElementById('fillAiColList').innerHTML = colHtml;
-        if (elCollocations) elCollocations.classList.remove('hidden');
+    if (ex.synonyms && ex.synonyms.length > 0) {
+        const synHtml = ex.synonyms.map(c => {
+            let textVi = c.vi || '';
+            textVi = textVi.replace(/\[Đồng nghĩa\]/gi, '<span class="text-emerald-400 font-bold">[Đồng nghĩa]</span>');
+            textVi = textVi.replace(/\[Trái nghĩa\]/gi, '<span class="text-rose-400 font-bold">[Trái nghĩa]</span>');
+            return `<li class="cursor-pointer hover:bg-slate-800/30 p-1.5 rounded transition-colors group" 
+                    onclick="speakText('${c.word.replace(/'/g, "\\'")}', 'en-US')" 
+                    oncontextmenu="handleExtraRightClick(event, '${c.word.replace(/'/g, "\\'")}')" title="Chuột trái: Đọc từ | Chuột phải: Tra từ">
+                    <span class="font-bold text-white text-white-light-override group-hover:text-amber-200 transition-colors">${c.word}</span>: <span class="text-slate-400 text-slate-400-light-override">${textVi}</span>
+                </li>`;
+        }).join('');
+        const synListEl = document.getElementById('fillAiSynList');
+        if (synListEl) synListEl.innerHTML = synHtml;
+        if (elSynonyms) elSynonyms.classList.remove('hidden');
         showAi = true;
     }
 
