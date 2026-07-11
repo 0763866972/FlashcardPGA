@@ -1268,6 +1268,9 @@ async function startFlashcardMode() {
             }
             if (cacheEntry && cacheEntry.en) {
                 w.aiExample = cacheEntry;
+                if (w.aiExample.collocations && !w.aiExample.synonyms) {
+                    w.aiExample.synonyms = w.aiExample.collocations.map(c => ({ word: c.col || c.word, vi: c.vi }));
+                }
             }
 
             // [AI BUGFIX] Lục tìm Family và Collocation từ TẤT CẢ các cấu hình khác (long, short, easy, medium, hard) để kế thừa
@@ -1293,7 +1296,7 @@ async function startFlashcardMode() {
                 for (let pk of possibleKeys) {
                     if (aiCache[pk] && aiCache[pk].family && aiCache[pk].family.length > 0) {
                         inheritedFamily = aiCache[pk].family;
-                        inheritedSynonyms = aiCache[pk].synonyms || [];
+                        inheritedSynonyms = aiCache[pk].synonyms || (aiCache[pk].collocations ? aiCache[pk].collocations.map(c => ({ word: c.col || c.word, vi: c.vi })) : []);
                         inheritedHomophones = aiCache[pk].homophones || [];
                         break;
                     }
@@ -1620,7 +1623,7 @@ ${jsonStructure}`;
                         }
 
                         if (onlyExample) {
-                            ex.synonyms = wTarget._tempInheritedSynonyms || oldCache.synonyms || [];
+                            ex.synonyms = wTarget._tempInheritedSynonyms || oldCache.synonyms || (oldCache.collocations ? oldCache.collocations.map(c => ({ word: c.col || c.word, vi: c.vi })) : []);
                             ex.family = wTarget._tempInheritedFamily || oldCache.family || [];
                             ex.homophones = wTarget._tempInheritedHomophones || oldCache.homophones || [];
 
@@ -1650,7 +1653,7 @@ ${jsonStructure}`;
                                 if (aiCache[pk] && aiCache[pk].family && aiCache[pk].family.length > 0) {
                                     ex.family = aiCache[pk].family;
                                     if (!ex.synonyms || ex.synonyms.length === 0) {
-                                        ex.synonyms = aiCache[pk].synonyms || [];
+                                        ex.synonyms = aiCache[pk].synonyms || (aiCache[pk].collocations ? aiCache[pk].collocations.map(c => ({ word: c.col || c.word, vi: c.vi })) : []);
                                     }
                                     if (!ex.homophones || ex.homophones.length === 0) {
                                         ex.homophones = aiCache[pk].homophones || [];
@@ -2465,13 +2468,13 @@ function parseVocab(forceRender = false, noRender = false) {
                             const pk2 = `${baseOldKey}${suffix}`;
                             if (aiCache[pk1] && aiCache[pk1].family && aiCache[pk1].family.length > 0) {
                                 targetEx.family = aiCache[pk1].family;
-                                targetEx.synonyms = aiCache[pk1].synonyms || [];
+                                targetEx.synonyms = aiCache[pk1].synonyms || (aiCache[pk1].collocations ? aiCache[pk1].collocations.map(c => ({ word: c.col || c.word, vi: c.vi })) : []);
                                 targetEx.homophones = aiCache[pk1].homophones || [];
                                 break;
                             }
                             if (aiCache[pk2] && aiCache[pk2].family && aiCache[pk2].family.length > 0) {
                                 targetEx.family = aiCache[pk2].family;
-                                targetEx.synonyms = aiCache[pk2].synonyms || [];
+                                targetEx.synonyms = aiCache[pk2].synonyms || (aiCache[pk2].collocations ? aiCache[pk2].collocations.map(c => ({ word: c.col || c.word, vi: c.vi })) : []);
                                 targetEx.homophones = aiCache[pk2].homophones || [];
                                 break;
                             }
@@ -5188,13 +5191,13 @@ function selectQuizAnswer(selectedIndex, isRestore = false) {
                 const pk2 = `${baseOldKey}${suffix}`;
                 if (aiCache[pk1] && aiCache[pk1].family && aiCache[pk1].family.length > 0) {
                     ex.family = aiCache[pk1].family;
-                    ex.synonyms = aiCache[pk1].synonyms || [];
+                    ex.synonyms = aiCache[pk1].synonyms || (aiCache[pk1].collocations ? aiCache[pk1].collocations.map(c => ({ word: c.col || c.word, vi: c.vi })) : []);
                     ex.homophones = aiCache[pk1].homophones || [];
                     break;
                 }
                 if (aiCache[pk2] && aiCache[pk2].family && aiCache[pk2].family.length > 0) {
                     ex.family = aiCache[pk2].family;
-                    ex.synonyms = aiCache[pk2].synonyms || [];
+                    ex.synonyms = aiCache[pk2].synonyms || (aiCache[pk2].collocations ? aiCache[pk2].collocations.map(c => ({ word: c.col || c.word, vi: c.vi })) : []);
                     ex.homophones = aiCache[pk2].homophones || [];
                     break;
                 }
