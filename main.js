@@ -1427,11 +1427,11 @@ async function generateBulkExamples(wordsArray, assignedKey, onlyExample = false
             } else {
                 styleInstruction = "Tạo 1 CÂU VÍ DỤ TRUNG BÌNH (15-25 từ) rõ nghĩa ngữ cảnh. KHÔNG TẠO CÂU DICTATION.";
             }
-            outputFields = `"en": "câu ví dụ tiếng anh", \n      "vi": "câu dịch (bọc [nghĩa] trong ngoặc vuông)"`;
+            outputFields = `"en": "câu ví dụ tiếng anh (bọc [...] quanh TỪ VỰNG ĐANG HỌC)", \n      "vi": "câu dịch TỰ NHIÊN (bọc [...] quanh ĐÚNG phần dịch của từ vựng, DỊCH THEO NGỮ CẢNH, KHÔNG ÉP DÙNG TỪ ĐIỂN NẾU SƯỢNG)"`;
         } else if (targetMode === 'dictation') {
             if (aiDifficultyLevel === 'easy') {
                 styleInstruction = "Tạo 1 CÂU VÍ DỤ NGẮN (8-13 từ) DỄ HIỂU ĐỂ LUYỆN NGHE ĐIỀN TỪ.";
-                outputFields = `"en_dictation": "câu ví dụ tiếng anh", \n      "vi_dictation": "câu dịch (bọc [nghĩa] trong ngoặc vuông)"`;
+                outputFields = `"en_dictation": "câu ví dụ tiếng anh (bọc [...] quanh TỪ VỰNG ĐANG HỌC)", \n      "vi_dictation": "câu dịch TỰ NHIÊN (bọc [...] quanh ĐÚNG phần dịch của từ vựng, DỊCH THEO NGỮ CẢNH, KHÔNG ÉP DÙNG TỪ ĐIỂN NẾU SƯỢNG)"`;
             } else if (aiDifficultyLevel === 'hard') {
                 // [AI Note] Người dùng yêu cầu chế độ Khó (Hard) của phần Nghe & Điền (Dictation)
                 // PHẢI LÀ nghe mô tả từ (định nghĩa) thay vì câu ví dụ đục lỗ điền khuyết.
@@ -1440,18 +1440,18 @@ async function generateBulkExamples(wordsArray, assignedKey, onlyExample = false
                 outputFields = `"en_dictation": "câu định nghĩa tiếng anh", \n      "vi_dictation": "câu dịch"`;
             } else {
                 styleInstruction = "Tạo 1 CÂU VÍ DỤ TRUNG BÌNH (15-20 từ) ĐỂ LUYỆN NGHE ĐIỀN TỪ.";
-                outputFields = `"en_dictation": "câu ví dụ tiếng anh", \n      "vi_dictation": "câu dịch (bọc [nghĩa] trong ngoặc vuông)"`;
+                outputFields = `"en_dictation": "câu ví dụ tiếng anh (bọc [...] quanh TỪ VỰNG ĐANG HỌC)", \n      "vi_dictation": "câu dịch TỰ NHIÊN (bọc [...] quanh ĐÚNG phần dịch của từ vựng, DỊCH THEO NGỮ CẢNH, KHÔNG ÉP DÙNG TỪ ĐIỂN NẾU SƯỢNG)"`;
             }
         } else {
             if (aiDifficultyLevel === 'easy') {
                 styleInstruction = "Tạo 2 CÂU VÍ DỤ. Câu 1 (Flashcard): NGẮN (10-15 từ). Câu 2 (Dictation): NGẮN (8-13 từ). Câu 1 và 2 PHẢI KHÁC HOÀN TOÀN NHAU VỀ NGỮ CẢNH VÀ TỪ VỰNG.";
-                outputFields = `"en": "câu 1 (Flashcard)", \n      "vi": "câu dịch 1 (bọc [nghĩa] trong ngoặc vuông)", \n      "en_dictation": "câu 2 (Dictation, khác câu 1)", \n      "vi_dictation": "câu dịch 2 (bọc [nghĩa] trong ngoặc vuông)"`;
+                outputFields = `"en": "câu 1 (Flashcard) (bọc [...] quanh TỪ VỰNG ĐANG HỌC)", \n      "vi": "câu dịch 1 TỰ NHIÊN (bọc [...] quanh ĐÚNG phần dịch của từ vựng, DỊCH THEO NGỮ CẢNH, KHÔNG ÉP DÙNG TỪ ĐIỂN NẾU SƯỢNG)", \n      "en_dictation": "câu 2 (Dictation, khác câu 1) (bọc [...] quanh TỪ VỰNG ĐANG HỌC)", \n      "vi_dictation": "câu dịch 2 TỰ NHIÊN (bọc [...] quanh ĐÚNG phần dịch của từ vựng, DỊCH THEO NGỮ CẢNH, KHÔNG ÉP DÙNG TỪ ĐIỂN NẾU SƯỢNG)"`;
             } else if (aiDifficultyLevel === 'hard') {
                 styleInstruction = "Câu 1 (Flashcard): Tạo 1 CÂU VÍ DỤ NGẮN (10-15 từ) rõ nghĩa ngữ cảnh. Câu 2 (Dictation): Định nghĩa tiếng Anh mô tả từ, BẮT BUỘC đặt từ gốc NẰM TÁCH BIỆT Ở CUỐI CÂU sau dấu hai chấm (vd: 'A round fruit: apple').";
                 outputFields = `"en": "câu ví dụ 1 (Flashcard)", \n      "vi": "câu dịch 1", \n      "en_dictation": "câu định nghĩa 2 (Dictation)", \n      "vi_dictation": "câu dịch 2"`;
             } else {
                 styleInstruction = "Tạo 2 CÂU VÍ DỤ. Câu 1 (Flashcard): NGẮN (10-15 từ). Câu 2 (Dictation): TRUNG BÌNH (15-20 từ). Câu 1 và 2 PHẢI KHÁC HOÀN TOÀN NHAU VỀ NGỮ CẢNH VÀ TỪ VỰNG.";
-                outputFields = `"en": "câu 1 (Flashcard)", \n      "vi": "câu dịch 1 (bọc [nghĩa] trong ngoặc vuông)", \n      "en_dictation": "câu 2 (Dictation, khác câu 1)", \n      "vi_dictation": "câu dịch 2 (bọc [nghĩa] trong ngoặc vuông)"`;
+                outputFields = `"en": "câu 1 (Flashcard) (bọc [...] quanh TỪ VỰNG ĐANG HỌC)", \n      "vi": "câu dịch 1 TỰ NHIÊN (bọc [...] quanh ĐÚNG phần dịch của từ vựng, DỊCH THEO NGỮ CẢNH, KHÔNG ÉP DÙNG TỪ ĐIỂN NẾU SƯỢNG)", \n      "en_dictation": "câu 2 (Dictation, khác câu 1) (bọc [...] quanh TỪ VỰNG ĐANG HỌC)", \n      "vi_dictation": "câu dịch 2 TỰ NHIÊN (bọc [...] quanh ĐÚNG phần dịch của từ vựng, DỊCH THEO NGỮ CẢNH, KHÔNG ÉP DÙNG TỪ ĐIỂN NẾU SƯỢNG)"`;
             }
         }
 
@@ -1465,16 +1465,25 @@ async function generateBulkExamples(wordsArray, assignedKey, onlyExample = false
             wantHom = false;
         }
 
-        let taskInstructions = `1. Viết 1 câu cho mỗi từ theo chuẩn: ${styleInstruction}`;
-        if (wantCol) taskInstructions += `\n2. TÌM 3-4 Collocations (cụm từ đi kèm). BẮT BUỘC PHẢI TRẢ VỀ TRONG KEY 'collocations'.`;
-        if (wantFam) taskInstructions += `\n3. TÌM TẤT CẢ CÁC TỪ CÙNG GỐC (Word Family). BẮT BUỘC PHẢI TRẢ VỀ TRONG KEY 'family'. TUYỆT ĐỐI KHÔNG ĐƯỢC BỎ QUA.`;
-        if (wantHom) taskInstructions += `\n4. TÌM 3-4 TỪ DỄ NHẦM LẪN. BẮT BUỘC PHẢI TRẢ VỀ TRONG KEY 'homophones'.`;
+        let taskInstructions = `1. Phân tích loại từ (pos). Viết 1 câu cho mỗi từ theo chuẩn: ${styleInstruction}
+2. Cấu trúc ngữ pháp (structures): NẾU CÓ, BẮT BUỘC dùng ngoặc vuông [...] bọc TỪ KHÓA CHÍNH và ngoặc nhọn {...} bọc THÀNH PHẦN PHỤ. 
+- QUY TẮC NGOẶC NÀY **CHỈ ÁP DỤNG** BÊN TRONG mảng 'structures' (cho 4 trường: struct, vi, example, example_vi). Câu ví dụ trong structures PHẢI KHÁC HOÀN TOÀN với câu ví dụ chính, và PHẢI CÓ ĐẦY ĐỦ ngoặc ở cả câu tiếng Anh lẫn tiếng Việt!
+- VỚI trường 'en', 'vi', 'en_dictation', 'vi_dictation': BẮT BUỘC bọc ngoặc vuông [...] quanh từ vựng gốc (ở câu Anh) và phần dịch tương ứng (ở câu Việt). QUAN TRỌNG: Hãy DỊCH THẬT TỰ NHIÊN THEO NGỮ CẢNH CỦA CÂU, **KHÔNG CẦN** ép dùng đúng từng chữ của "Nghĩa" từ điển cung cấp ban đầu nếu nghe nó bị sượng. (Ví dụ: Từ 'diligence' (nghĩa: sự cần cù), nếu vào câu 'shows diligence' thì cứ dịch là 'thể hiện [sự chăm chỉ]'). TUYỆT ĐỐI không bọc sai từ (đang học 'occupation' thì bọc "[nghề nghiệp]" chứ không phải là nghề nghiệp "[là]").
+LƯU Ý QUAN TRỌNG: Dấu '+' CHỈ DÙNG trước các biến số như noun, V-ing. KHÔNG DÙNG dấu '+' trước giới từ (SAI: eligibility + for + noun -> ĐÚNG: [eligibility for] + {noun}).
+Ví dụ CHUẨN trong structures: struct: "[be eligible for] + {noun}", vi: "[đủ điều kiện cho] + {danh từ}", example: "She is [eligible for] {the scholarship}.", example_vi: "Cô ấy [đủ điều kiện cho] {học bổng}."`;
+        if (wantCol) taskInstructions += `\n3. TÌM 3-4 Collocations (cụm từ đi kèm). BẮT BUỘC PHẢI TRẢ VỀ TRONG KEY 'collocations'.`;
+        if (wantFam) taskInstructions += `\n4. TÌM TẤT CẢ CÁC TỪ CÙNG GỐC (Word Family). Đánh dấu "isSpecial": true nếu từ có dạng đuôi dễ nhầm lẫn (vd: danh từ nhưng đuôi -al, tính từ đuôi -ing/-ed). Đánh dấu "isDifferentMeaning": true nếu từ đó CÓ NGHĨA KHÁC HOÀN TOÀN so với từ gốc (vd: confidence là tự tin, nhưng confidential là tuyệt mật). BẮT BUỘC PHẢI TRẢ VỀ TRONG KEY 'family'.`;
+        if (wantHom) taskInstructions += `\n5. TÌM 3-4 TỪ DỄ NHẦM LẪN. BẮT BUỘC PHẢI TRẢ VỀ TRONG KEY 'homophones'.`;
 
         let jsonStructure = `{
   "examples": [
     { 
       "id": <SỐ ID BẠN NHẬN ĐƯỢC>,
       "word": "từ vựng ở trên", 
+      "pos": "n/v/adj/adv/prep...",
+      "structures": [
+        { "struct": "[cấu trúc] {tiếng anh}", "vi": "[nghĩa] {tiếng việt}", "example": "Câu ví dụ [có] {ngoặc}", "example_vi": "Dịch nghĩa [có] {ngoặc}" }
+      ],
       ${outputFields}`;
 
         if (wantCol) {
@@ -1486,8 +1495,8 @@ async function generateBulkExamples(wordsArray, assignedKey, onlyExample = false
         if (wantFam) {
             jsonStructure += `,
       "family": [
-        { "word": "từ cùng gốc 1", "type": "n/v/adj/adv", "vi": "nghĩa tiếng việt" },
-        { "word": "từ cùng gốc 2", "type": "n/v/adj/adv", "vi": "nghĩa tiếng việt" }
+        { "word": "từ cùng gốc 1", "type": "n/v/adj/adv", "vi": "nghĩa tiếng việt", "isSpecial": false, "isDifferentMeaning": false },
+        { "word": "từ cùng gốc 2", "type": "n/v/adj/adv", "vi": "nghĩa tiếng việt", "isSpecial": true, "isDifferentMeaning": true }
       ]`;
         }
         if (wantHom) {
@@ -1869,31 +1878,45 @@ function renderFlashcard() {
     if (aiExContainer) {
         if (card.aiExample) {
             const enEl = document.getElementById('fcExEn');
-            const sentence = card.aiExample.en;
+            const rawEnText = card.aiExample.en || "";
+            // Trích xuất các từ được AI bọc ngoặc vuông (nếu có)
+            const bracketMatches = [...rawEnText.matchAll(/\[(.*?)\]/g)];
+            const aiHighlightedWords = bracketMatches.map(m => m[1].toLowerCase());
+
+            const sentence = rawEnText.replace(/[\[\]\{\}"]/g, '').replace(/[\.\?!]$/, '').trim();
             const words = sentence.split(/(\b[\w'-]+\b)/g);
 
-            // Lấy các gốc từ để fuzzy match (loại bỏ đuôi cơ bản)
-            const targetRoots = card.word.toLowerCase().split(/\s+/).map(w => w.replace(/(e|ed|d|ing|s|es|ly)$/, ''));
+            // Cải tiến fuzzy match: xử lý y -> i (vd: accessory -> accessori -> accessories)
+            const getBaseRoot = (w) => {
+                let base = w.replace(/(e|ed|d|ing|s|es|ly)$/, '');
+                base = base.replace(/y$/, 'i');
+                return base;
+            };
+            const targetRoots = card.word.toLowerCase().split(/\s+/).map(getBaseRoot);
             const exactWords = card.word.toLowerCase().split(/\s+/);
 
             const html = words.map(part => {
                 if (/^[\w'-]+$/.test(part)) {
                     const pLower = part.toLowerCase();
                     let isTarget = exactWords.includes(pLower);
+                    
                     if (!isTarget) {
                         isTarget = targetRoots.some(root => root.length > 2 && pLower.includes(root));
                     }
-                    const extraClass = isTarget ? "text-amber-400 font-bold" : "";
+                    if (!isTarget && aiHighlightedWords.length > 0) {
+                        isTarget = aiHighlightedWords.some(hw => hw.includes(pLower));
+                    }
+                    const extraClass = isTarget ? "text-orange-400 font-bold" : "";
                     return `<span class="${extraClass} hover:bg-slate-500/20 rounded px-0.5 cursor-pointer transition-colors inline-block" onclick="handleWordClick(event, '${part.replace(/'/g, "\\'")}')" oncontextmenu="handleWordRightClick(event, '${part.replace(/'/g, "\\'")}')">${part}</span>`;
                 }
                 return part.replace(/</g, "&lt;").replace(/>/g, "&gt;");
             }).join('');
 
-            enEl.innerHTML = `"${html}"`;
+            enEl.innerHTML = html;
 
-            // Highlight nghĩa tiếng Việt (bỏ ngoặc vuông)
-            const viText = card.aiExample.vi;
-            const viHtml = viText.replace(/\[(.*?)\]/g, '<span class="font-bold text-amber-400">$1</span>');
+            // Highlight nghĩa tiếng Việt (bỏ ngoặc vuông, xoá ngoặc nhọn, xoá chấm câu)
+            const viText = card.aiExample.vi.replace(/[\{\}"]/g, '').replace(/[\.\?!]$/, '').trim();
+            const viHtml = viText.replace(/\[(.*?)\]/g, '<span class="font-bold text-orange-400">$1</span>');
             document.getElementById('fcExVi').innerHTML = viHtml;
             aiExContainer.classList.remove('hidden');
 
@@ -1918,20 +1941,88 @@ function renderFlashcard() {
             const extraDetails = document.getElementById('fcExtraDetails');
             let hasExtra = false;
 
+            // Render Structures (if any)
+            const usageContainer = document.getElementById('fcUsage');
+            const usageList = document.getElementById('fcUsageList');
+            if (usageContainer && usageList) {
+                if (card.aiExample.structures && Array.isArray(card.aiExample.structures) && card.aiExample.structures.length > 0) {
+                    usageList.innerHTML = card.aiExample.structures.map(s => {
+                        const fmt = (text, isStruct = false) => {
+                            if (!text) return '';
+                            let res = text.replace(/\[(.*?)\]/g, '<span class="text-emerald-400 font-bold">$1</span>').replace(/\{(.*?)\}/g, '<span class="text-orange-400 font-bold">$1</span>');
+                            if (!res.includes('<span') && isStruct) {
+                                if (res.includes('+')) {
+                                    let parts = res.split('+');
+                                    if (parts.length === 2) {
+                                        return `<span class="text-emerald-400 font-bold">${parts[0].trim()}</span> + <span class="text-orange-400 font-bold">${parts[1].trim()}</span>`;
+                                    }
+                                } else {
+                                    return `<span class="text-emerald-400 font-bold">${res}</span>`;
+                                }
+                            }
+                            return res;
+                        };
+                        const cleanStr = s.struct ? s.struct.replace(/[\[\]\{\}]/g, '') : '';
+                        return `<tr class="hover:bg-slate-800/30 transition-colors cursor-pointer group"
+                                onclick="speakText('${cleanStr.replace(/'/g, "\\'")}', 'en-US')">
+                                <td class="py-0">
+                                    <div class="flex flex-col">
+                                        <div class="flex items-start py-3 border-b border-slate-600">
+                                            <div class="w-1/2 pr-4 text-slate-400 font-bold">${fmt(s.struct, true)}</div>
+                                            <div class="w-1/2 pr-4 text-slate-400 font-bold">${fmt(s.vi, true)}</div>
+                                        </div>
+                                        ${s.example ? `
+                                        <div class="flex flex-col gap-1 pt-3 pb-2">
+                                            <div class="text-[14px] text-slate-200">${fmt(s.example)}</div>
+                                            ${s.example_vi ? `<div class="text-[14px] text-slate-200">${fmt(s.example_vi)}</div>` : ''}
+                                        </div>
+                                        ` : ''}
+                                    </div>
+                                </td>
+                            </tr>`;
+                    }).join('');
+                    usageContainer.classList.remove('hidden');
+                    hasExtra = true;
+                } else {
+                    usageContainer.classList.add('hidden');
+                }
+            }
+
             // Render Word Family
             const famContainer = document.getElementById('fcWordFamily');
             const famList = document.getElementById('fcFamilyList');
             const famCount = document.getElementById('fcFamilyCount');
             if (card.aiExample.family && card.aiExample.family.length > 0) {
                 famCount.innerText = `${card.aiExample.family.length} từ`;
-                famList.innerHTML = card.aiExample.family.map(f => `<tr class="hover:bg-slate-800/30 transition-colors cursor-pointer group"
+                famList.innerHTML = card.aiExample.family.map(f => {
+                    const isSp = f.isSpecial === true || f.isSpecial === 'true';
+                    const isDiff = f.isDifferentMeaning === true || f.isDifferentMeaning === 'true';
+                    
+                    let wordClass = 'text-indigo-300 font-bold group-hover:text-indigo-200';
+                    let typeClass = 'text-slate-400';
+                    
+                    if (isDiff) {
+                        wordClass = 'text-rose-400 font-bold group-hover:text-rose-300';
+                        typeClass = 'text-rose-500/70';
+                    } else if (isSp) {
+                        wordClass = 'text-amber-400 font-bold group-hover:text-amber-300';
+                        typeClass = 'text-amber-500/70';
+                    }
+                    
+                    let meaningHtml = f.vi;
+                    if (isDiff) {
+                        meaningHtml += ` <span class="text-[11px] text-rose-400/80 font-bold ml-1 tracking-wide">(khác nghĩa)</span>`;
+                    }
+                    
+                    return `<tr class="hover:bg-slate-800/30 transition-colors cursor-pointer group"
                             onclick="speakText('${f.word.replace(/'/g, "\\'")}', 'en-US')"
                             oncontextmenu="handleExtraRightClick(event, '${f.word.replace(/'/g, "\\'")}')"
                             title="Chuột trái: Đọc từ | Chuột phải: Tra từ">
-                            <td class="py-2.5 pr-4 font-bold text-indigo-300 w-1/3 whitespace-nowrap group-hover:text-indigo-200 transition-colors">${f.word}</td>
-                            <td class="py-2.5 px-4 text-slate-400 w-1/6 italic">${f.type}</td>
-                            <td class="py-2.5 pl-4 text-slate-300">${f.vi}</td>
-                        </tr>`).join('');
+                            <td class="py-2.5 pr-4 ${wordClass} w-1/3 whitespace-nowrap transition-colors">${f.word}</td>
+                            <td class="py-2.5 px-4 ${typeClass} w-1/6 italic">${f.type}</td>
+                            <td class="py-2.5 pl-4 text-slate-300">${meaningHtml}</td>
+                        </tr>`;
+                }).join('');
                 famContainer.classList.remove('hidden');
                 hasExtra = true;
             } else {
@@ -2082,7 +2173,7 @@ document.addEventListener('keydown', function (event) {
     const fcContainer = document.getElementById('flashcardContainer');
     if (fcContainer && !fcContainer.classList.contains('hidden')) {
         // Không chặn phím nếu đang gõ chữ ở đâu đó
-        if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+        if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName) || document.activeElement.isContentEditable) return;
 
         if (event.code === 'Space') {
             event.preventDefault();
@@ -2090,6 +2181,11 @@ document.addEventListener('keydown', function (event) {
                 speakMeaning(null);
             } else {
                 speakWord(null);
+            }
+        } else if (event.key === 'Shift') {
+            if (!event.repeat) {
+                event.preventDefault();
+                speakWord(null); // Đọc tiếng Anh
             }
         } else if (event.code === 'ArrowRight') {
             event.preventDefault();
@@ -3001,9 +3097,7 @@ function saveInlineEdit(id, colIndex, newText) {
 
     // Invalidate sessions so UI rebuilds and generates new AI examples if needed
     try { currentFillList = []; } catch (e) { }
-    try { currentFlashcards = []; } catch (e) { }
-    const saveToggle = document.getElementById('saveSessionToggle');
-    if (saveToggle) saveToggle.checked = false;
+    refreshActiveFlashcards();
 }
 
 function deleteWordFromTable(id, event = null) {
@@ -3053,9 +3147,7 @@ function deleteWordFromTable(id, event = null) {
 
     // Invalidate sessions so UI rebuilds and generates new AI examples if needed
     try { currentFillList = []; } catch (e) { }
-    try { currentFlashcards = []; } catch (e) { }
-    const saveToggle = document.getElementById('saveSessionToggle');
-    if (saveToggle) saveToggle.checked = false;
+    refreshActiveFlashcards();
 }
 
 function saveNewRow(element) {
@@ -3094,9 +3186,7 @@ function saveNewRow(element) {
 
         // Invalidate sessions so UI rebuilds and generates new AI examples if needed
         try { currentFillList = []; } catch (e) { }
-        try { currentFlashcards = []; } catch (e) { }
-        const saveToggle = document.getElementById('saveSessionToggle');
-        if (saveToggle) saveToggle.checked = false;
+        refreshActiveFlashcards();
 
         // Focus the new empty row's word cell
         setTimeout(() => {
@@ -3126,6 +3216,30 @@ function handleNewRowKeydown(event, element, colIndex) {
             element.innerText = element.innerText.trim();
             divs[1].focus();
         }
+    }
+}
+
+function refreshActiveFlashcards() {
+    try {
+        const fcContainer = document.getElementById('flashcardContainer');
+        if (fcContainer && !fcContainer.classList.contains('hidden')) {
+            const isStarredMode = document.getElementById('onlyStarredToggle') && !document.getElementById('onlyStarredToggle').checked;
+            currentFlashcards = [...(isStarredMode ? getStarredWords() : parsedVocabList)];
+            if (flashcardIndex >= currentFlashcards.length) flashcardIndex = Math.max(0, currentFlashcards.length - 1);
+            if (currentFlashcards.length > 0) {
+                renderFlashcard();
+            } else {
+                document.getElementById('flashcardTotalCount').innerText = "0";
+                document.getElementById('fcWord').innerHTML = "Hoàn thành!";
+                document.getElementById('fcMeaning').innerText = "Không còn từ nào.";
+                if (document.getElementById('fcUsage')) document.getElementById('fcUsage').classList.add('hidden');
+                if (document.getElementById('fcExtraDetails')) document.getElementById('fcExtraDetails').classList.add('hidden');
+            }
+        } else {
+            currentFlashcards = [];
+        }
+    } catch (e) { 
+        currentFlashcards = []; 
     }
 }
 
