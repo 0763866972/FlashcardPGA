@@ -2461,6 +2461,12 @@ function parseVocab(forceRender = false, noRender = false) {
 
                     // 3. Kế thừa chéo Family/Collocation (áp dụng cho cả newItem.aiExample cũ và cacheEntry mới)
                     let targetEx = newItem.aiExample || cacheEntry;
+
+                    // [AI BUGFIX] Ánh xạ dữ liệu Collocations cũ sang Synonyms mới cho tất cả các mode
+                    if (targetEx && targetEx.collocations && (!targetEx.synonyms || targetEx.synonyms.length === 0)) {
+                        targetEx.synonyms = targetEx.collocations.map(c => ({ word: c.col || c.word, vi: c.vi }));
+                    }
+
                     if (targetEx && (!targetEx.family || targetEx.family.length === 0)) {
                         const allSuffixes = ['_fc_short', '_fc_long', '_medium', '_hard', '_easy', ''];
                         for (let suffix of allSuffixes) {
