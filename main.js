@@ -5844,13 +5844,13 @@ function showFillAiDetails() {
             const pk2 = `${baseOldKey}${suffix}`;
             if (aiCache[pk1] && aiCache[pk1].family && aiCache[pk1].family.length > 0) {
                 ex.family = aiCache[pk1].family;
-                ex.collocations = aiCache[pk1].collocations || [];
+                ex.synonyms = aiCache[pk1].synonyms || (aiCache[pk1].collocations ? aiCache[pk1].collocations.map(c => ({ word: c.col || c.word, vi: c.vi })) : []);
                 ex.homophones = aiCache[pk1].homophones || [];
                 break;
             }
             if (aiCache[pk2] && aiCache[pk2].family && aiCache[pk2].family.length > 0) {
                 ex.family = aiCache[pk2].family;
-                ex.collocations = aiCache[pk2].collocations || [];
+                ex.synonyms = aiCache[pk2].synonyms || (aiCache[pk2].collocations ? aiCache[pk2].collocations.map(c => ({ word: c.col || c.word, vi: c.vi })) : []);
                 ex.homophones = aiCache[pk2].homophones || [];
                 break;
             }
