@@ -2069,12 +2069,13 @@ function renderFlashcard() {
                     let textVi = c.vi || '';
                     textVi = textVi.replace(/\[Đồng nghĩa\]/gi, '<span class="text-emerald-400 font-bold">[Đồng nghĩa]</span>');
                     textVi = textVi.replace(/\[Trái nghĩa\]/gi, '<span class="text-rose-400 font-bold">[Trái nghĩa]</span>');
-                    return `<li class="cursor-pointer hover:bg-slate-800/30 p-2 rounded transition-colors group"
+                    return `<tr class="cursor-pointer hover:bg-slate-800/30 transition-colors group"
                             onclick="speakText('${c.word.replace(/'/g, "\\'")}', 'en-US')"
                             oncontextmenu="handleExtraRightClick(event, '${c.word.replace(/'/g, "\\'")}')"
                             title="Chuột trái: Đọc từ | Chuột phải: Tra từ">
-                            <span class="font-bold text-slate-200 group-hover:text-white transition-colors">${c.word}</span> <span class="text-slate-500">-</span> <span class="text-slate-300 italic">${textVi}</span>
-                        </li>`;
+                            <td class="py-2.5 pr-4 text-slate-200 group-hover:text-white font-bold w-1/3 whitespace-nowrap transition-colors">${c.word}</td>
+                            <td class="py-2.5 pl-4 text-slate-300 italic border-l border-slate-700/50">${textVi}</td>
+                        </tr>`;
                 }).join('');
                 synContainer.classList.remove('hidden');
                 hasExtra = true;
@@ -2086,12 +2087,13 @@ function renderFlashcard() {
             const homContainer = document.getElementById('fcHomophones');
             const homList = document.getElementById('fcHomList');
             if (card.aiExample.homophones && card.aiExample.homophones.length > 0) {
-                homList.innerHTML = card.aiExample.homophones.map(h => `<li class="cursor-pointer hover:bg-slate-800/30 p-2 rounded transition-colors group"
+                homList.innerHTML = card.aiExample.homophones.map(h => `<tr class="cursor-pointer hover:bg-slate-800/30 transition-colors group"
                             onclick="speakText('${h.word.replace(/'/g, "\\'")}', 'en-US')"
                             oncontextmenu="handleExtraRightClick(event, '${h.word.replace(/'/g, "\\'")}')"
                             title="Chuột trái: Đọc từ | Chuột phải: Tra từ">
-                            <span class="font-bold text-slate-200 group-hover:text-white transition-colors">${h.word}</span> <span class="text-slate-500">-</span> <span class="text-slate-300 italic">${h.vi}</span>
-                        </li>`).join('');
+                            <td class="py-2.5 pr-4 text-slate-200 group-hover:text-white font-bold w-1/3 whitespace-nowrap transition-colors">${h.word}</td>
+                            <td class="py-2.5 pl-4 text-slate-300 italic border-l border-slate-700/50">${h.vi}</td>
+                        </tr>`).join('');
                 homContainer.classList.remove('hidden');
                 hasExtra = true;
             } else {
@@ -5244,11 +5246,12 @@ function selectQuizAnswer(selectedIndex, isRestore = false) {
                 let textVi = c.vi || '';
                 textVi = textVi.replace(/\[Đồng nghĩa\]/gi, '<span class="text-emerald-400 font-bold">[Đồng nghĩa]</span>');
                 textVi = textVi.replace(/\[Trái nghĩa\]/gi, '<span class="text-rose-400 font-bold">[Trái nghĩa]</span>');
-                return `<li class="cursor-pointer hover:bg-slate-800/30 p-1.5 rounded transition-colors group" 
+                return `<tr class="cursor-pointer hover:bg-slate-800/30 transition-colors group" 
                         onclick="speakText('${c.word.replace(/'/g, "\\'")}', 'en-US')" 
                         oncontextmenu="handleExtraRightClick(event, '${c.word.replace(/'/g, "\\'")}')" title="Chuột trái: Đọc từ | Chuột phải: Tra từ">
-                        <span class="font-bold text-white text-white-light-override group-hover:text-amber-200 transition-colors">${c.word}</span>: <span class="text-slate-400 text-slate-400-light-override">${textVi}</span>
-                    </li>`;
+                        <td class="py-1.5 pr-4 text-white text-white-light-override font-bold group-hover:text-amber-200 w-1/3 whitespace-nowrap transition-colors">${c.word}</td>
+                        <td class="py-1.5 pl-4 text-slate-400 text-slate-400-light-override border-l border-slate-700/50">${textVi}</td>
+                    </tr>`;
             }).join('');
             document.getElementById('quizAiSynList').innerHTML = synHtml;
             document.getElementById('quizAiSynonyms').classList.remove('hidden');
@@ -5256,11 +5259,12 @@ function selectQuizAnswer(selectedIndex, isRestore = false) {
         }
 
         if (ex.homophones && ex.homophones.length > 0) {
-            const homHtml = ex.homophones.map(h => `<li class="cursor-pointer hover:bg-slate-800/30 p-1.5 rounded transition-colors group" 
+            const homHtml = ex.homophones.map(h => `<tr class="cursor-pointer hover:bg-slate-800/30 transition-colors group" 
                         onclick="speakText('${h.word.replace(/'/g, "\\'")}', 'en-US')" 
                         oncontextmenu="handleExtraRightClick(event, '${h.word.replace(/'/g, "\\'")}')" title="Chuột trái: Đọc từ | Chuột phải: Tra từ">
-                        <span class="font-bold text-white text-white-light-override group-hover:text-rose-200 transition-colors">${h.word}</span>: <span class="text-slate-400 text-slate-400-light-override">${h.vi}</span>
-                    </li>`).join('');
+                        <td class="py-1.5 pr-4 text-white text-white-light-override font-bold group-hover:text-rose-200 w-1/3 whitespace-nowrap transition-colors">${h.word}</td>
+                        <td class="py-1.5 pl-4 text-slate-400 text-slate-400-light-override border-l border-slate-700/50">${h.vi}</td>
+                    </tr>`).join('');
             const homList = document.getElementById('quizAiHomList');
             if (homList) {
                 homList.innerHTML = homHtml;
@@ -5894,11 +5898,12 @@ function showFillAiDetails() {
             let textVi = c.vi || '';
             textVi = textVi.replace(/\[Đồng nghĩa\]/gi, '<span class="text-emerald-400 font-bold">[Đồng nghĩa]</span>');
             textVi = textVi.replace(/\[Trái nghĩa\]/gi, '<span class="text-rose-400 font-bold">[Trái nghĩa]</span>');
-            return `<li class="cursor-pointer hover:bg-slate-800/30 p-1.5 rounded transition-colors group" 
+            return `<tr class="cursor-pointer hover:bg-slate-800/30 transition-colors group" 
                     onclick="speakText('${c.word.replace(/'/g, "\\'")}', 'en-US')" 
                     oncontextmenu="handleExtraRightClick(event, '${c.word.replace(/'/g, "\\'")}')" title="Chuột trái: Đọc từ | Chuột phải: Tra từ">
-                    <span class="font-bold text-white text-white-light-override group-hover:text-amber-200 transition-colors">${c.word}</span>: <span class="text-slate-400 text-slate-400-light-override">${textVi}</span>
-                </li>`;
+                    <td class="py-1.5 pr-4 text-white text-white-light-override font-bold group-hover:text-amber-200 w-1/3 whitespace-nowrap transition-colors">${c.word}</td>
+                    <td class="py-1.5 pl-4 text-slate-400 text-slate-400-light-override border-l border-slate-700/50">${textVi}</td>
+                </tr>`;
         }).join('');
         const synListEl = document.getElementById('fillAiSynList');
         if (synListEl) synListEl.innerHTML = synHtml;
@@ -5907,11 +5912,12 @@ function showFillAiDetails() {
     }
 
     if (ex.homophones && ex.homophones.length > 0) {
-        const homHtml = ex.homophones.map(h => `<li class="cursor-pointer hover:bg-slate-800/30 p-1.5 rounded transition-colors group" 
+        const homHtml = ex.homophones.map(h => `<tr class="cursor-pointer hover:bg-slate-800/30 transition-colors group" 
                     onclick="speakText('${h.word.replace(/'/g, "\\'")}', 'en-US')" 
                     oncontextmenu="handleExtraRightClick(event, '${h.word.replace(/'/g, "\\'")}')" title="Chuột trái: Đọc từ | Chuột phải: Tra từ">
-                    <span class="font-bold text-white text-white-light-override group-hover:text-rose-200 transition-colors">${h.word}</span>: <span class="text-slate-400 text-slate-400-light-override">${h.vi}</span>
-                </li>`).join('');
+                    <td class="py-1.5 pr-4 text-white text-white-light-override font-bold group-hover:text-rose-200 w-1/3 whitespace-nowrap transition-colors">${h.word}</td>
+                    <td class="py-1.5 pl-4 text-slate-400 text-slate-400-light-override border-l border-slate-700/50">${h.vi}</td>
+                </tr>`).join('');
         const homList = document.getElementById('fillAiHomList');
         if (homList) {
             homList.innerHTML = homHtml;
