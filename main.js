@@ -222,6 +222,19 @@ function renderGroupSelect() {
     const select = document.getElementById('vocabGroupSelect');
     if (!select) return;
     select.innerHTML = ''; // Xóa hết options cũ
+
+    // Khôi phục mảng an toàn nếu bị hỏng/trống
+    if (!Array.isArray(vocabGroups) || vocabGroups.length === 0) {
+        vocabGroups = [{ id: 'default', name: 'Mặc định' }];
+        saveGroups();
+    }
+
+    // Nếu active id không tồn tại trong danh sách, đưa về default
+    if (!vocabGroups.some(g => g.id === activeVocabGroupId)) {
+        activeVocabGroupId = 'default';
+        saveGroups();
+    }
+
     vocabGroups.forEach(g => {
         const opt = document.createElement('option');
         opt.value = g.id;
@@ -1454,6 +1467,7 @@ async function generateBulkExamples(wordsArray, assignedKey, onlyExample = false
                 outputFields = `"en": "câu 1 (Flashcard) (bọc [...] quanh TỪ VỰNG ĐANG HỌC)", \n      "vi": "câu dịch 1 TỰ NHIÊN (bọc [...] quanh ĐÚNG phần dịch của từ vựng, DỊCH THEO NGỮ CẢNH, KHÔNG ÉP DÙNG TỪ ĐIỂN NẾU SƯỢNG)", \n      "en_dictation": "câu 2 (Dictation, khác câu 1) (bọc [...] quanh TỪ VỰNG ĐANG HỌC)", \n      "vi_dictation": "câu dịch 2 TỰ NHIÊN (bọc [...] quanh ĐÚNG phần dịch của từ vựng, DỊCH THEO NGỮ CẢNH, KHÔNG ÉP DÙNG TỪ ĐIỂN NẾU SƯỢNG)"`;
             }
         }
+        styleInstruction += " (LƯU Ý: Giới hạn số lượng từ chỉ áp dụng cho câu Tiếng Anh. Câu dịch Tiếng Việt KHÔNG BỊ GIỚI HẠN độ dài, phải dịch trọn vẹn và thoát ý nhất có thể!).";
 
         let wantCol = document.getElementById('aiColToggle') ? document.getElementById('aiColToggle').checked : true;
         let wantFam = document.getElementById('aiFamToggle') ? document.getElementById('aiFamToggle').checked : true;
@@ -1466,10 +1480,11 @@ async function generateBulkExamples(wordsArray, assignedKey, onlyExample = false
         }
 
         let taskInstructions = `1. Phân tích loại từ (pos). Viết 1 câu cho mỗi từ theo chuẩn: ${styleInstruction}
-2. Cấu trúc ngữ pháp (structures): NẾU CÓ, BẮT BUỘC dùng ngoặc vuông [...] bọc TỪ KHÓA CHÍNH và ngoặc nhọn {...} bọc THÀNH PHẦN PHỤ. 
+2. Cấu trúc ngữ pháp (structures): NẾU TỪ CÓ giới từ đi kèm (vd: under + construction) HOẶC là danh từ ghép phổ biến (vd: lecture hall), hãy đưa vào đây.
+- NẾU LÀ CẤU TRÚC GIỚI TỪ/ĐỘNG TỪ: Dấu '+' CHỈ ĐƯỢC DÙNG trước các biến số (như noun, V-ing). CẤM dùng dấu '+' trước giới từ. Bọc ngoặc vuông [...] quanh TỪ KHÓA CHÍNH + GIỚI TỪ, và ngoặc nhọn {...} quanh BIẾN SỐ. (SAI: [domain] + of + {noun} -> ĐÚNG: [domain of] + {noun}).
+- NẾU LÀ DANH TỪ GHÉP: CẤM DÙNG dấu '+' hay ngoặc nhọn {...}. HÃY BỌC NGOẶC VUÔNG [...] CHO TOÀN BỘ CỤM (vd: [lecture hall]). Phải thêm "(danh từ ghép)" ở cuối phần nghĩa và DỊCH THẬT TỰ NHIÊN (vd: "[giảng đường] (danh từ ghép)"). Mảng rỗng \`[]\` nếu không có gì đặc biệt.
 - QUY TẮC NGOẶC NÀY **CHỈ ÁP DỤNG** BÊN TRONG mảng 'structures' (cho 4 trường: struct, vi, example, example_vi). Câu ví dụ trong structures PHẢI KHÁC HOÀN TOÀN với câu ví dụ chính, và PHẢI CÓ ĐẦY ĐỦ ngoặc ở cả câu tiếng Anh lẫn tiếng Việt!
-- VỚI trường 'en', 'vi', 'en_dictation', 'vi_dictation': BẮT BUỘC bọc ngoặc vuông [...] quanh từ vựng gốc (ở câu Anh) và phần dịch tương ứng (ở câu Việt). QUAN TRỌNG: Hãy DỊCH THẬT TỰ NHIÊN THEO NGỮ CẢNH CỦA CÂU, **KHÔNG CẦN** ép dùng đúng từng chữ của "Nghĩa" từ điển cung cấp ban đầu nếu nghe nó bị sượng. (Ví dụ: Từ 'diligence' (nghĩa: sự cần cù), nếu vào câu 'shows diligence' thì cứ dịch là 'thể hiện [sự chăm chỉ]'). TUYỆT ĐỐI không bọc sai từ (đang học 'occupation' thì bọc "[nghề nghiệp]" chứ không phải là nghề nghiệp "[là]").
-LƯU Ý QUAN TRỌNG: Dấu '+' CHỈ DÙNG trước các biến số như noun, V-ing. KHÔNG DÙNG dấu '+' trước giới từ (SAI: eligibility + for + noun -> ĐÚNG: [eligibility for] + {noun}).
+- VỚI trường 'en', 'vi', 'en_dictation', 'vi_dictation': BẮT BUỘC bọc ngoặc vuông [...] quanh từ vựng gốc (ở câu Anh) và phần dịch tương ứng (ở câu Việt). QUAN TRỌNG: CẤM TUYỆT ĐỐI việc nhét "Nghĩa" từ điển vào câu dịch nếu nó làm câu văn vô nghĩa! HÃY BỎ QUA NGHĨA GỐC VÀ DỊCH THẬT TỰ NHIÊN THEO ĐÚNG NGỮ CẢNH (VD: Từ 'domain' nghĩa gốc là 'thuộc quyền sở hữu', nhưng trong câu 'secured a new domain for website' thì BẮT BUỘC dịch là 'mua một [tên miền] mới' chứ CẤM dịch 'bảo vệ một [thuộc quyền sở hữu]'). TUYỆT ĐỐI không bọc sai từ.
 Ví dụ CHUẨN trong structures: struct: "[be eligible for] + {noun}", vi: "[đủ điều kiện cho] + {danh từ}", example: "She is [eligible for] {the scholarship}.", example_vi: "Cô ấy [đủ điều kiện cho] {học bổng}."`;
         if (wantCol) taskInstructions += `\n3. TÌM 3-4 Collocations (cụm từ đi kèm). BẮT BUỘC PHẢI TRẢ VỀ TRONG KEY 'collocations'.`;
         if (wantFam) taskInstructions += `\n4. TÌM TẤT CẢ CÁC TỪ CÙNG GỐC (Word Family). Đánh dấu "isSpecial": true nếu từ có dạng đuôi dễ nhầm lẫn (vd: danh từ nhưng đuôi -al, tính từ đuôi -ing/-ed). Đánh dấu "isDifferentMeaning": true nếu từ đó CÓ NGHĨA KHÁC HOÀN TOÀN so với từ gốc (vd: confidence là tự tin, nhưng confidential là tuyệt mật). BẮT BUỘC PHẢI TRẢ VỀ TRONG KEY 'family'.`;
@@ -1881,7 +1896,8 @@ function renderFlashcard() {
             const rawEnText = card.aiExample.en || "";
             // Trích xuất các từ được AI bọc ngoặc vuông (nếu có)
             const bracketMatches = [...rawEnText.matchAll(/\[(.*?)\]/g)];
-            const aiHighlightedWords = bracketMatches.map(m => m[1].toLowerCase());
+            // Tách thành mảng các từ riêng biệt để tránh lỗi substring (VD: "mineral".includes("a"))
+            const aiHighlightedWords = bracketMatches.flatMap(m => m[1].toLowerCase().split(/(\b[\w'-]+\b)/g).filter(w => /^[\w'-]+$/.test(w)));
 
             const sentence = rawEnText.replace(/[\[\]\{\}"]/g, '').replace(/[\.\?!]$/, '').trim();
             const words = sentence.split(/(\b[\w'-]+\b)/g);
@@ -1904,7 +1920,7 @@ function renderFlashcard() {
                         isTarget = targetRoots.some(root => root.length > 2 && pLower.includes(root));
                     }
                     if (!isTarget && aiHighlightedWords.length > 0) {
-                        isTarget = aiHighlightedWords.some(hw => hw.includes(pLower));
+                        isTarget = aiHighlightedWords.includes(pLower);
                     }
                     const extraClass = isTarget ? "text-orange-400 font-bold" : "";
                     return `<span class="${extraClass} hover:bg-slate-500/20 rounded px-0.5 cursor-pointer transition-colors inline-block" onclick="handleWordClick(event, '${part.replace(/'/g, "\\'")}')" oncontextmenu="handleWordRightClick(event, '${part.replace(/'/g, "\\'")}')">${part}</span>`;
