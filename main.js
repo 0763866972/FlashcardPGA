@@ -5257,7 +5257,7 @@ function selectQuizAnswer(selectedIndex, isRestore = false) {
 
         const fmt = (text) => {
             if (!text) return '';
-            return text.replace(/\[(.*?)\]/g, '<span class="text-emerald-400 font-bold">$1</span>').replace(/\{(.*?)\}/g, '<span class="text-orange-400 font-bold">$1</span>');
+            return text.replace(/\[(.*?)\]/g, '<span class="text-orange-400 font-bold">$1</span>').replace(/\{(.*?)\}/g, '<span class="text-emerald-400 font-bold">$1</span>');
         };
 
         const finalEn = ex.en || ex.en_dictation;
