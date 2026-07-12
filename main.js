@@ -1331,23 +1331,10 @@ async function startFlashcardMode() {
         let wordsNeedingOnlyExample = [];
 
         if (saveSessionToggle && !saveSessionToggle.checked) {
-            // Nếu tắt "Lưu tiến độ": TẠO MỚI ví dụ cho TẤT CẢ các từ.
-            // Nhưng giữ lại Word Family và Synonyms cũ nếu có để tiết kiệm.
+            // Nếu tắt "Lưu tiến độ": TẠO MỚI HOÀN TOÀN TẤT CẢ.
             sourceList.forEach(w => {
-                const hasFamily = w.aiExample && w.aiExample.family && w.aiExample.family.length > 0;
-                const hasSynonyms = w.aiExample && w.aiExample.synonyms && w.aiExample.synonyms.length > 0;
-
-                // LƯU TẠM DỮ LIỆU ĐỂ KHÔNG BỊ MẤT KHI RE-GENERATE CHỈ CÂU VÍ DỤ
-                w._tempInheritedFamily = hasFamily ? w.aiExample.family : null;
-                w._tempInheritedSynonyms = hasSynonyms ? w.aiExample.synonyms : null;
-                w._tempInheritedHomophones = w.aiExample ? w.aiExample.homophones : null;
-
-                delete w.aiExample; // Xóa trong RAM để ép tạo mới
-                if (hasFamily && hasSynonyms) {
-                    wordsNeedingOnlyExample.push(w);
-                } else {
-                    wordsNeedingEverything.push(w);
-                }
+                delete w.aiExample; // Xóa trong RAM để ép tạo mới toàn bộ
+                wordsNeedingEverything.push(w);
             });
         } else {
             // Nếu bật "Lưu tiến độ": Chỉ lấy những từ CHƯA CÓ dữ liệu flashcard
@@ -1509,7 +1496,7 @@ async function generateBulkExamples(wordsArray, assignedKey, onlyExample = false
 Ví dụ CHUẨN trong structures: struct: "[be eligible for] + {noun}", vi: "[đủ điều kiện cho] + {danh từ}", example: "She is [eligible for] {the scholarship}.", example_vi: "Cô ấy [đủ điều kiện cho] {học bổng}."`;
         if (wantSyn) taskInstructions += `\n3. TÌM 3-4 Từ đồng nghĩa (Synonyms) hoặc Từ trái nghĩa (Antonyms). Phân loại rõ bằng cách thêm "[Đồng nghĩa]" hoặc "[Trái nghĩa]" ở đầu phần nghĩa tiếng Việt. BẮT BUỘC PHẢI TRẢ VỀ TRONG KEY 'synonyms_antonyms'.`;
         if (wantFam) taskInstructions += `\n4. KHAI THÁC TỐI ĐA TỪ CÙNG GỐC (Word Family): Hãy tìm VÀ LIỆT KÊ TOÀN BỘ tất cả các biến thể của từ (danh từ, động từ, tính từ, trạng từ, từ trái nghĩa cùng gốc, v.v.) CÀNG NHIỀU CÀNG TỐT, TUYỆT ĐỐI KHÔNG BỎ SÓT. Đánh dấu "isSpecial": true nếu từ có dạng đuôi dễ nhầm lẫn (vd: danh từ nhưng đuôi -al, tính từ đuôi -ing/-ed). Đánh dấu "isDifferentMeaning": true nếu từ đó CÓ NGHĨA KHÁC HOÀN TOÀN so với từ gốc (vd: confidence là tự tin, nhưng confidential là tuyệt mật). BẮT BUỘC PHẢI TRẢ VỀ TRONG KEY 'family'.`;
-        if (wantHom) taskInstructions += `\n5. TÌM 3-4 TỪ DỄ NHẦM LẪN. BẮT BUỘC PHẢI TRẢ VỀ TRONG KEY 'homophones'.`;
+        if (wantHom) taskInstructions += `\n5. TÌM 3-4 TỪ DỄ NHẦM LẪN (Confusing Words / Homophones). YÊU CẦU TỐI THƯỢNG: CÁC TỪ NÀY PHẢI LÀ TỪ VỰNG TIẾNG ANH CHUẨN CÓ THẬT TRONG TỪ ĐIỂN. TUYỆT ĐỐI KHÔNG ĐƯỢC CHẾ RA TỪ SAI CHÍNH TẢ (vd: cấm dùng 'eligibilty' để nhầm với 'eligibility', cấm dùng 'açess' để nhầm với 'access'). HÃY tìm các từ có CÁCH VIẾT hoặc PHÁT ÂM gần giống với từ gốc NHƯNG NGHĨA KHÁC HOÀN TOÀN (ví dụ: "access" nhầm với "accessory", "eligible" nhầm với "illegible", "affect" nhầm với "effect"). BẮT BUỘC PHẢI TRẢ VỀ TRONG KEY 'homophones'.`;
 
         let jsonStructure = `{
   "examples": [
@@ -1602,6 +1589,9 @@ ${jsonStructure}`;
                         if (ex.synonyms_antonyms) {
                             ex.synonyms = ex.synonyms_antonyms.map(s => ({ word: s.word || s.col, vi: s.vi }));
                             delete ex.synonyms_antonyms;
+                        }
+                        if (ex.homophones) {
+                            ex.homophones = ex.homophones.filter(h => !/chính\s*tả/i.test(h.vi || '') && !/không\s*có\s*nghĩa/i.test(h.vi || ''));
                         }
                     });
 
@@ -1995,14 +1985,39 @@ function renderFlashcard() {
             if (usageContainer && usageList) {
                 if (card.aiExample.structures && Array.isArray(card.aiExample.structures) && card.aiExample.structures.length > 0) {
                     usageList.innerHTML = card.aiExample.structures.map(s => {
+                        let isCompound = s.vi && s.vi.toLowerCase().includes('(danh từ ghép)');
+                        
+                        let normStruct = s.struct || '';
+                        let normVi = s.vi || '';
+                        let normEx = s.example || '';
+                        let normExVi = s.example_vi || '';
+
+                        if (isCompound) {
+                            normStruct = normStruct.replace(/\+/g, ' ').replace(/\s+/g, ' ').trim();
+                            normVi = normVi.replace(/\+/g, ' ').replace(/\s+/g, ' ').trim();
+                            
+                            normEx = normEx.replace(/\[([^\]]+)\]\s*\{([^\}]+)\}/g, '[$1 $2]');
+                            normExVi = normExVi.replace(/\[([^\]]+)\]\s*\{([^\}]+)\}/g, '[$1 $2]');
+                        }
+
                         const fmt = (text, isStruct = false) => {
                             if (!text) return '';
+                            
+                            if (isCompound && isStruct) {
+                                let cleanText = text.replace(/[\+\[\]\{\}]/g, '').replace(/\s+/g, ' ').trim();
+                                let noteMatch = cleanText.match(/(.*?)\s*(\(danh từ ghép\))/i);
+                                if (noteMatch) {
+                                    return `<span class="text-emerald-400 font-bold">${noteMatch[1].trim()}</span> <span class="text-slate-400 italic font-normal text-[13px] ml-1">${noteMatch[2]}</span>`;
+                                }
+                                return `<span class="text-emerald-400 font-bold">${cleanText}</span>`;
+                            }
+
                             let res = text.replace(/\[(.*?)\]/g, '<span class="text-emerald-400 font-bold">$1</span>').replace(/\{(.*?)\}/g, '<span class="text-orange-400 font-bold">$1</span>');
                             if (!res.includes('<span') && isStruct) {
                                 if (res.includes('+')) {
                                     let parts = res.split('+');
                                     if (parts.length === 2) {
-                                        return `<span class="text-emerald-400 font-bold">${parts[0].trim()}</span> + <span class="text-orange-400 font-bold">${parts[1].trim()}</span>`;
+                                        return `<span class="text-emerald-400 font-bold">${parts[0].trim()}</span> <span class="text-slate-500 font-normal mx-1">+</span> <span class="text-orange-400 font-bold">${parts[1].trim()}</span>`;
                                     }
                                 } else {
                                     return `<span class="text-emerald-400 font-bold">${res}</span>`;
@@ -2010,19 +2025,19 @@ function renderFlashcard() {
                             }
                             return res;
                         };
-                        const cleanStr = s.struct ? s.struct.replace(/[\[\]\{\}]/g, '') : '';
+                        const cleanStr = normStruct ? normStruct.replace(/[\[\]\{\}]/g, '') : '';
                         return `<tr class="hover:bg-slate-800/30 transition-colors cursor-pointer group"
                                 onclick="speakText('${cleanStr.replace(/'/g, "\\'")}', 'en-US')">
                                 <td class="py-0">
                                     <div class="flex flex-col">
                                         <div class="flex items-start py-3 border-b border-slate-600">
-                                            <div class="w-1/2 pr-4 text-slate-400 font-bold">${fmt(s.struct, true)}</div>
-                                            <div class="w-1/2 pr-4 text-slate-400 font-bold">${fmt(s.vi, true)}</div>
+                                            <div class="w-1/2 pr-4 text-slate-400 font-bold">${fmt(normStruct, true)}</div>
+                                            <div class="w-1/2 pr-4 text-slate-400 font-bold">${fmt(normVi, true)}</div>
                                         </div>
-                                        ${s.example ? `
+                                        ${normEx ? `
                                         <div class="flex flex-col gap-1 pt-3 pb-2">
-                                            <div class="text-[14px] text-slate-200">${fmt(s.example)}</div>
-                                            ${s.example_vi ? `<div class="text-[14px] text-slate-200">${fmt(s.example_vi)}</div>` : ''}
+                                            <div class="text-[14px] text-slate-200">${fmt(normEx)}</div>
+                                            ${normExVi ? `<div class="text-[14px] text-slate-200">${fmt(normExVi)}</div>` : ''}
                                         </div>
                                         ` : ''}
                                     </div>
@@ -3021,10 +3036,7 @@ function turnOnSaveSessionToggle() {
     const toggle = document.getElementById('saveSessionToggle');
     if (toggle && !toggle.checked) {
         toggle.checked = true;
-        document.getElementById('saveSessionTrack').className = 'w-9 h-5 rounded-full transition-colors duration-300 shadow-inner shadow-sm p-[2px] bg-brand-500 dark:bg-brand-600 flex items-center';
-        document.getElementById('saveSessionThumb').className = 'bg-white rounded-full h-4 w-4 transition-all duration-300 transform translate-x-4 shadow-sm';
-        document.getElementById('saveSessionText').className = 'text-[11px] font-bold transition-colors text-brand-400';
-        document.getElementById('saveSessionIcon').className = 'fa-solid fa-floppy-disk text-[10px] transition-all text-brand-400 drop-shadow-[0_0_3px_rgba(59,130,246,0.6)]';
+        toggle.dispatchEvent(new Event('change'));
     }
 }
 
@@ -4372,7 +4384,7 @@ async function callGeminiAPIText(systemPrompt, userPrompt, overrideModel = null,
             apiUrl = `https://api.groq.com/openai/v1/chat/completions`;
             headers['Authorization'] = `Bearer ${currentKey}`;
             payload = { model: selectedModel, messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }] };
-            if (!selectedModel.includes('compound')) payload.max_tokens = 6000;
+            if (!selectedModel.includes('compound')) payload.max_tokens = 3000;
         } else {
             apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${currentKey}`;
             payload = { contents: [{ parts: [{ text: userPrompt }] }], systemInstruction: { parts: [{ text: systemPrompt }] } };
@@ -5243,14 +5255,19 @@ function selectQuizAnswer(selectedIndex, isRestore = false) {
         }
         let showAi = false;
 
+        const fmt = (text) => {
+            if (!text) return '';
+            return text.replace(/\[(.*?)\]/g, '<span class="text-emerald-400 font-bold">$1</span>').replace(/\{(.*?)\}/g, '<span class="text-orange-400 font-bold">$1</span>');
+        };
+
         const finalEn = ex.en || ex.en_dictation;
         const finalVi = ex.vi || ex.vi_dictation;
         if (finalEn && finalVi) {
             const exEn = document.getElementById('quizAiExEn');
             if (exEn) {
-                exEn.innerText = finalEn;
-                exEn.onclick = () => speakText(finalEn, 'en-US');
-                document.getElementById('quizAiExVi').innerText = finalVi;
+                exEn.innerHTML = fmt(finalEn);
+                exEn.onclick = () => speakText(finalEn.replace(/[\[\]\{\}]/g, ''), 'en-US');
+                document.getElementById('quizAiExVi').innerHTML = fmt(finalVi);
                 document.getElementById('quizAiExample').classList.remove('hidden');
                 showAi = true;
             }

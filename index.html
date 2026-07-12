@@ -239,7 +239,7 @@
                     title="Bật để giữ nguyên tiến độ cũ khi chuyển qua lại giữa các chế độ. Tắt để luôn làm mới.">
                     <div class="relative flex shrink-0 items-center justify-center">
                         <input type="checkbox" id="saveSessionToggle" class="sr-only" checked
-                            onchange="document.getElementById('saveSessionTrack').className = this.checked ? 'w-9 h-5 rounded-full transition-colors duration-300 shadow-inner shadow-sm p-[2px] bg-brand-500 dark:bg-brand-600' : 'w-9 h-5 rounded-full transition-colors duration-300 shadow-inner shadow-sm p-[2px] bg-slate-400 dark:bg-slate-700'; document.getElementById('saveSessionThumb').className = this.checked ? 'bg-white rounded-full h-4 w-4 transition-all duration-300 transform translate-x-0 shadow-sm' : 'bg-white rounded-full h-4 w-4 transition-all duration-300 transform translate-x-4 shadow-sm'; document.getElementById('saveSessionText').className = this.checked ? 'text-[11px] font-bold transition-colors text-brand-400' : 'text-[11px] font-bold transition-colors text-slate-500'; document.getElementById('saveSessionIcon').className = this.checked ? 'fa-solid fa-floppy-disk text-[13px] transition-all text-brand-400 drop-shadow-[0_0_3px_rgba(59,130,246,0.6)]' : 'fa-solid fa-floppy-disk text-[13px] transition-all text-slate-500'; handleSaveSessionToggle(this);">
+                            onchange="document.getElementById('saveSessionTrack').className = this.checked ? 'w-9 h-5 rounded-full transition-colors duration-300 shadow-inner shadow-sm p-[2px] bg-brand-500 dark:bg-brand-600 flex items-center' : 'w-9 h-5 rounded-full transition-colors duration-300 shadow-inner shadow-sm p-[2px] bg-slate-400 dark:bg-slate-700 flex items-center'; document.getElementById('saveSessionThumb').className = this.checked ? 'bg-white rounded-full h-4 w-4 transition-all duration-300 transform translate-x-0 shadow-sm' : 'bg-white rounded-full h-4 w-4 transition-all duration-300 transform translate-x-4 shadow-sm'; document.getElementById('saveSessionText').className = this.checked ? 'text-[11px] font-bold transition-colors text-brand-400' : 'text-[11px] font-bold transition-colors text-slate-500'; document.getElementById('saveSessionIcon').className = this.checked ? 'fa-solid fa-floppy-disk text-[13px] transition-all text-brand-400 drop-shadow-[0_0_3px_rgba(59,130,246,0.6)]' : 'fa-solid fa-floppy-disk text-[13px] transition-all text-slate-500'; handleSaveSessionToggle(this);">
                         <div id="saveSessionTrack"
                             class="w-9 h-5 rounded-full transition-colors duration-300 shadow-inner shadow-sm p-[2px] bg-brand-500 dark:bg-brand-600 flex items-center">
                             <div id="saveSessionThumb"
@@ -979,9 +979,9 @@
                                     <p id="quizAiExVi" class="text-slate-400 mt-1 text-slate-400-light-override"></p>
                                 </div>
                             </div>
-                            <div class="flex flex-col md:flex-row gap-4 w-full">
+                            <div class="flex flex-col gap-4 w-full">
                                 <div id="quizAiFamily"
-                                    class="hidden flex-1 bg-slate-900/60 border border-slate-800 rounded-xl p-4 text-left shadow-md">
+                                    class="hidden w-full bg-slate-900/60 border border-slate-800 rounded-xl p-4 text-left shadow-md">
                                     <div
                                         class="font-bold text-indigo-400 text-xs mb-2 uppercase flex items-center justify-between border-b border-slate-800 pb-2">
                                         <span><i class="fa-solid fa-sitemap"></i> Word Family</span>
@@ -991,7 +991,7 @@
                                     </table>
                                 </div>
                                 <div id="quizAiSynonyms"
-                                    class="hidden flex-1 bg-slate-900/60 border border-slate-800 rounded-xl p-4 text-left shadow-md">
+                                    class="hidden w-full bg-slate-900/60 border border-slate-800 rounded-xl p-4 text-left shadow-md">
                                     <div
                                         class="font-bold text-emerald-400 text-xs mb-2 uppercase border-b border-slate-800 pb-2">
                                         <i class="fa-solid fa-code-compare"></i> Đồng nghĩa & Trái nghĩa
@@ -1001,7 +1001,7 @@
                                     </table>
                                 </div>
                                 <div id="quizAiHomophones"
-                                    class="hidden flex-1 bg-slate-900/60 border border-slate-800 rounded-xl p-4 text-left shadow-md">
+                                    class="hidden w-full bg-slate-900/60 border border-slate-800 rounded-xl p-4 text-left shadow-md">
                                     <div
                                         class="font-bold text-rose-400 text-xs mb-2 uppercase border-b border-slate-800 pb-2">
                                         <i class="fa-solid fa-triangle-exclamation"></i> Dễ nhầm lẫn
@@ -1090,9 +1090,9 @@
 
                         <!-- AI Info (hidden by default) -->
                         <div id="fillAiDetails" class="hidden mt-4 w-full space-y-4">
-                            <div class="flex flex-col md:flex-row gap-4 w-full">
+                            <div class="flex flex-col gap-4 w-full">
                                 <div id="fillAiFamily"
-                                    class="hidden flex-1 bg-slate-900/60 border border-slate-800 rounded-xl p-4 text-left shadow-md">
+                                    class="hidden w-full bg-slate-900/60 border border-slate-800 rounded-xl p-4 text-left shadow-md">
                                     <div
                                         class="font-bold text-indigo-400 text-xs mb-2 uppercase flex items-center justify-between border-b border-slate-800 pb-2">
                                         <span><i class="fa-solid fa-sitemap"></i> Word Family</span>
@@ -1102,7 +1102,7 @@
                                     </table>
                                 </div>
                                 <div id="fillAiSynonyms"
-                                    class="hidden flex-1 bg-slate-900/60 border border-slate-800 rounded-xl p-4 text-left shadow-md">
+                                    class="hidden w-full bg-slate-900/60 border border-slate-800 rounded-xl p-4 text-left shadow-md">
                                     <div
                                         class="font-bold text-emerald-400 text-xs mb-2 uppercase border-b border-slate-800 pb-2">
                                         <i class="fa-solid fa-code-compare"></i> Đồng nghĩa & Trái nghĩa
@@ -1112,7 +1112,7 @@
                                     </table>
                                 </div>
                                 <div id="fillAiHomophones"
-                                    class="hidden flex-1 bg-slate-900/60 border border-slate-800 rounded-xl p-4 text-left shadow-md">
+                                    class="hidden w-full bg-slate-900/60 border border-slate-800 rounded-xl p-4 text-left shadow-md">
                                     <div
                                         class="font-bold text-rose-400 text-xs mb-2 uppercase border-b border-slate-800 pb-2">
                                         <i class="fa-solid fa-triangle-exclamation"></i> Dễ nhầm lẫn
