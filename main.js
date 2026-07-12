@@ -1268,8 +1268,14 @@ async function startFlashcardMode() {
             }
             if (cacheEntry && cacheEntry.en) {
                 w.aiExample = cacheEntry;
-                if (w.aiExample.collocations && !w.aiExample.synonyms) {
-                    w.aiExample.synonyms = w.aiExample.collocations.map(c => ({ word: c.col || c.word, vi: c.vi }));
+                if (w.aiExample.synonyms && w.aiExample.synonyms.length > 0) {
+                    const hasTags = w.aiExample.synonyms.some(s => {
+                        const vi = s.vi || '';
+                        return vi.toLowerCase().includes('[đồng nghĩa]') || vi.toLowerCase().includes('[trái nghĩa]');
+                    });
+                    if (!hasTags) {
+                        w.aiExample.synonyms = [];
+                    }
                 }
             }
 
@@ -1296,7 +1302,17 @@ async function startFlashcardMode() {
                 for (let pk of possibleKeys) {
                     if (aiCache[pk] && aiCache[pk].family && aiCache[pk].family.length > 0) {
                         inheritedFamily = aiCache[pk].family;
-                        inheritedSynonyms = aiCache[pk].synonyms || (aiCache[pk].collocations ? aiCache[pk].collocations.map(c => ({ word: c.col || c.word, vi: c.vi })) : []);
+                        let rawSyn = aiCache[pk].synonyms || [];
+                        if (rawSyn.length > 0) {
+                            const hasTags = rawSyn.some(s => {
+                                const vi = s.vi || '';
+                                return vi.toLowerCase().includes('[đồng nghĩa]') || vi.toLowerCase().includes('[trái nghĩa]');
+                            });
+                            if (!hasTags) {
+                                rawSyn = [];
+                            }
+                        }
+                        inheritedSynonyms = rawSyn;
                         inheritedHomophones = aiCache[pk].homophones || [];
                         break;
                     }
@@ -1625,7 +1641,7 @@ ${jsonStructure}`;
                         }
 
                         if (onlyExample) {
-                            ex.synonyms = wTarget._tempInheritedSynonyms || oldCache.synonyms || (oldCache.collocations ? oldCache.collocations.map(c => ({ word: c.col || c.word, vi: c.vi })) : []);
+                            ex.synonyms = wTarget._tempInheritedSynonyms || oldCache.synonyms || [];
                             ex.family = wTarget._tempInheritedFamily || oldCache.family || [];
                             ex.homophones = wTarget._tempInheritedHomophones || oldCache.homophones || [];
 
@@ -2469,12 +2485,18 @@ function parseVocab(forceRender = false, noRender = false) {
                         }
                     }
 
-                    // 3. Kế thừa chéo Family/Collocation (áp dụng cho cả newItem.aiExample cũ và cacheEntry mới)
+                    // 3. Kế thừa chéo Family (áp dụng cho cả newItem.aiExample cũ và cacheEntry mới)
                     let targetEx = newItem.aiExample || cacheEntry;
 
-                    // [AI BUGFIX] Ánh xạ dữ liệu Collocations cũ sang Synonyms mới cho tất cả các mode
-                    if (targetEx && targetEx.collocations && (!targetEx.synonyms || targetEx.synonyms.length === 0)) {
-                        targetEx.synonyms = targetEx.collocations.map(c => ({ word: c.col || c.word, vi: c.vi }));
+                    // [AI BUGFIX] Tẩy rửa bộ nhớ đệm: Nếu synonyms bị nhiễm độc (không chứa tag), xóa nó để ép AI tạo lại
+                    if (targetEx && targetEx.synonyms && targetEx.synonyms.length > 0) {
+                        const hasTags = targetEx.synonyms.some(s => {
+                            const vi = s.vi || '';
+                            return vi.toLowerCase().includes('[đồng nghĩa]') || vi.toLowerCase().includes('[trái nghĩa]');
+                        });
+                        if (!hasTags) {
+                            targetEx.synonyms = [];
+                        }
                     }
 
                     if (targetEx && (!targetEx.family || targetEx.family.length === 0)) {
@@ -2484,13 +2506,13 @@ function parseVocab(forceRender = false, noRender = false) {
                             const pk2 = `${baseOldKey}${suffix}`;
                             if (aiCache[pk1] && aiCache[pk1].family && aiCache[pk1].family.length > 0) {
                                 targetEx.family = aiCache[pk1].family;
-                                targetEx.synonyms = aiCache[pk1].synonyms || (aiCache[pk1].collocations ? aiCache[pk1].collocations.map(c => ({ word: c.col || c.word, vi: c.vi })) : []);
+                                targetEx.synonyms = aiCache[pk1].synonyms || [];
                                 targetEx.homophones = aiCache[pk1].homophones || [];
                                 break;
                             }
                             if (aiCache[pk2] && aiCache[pk2].family && aiCache[pk2].family.length > 0) {
                                 targetEx.family = aiCache[pk2].family;
-                                targetEx.synonyms = aiCache[pk2].synonyms || (aiCache[pk2].collocations ? aiCache[pk2].collocations.map(c => ({ word: c.col || c.word, vi: c.vi })) : []);
+                                targetEx.synonyms = aiCache[pk2].synonyms || [];
                                 targetEx.homophones = aiCache[pk2].homophones || [];
                                 break;
                             }
