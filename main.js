@@ -972,7 +972,7 @@ function runAutoPlaySequence() {
             const card = currentFlashcards[flashcardIndex];
             if (card && card.meaning) {
                 // Sử dụng API Google Translate cho tiếng Việt để có giọng chuẩn và rõ ràng
-                const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=vi&client=tw-ob&q=${encodeURIComponent(card.meaning)}`;
+                const url = `https://translate.googleapis.com/translate_tts?client=gtx&ie=UTF-8&tl=vi&q=${encodeURIComponent(card.meaning)}`;
                 window.currentViAudio = new Audio(url);
                 window.currentViAudio.playbackRate = fcPlaybackSpeed;
                 
