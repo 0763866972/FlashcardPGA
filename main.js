@@ -1069,15 +1069,15 @@ function toggleSlideshow() {
     const speedControl = document.getElementById('fcSpeedControl');
 
     if (isFcSlideshow) {
-        btn.classList.remove('text-slate-400', 'bg-slate-800', 'hover:bg-slate-700');
-        btn.classList.add('text-amber-400', 'bg-amber-900/20', 'border', 'border-amber-500/30', 'hover:bg-amber-900/40');
+        btn.classList.remove('text-slate-600', 'bg-slate-200', 'hover:bg-slate-300');
+        btn.classList.add('text-amber-700', 'bg-amber-100', 'border', 'border-amber-300', 'hover:bg-amber-200');
         icon.className = 'fa-solid fa-pause';
         if (speedControl) speedControl.classList.remove('hidden');
         if (autoPlaySequenceTimeout) clearTimeout(autoPlaySequenceTimeout);
         runAutoPlaySequence();
     } else {
-        btn.classList.remove('text-amber-400', 'bg-amber-900/20', 'border', 'border-amber-500/30', 'hover:bg-amber-900/40');
-        btn.classList.add('text-slate-400', 'bg-slate-800', 'hover:bg-slate-700');
+        btn.classList.remove('text-amber-700', 'bg-amber-100', 'border', 'border-amber-300', 'hover:bg-amber-200');
+        btn.classList.add('text-slate-600', 'bg-slate-200', 'hover:bg-slate-300');
         icon.className = 'fa-solid fa-play';
         if (speedControl) speedControl.classList.add('hidden');
         if (autoPlaySequenceTimeout) clearTimeout(autoPlaySequenceTimeout);
@@ -1097,14 +1097,14 @@ function toggleAutoPlay() {
 
     if (isFcAutoPlay) {
         // Bật: Sáng nút + đọc từ
-        btn.classList.remove('text-slate-400', 'bg-slate-800', 'hover:bg-slate-700');
-        btn.classList.add('text-brand-400', 'bg-brand-900/20', 'border', 'border-brand-500/30', 'hover:bg-brand-900/40');
+        btn.classList.remove('text-slate-600', 'bg-slate-200', 'hover:bg-slate-300');
+        btn.classList.add('text-brand-700', 'bg-brand-100', 'border', 'border-brand-300', 'hover:bg-brand-200');
         icon.className = 'fa-solid fa-volume-high';
         speakWord(null); 
     } else {
         // Tắt: Mờ nút + dừng đọc
-        btn.classList.remove('text-brand-400', 'bg-brand-900/20', 'border', 'border-brand-500/30', 'hover:bg-brand-900/40');
-        btn.classList.add('text-slate-400', 'bg-slate-800', 'hover:bg-slate-700');
+        btn.classList.remove('text-brand-700', 'bg-brand-100', 'border', 'border-brand-300', 'hover:bg-brand-200');
+        btn.classList.add('text-slate-600', 'bg-slate-200', 'hover:bg-slate-300');
         icon.className = 'fa-solid fa-volume-xmark';
         stopAllAudio(); // Dừng phát âm
     }
@@ -1340,8 +1340,8 @@ async function startFlashcardMode() {
     const slideshowIcon = document.getElementById('fcSlideshowIcon');
     const speedControl = document.getElementById('fcSpeedControl');
     if (slideshowBtn && slideshowIcon) {
-        slideshowBtn.classList.remove('text-amber-400', 'bg-amber-900/20', 'border', 'border-amber-500/30', 'hover:bg-amber-900/40');
-        slideshowBtn.classList.add('text-slate-400', 'bg-slate-800', 'hover:bg-slate-700');
+        slideshowBtn.classList.remove('text-amber-700', 'bg-amber-100', 'border', 'border-amber-300', 'hover:bg-amber-200');
+        slideshowBtn.classList.add('text-slate-600', 'bg-slate-200', 'hover:bg-slate-300');
         slideshowIcon.className = 'fa-solid fa-play';
     }
     if (speedControl) speedControl.classList.add('hidden');
@@ -1351,8 +1351,8 @@ async function startFlashcardMode() {
     const autoPlayBtn = document.getElementById('fcAutoPlayBtn');
     const autoPlayIcon = document.getElementById('fcAutoPlayIcon');
     if (autoPlayBtn && autoPlayIcon) {
-        autoPlayBtn.classList.remove('text-slate-400', 'bg-slate-800', 'hover:bg-slate-700');
-        autoPlayBtn.classList.add('text-brand-400', 'bg-brand-900/20', 'border', 'border-brand-500/30', 'hover:bg-brand-900/40');
+        autoPlayBtn.classList.remove('text-slate-600', 'bg-slate-200', 'hover:bg-slate-300');
+        autoPlayBtn.classList.add('text-brand-700', 'bg-brand-100', 'border', 'border-brand-300', 'hover:bg-brand-200');
         autoPlayIcon.className = 'fa-solid fa-volume-high';
     }
 
