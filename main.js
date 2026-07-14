@@ -938,11 +938,19 @@ let autoPlaySequenceTimeout = null;
 let currentAutoPlayId = 0;
 window.currentViAudio = null;
 let fcPlaybackSpeed = 1.0;
+let fcExampleReadMode = 'none';
 
 function changePlaybackSpeed() {
     const speedSelect = document.getElementById('fcPlaybackSpeed');
     if (speedSelect) {
         fcPlaybackSpeed = parseFloat(speedSelect.value);
+    }
+}
+
+function changeExampleReadMode() {
+    const modeSelect = document.getElementById('fcExampleReadMode');
+    if (modeSelect) {
+        fcExampleReadMode = modeSelect.value;
     }
 }
 
@@ -962,7 +970,31 @@ function runAutoPlaySequence() {
     currentAutoPlayId++;
     const seqId = currentAutoPlayId;
     
-    // Đọc tiếng Anh
+    // Hàm trợ giúp phát Google TTS và tự động fallback về Web Speech API nếu lỗi
+    const playGoogleTTS = (text, langGoogle, langWeb, onEnd) => {
+        if (!isFcSlideshow || seqId !== currentAutoPlayId) return;
+        const url = `https://translate.googleapis.com/translate_tts?client=gtx&ie=UTF-8&tl=${langGoogle}&q=${encodeURIComponent(text)}`;
+        window.currentViAudio = new Audio(url);
+        window.currentViAudio.playbackRate = fcPlaybackSpeed;
+        
+        window.currentViAudio.onended = () => {
+            if (!isFcSlideshow || seqId !== currentAutoPlayId) return;
+            if (onEnd) onEnd();
+        };
+        
+        window.currentViAudio.onerror = () => {
+            playSpeechRobust(text, langWeb, 0.85 * fcPlaybackSpeed, () => {
+                if (!isFcSlideshow || seqId !== currentAutoPlayId) return;
+                if (onEnd) onEnd();
+            });
+        };
+        
+        window.currentViAudio.play().catch(e => {
+            if (window.currentViAudio && window.currentViAudio.onerror) window.currentViAudio.onerror();
+        });
+    };
+    
+    // Đọc tiếng Anh (Từ vựng chính)
     speakWord(null, () => {
         if (!isFcSlideshow || seqId !== currentAutoPlayId) return;
         
@@ -970,38 +1002,61 @@ function runAutoPlaySequence() {
         autoPlaySequenceTimeout = setTimeout(() => {
             if (!isFcSlideshow || seqId !== currentAutoPlayId) return;
             const card = currentFlashcards[flashcardIndex];
-            if (card && card.meaning) {
-                // Sử dụng API Google Translate cho tiếng Việt để có giọng chuẩn và rõ ràng
-                const url = `https://translate.googleapis.com/translate_tts?client=gtx&ie=UTF-8&tl=vi&q=${encodeURIComponent(card.meaning)}`;
-                window.currentViAudio = new Audio(url);
-                window.currentViAudio.playbackRate = fcPlaybackSpeed;
+            
+            const handleExampleSequence = () => {
+                if (!isFcSlideshow || seqId !== currentAutoPlayId) return;
                 
-                window.currentViAudio.onended = () => {
-                    if (!isFcSlideshow || seqId !== currentAutoPlayId) return;
+                const aiExEn = document.getElementById('fcExEn');
+                const aiExVi = document.getElementById('fcExVi');
+                const aiExampleContainer = document.getElementById('fcAiExample');
+                
+                const hasExample = aiExEn && aiExampleContainer && !aiExampleContainer.classList.contains('hidden') && aiExEn.innerText.trim() !== '';
+
+                if (fcExampleReadMode !== 'none' && hasExample) {
+                    autoPlaySequenceTimeout = setTimeout(() => {
+                        if (!isFcSlideshow || seqId !== currentAutoPlayId) return;
+                        
+                        let enText = aiExEn.innerText;
+                        if (enText.startsWith('"') && enText.endsWith('"')) enText = enText.substring(1, enText.length - 1);
+                        
+                        // Đọc ví dụ tiếng Anh bằng Google TTS
+                        playGoogleTTS(enText, 'en', 'en-US', () => {
+                            const hasViExample = aiExVi && aiExVi.innerText.trim() !== '';
+                            if (fcExampleReadMode === 'en_vi' && hasViExample) {
+                                // Đọc ví dụ tiếng Việt bằng Google TTS
+                                autoPlaySequenceTimeout = setTimeout(() => {
+                                    if (!isFcSlideshow || seqId !== currentAutoPlayId) return;
+                                    let viText = aiExVi.innerText;
+                                    playGoogleTTS(viText, 'vi', 'vi-VN', () => {
+                                        autoPlaySequenceTimeout = setTimeout(() => {
+                                            if (!isFcSlideshow || seqId !== currentAutoPlayId) return;
+                                            nextFlashcard();
+                                        }, 500 / fcPlaybackSpeed);
+                                    });
+                                }, 500 / fcPlaybackSpeed);
+                            } else {
+                                // Bỏ qua ví dụ tiếng Việt, sang thẻ mới
+                                autoPlaySequenceTimeout = setTimeout(() => {
+                                    if (!isFcSlideshow || seqId !== currentAutoPlayId) return;
+                                    nextFlashcard();
+                                }, 500 / fcPlaybackSpeed);
+                            }
+                        });
+                    }, 500 / fcPlaybackSpeed);
+                } else {
+                    // Không đọc ví dụ hoặc không có data, sang thẻ mới
                     autoPlaySequenceTimeout = setTimeout(() => {
                         if (!isFcSlideshow || seqId !== currentAutoPlayId) return;
                         nextFlashcard();
-                    }, 500 / fcPlaybackSpeed); 
-                };
-                
-                window.currentViAudio.onerror = () => {
-                    // Nếu lỗi (mất mạng/bị chặn), chuyển về dùng giọng ảo của trình duyệt
-                    playSpeechRobust(card.meaning, 'vi-VN', 0.85 * fcPlaybackSpeed, () => {
-                        if (!isFcSlideshow || seqId !== currentAutoPlayId) return;
-                        autoPlaySequenceTimeout = setTimeout(() => {
-                            if (!isFcSlideshow || seqId !== currentAutoPlayId) return;
-                            nextFlashcard();
-                        }, 500 / fcPlaybackSpeed);
-                    });
-                };
-                
-                window.currentViAudio.play().catch(e => {
-                    if (window.currentViAudio && window.currentViAudio.onerror) {
-                        window.currentViAudio.onerror();
-                    }
-                });
+                    }, 500 / fcPlaybackSpeed);
+                }
+            };
+            
+            if (card && card.meaning) {
+                // Đọc nghĩa Tiếng Việt của từ vựng bằng Google TTS
+                playGoogleTTS(card.meaning, 'vi', 'vi-VN', handleExampleSequence);
             } else {
-                nextFlashcard();
+                handleExampleSequence();
             }
         }, 500 / fcPlaybackSpeed); // 0.5 giây nghỉ điều chỉnh theo tốc độ
     });
