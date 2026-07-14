@@ -1396,6 +1396,18 @@ async function startFlashcardMode() {
     }
 
     if (shouldResume) {
+        const hasAnyExamples = currentFlashcards.some(word => word.aiExample && word.aiExample.en);
+        const exampleReadModeSelect = document.getElementById('fcExampleReadMode');
+        if (exampleReadModeSelect) {
+            if (!hasAnyExamples) {
+                exampleReadModeSelect.classList.add('hidden');
+                fcExampleReadMode = 'none';
+                exampleReadModeSelect.value = 'none';
+            } else {
+                exampleReadModeSelect.classList.remove('hidden');
+            }
+        }
+
         document.getElementById('welcomeScreen').classList.add('hidden');
         document.getElementById('examContainer').classList.add('hidden');
         document.getElementById('loadingScreen').classList.add('hidden');
@@ -1554,6 +1566,18 @@ async function startFlashcardMode() {
     flashcardIndex = 0;
     isFlipped = false;
     saveSessionForCurrentDifficulty();
+
+    const hasAnyExamples = currentFlashcards.some(word => word.aiExample && word.aiExample.en);
+    const exampleReadModeSelect = document.getElementById('fcExampleReadMode');
+    if (exampleReadModeSelect) {
+        if (!hasAnyExamples) {
+            exampleReadModeSelect.classList.add('hidden');
+            fcExampleReadMode = 'none';
+            exampleReadModeSelect.value = 'none';
+        } else {
+            exampleReadModeSelect.classList.remove('hidden');
+        }
+    }
 
     document.getElementById('welcomeScreen').classList.add('hidden');
     document.getElementById('examContainer').classList.add('hidden');
