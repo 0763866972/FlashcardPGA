@@ -937,6 +937,14 @@ let isFcSlideshow = false;
 let autoPlaySequenceTimeout = null;
 let currentAutoPlayId = 0;
 window.currentViAudio = null;
+let fcPlaybackSpeed = 1.0;
+
+function changePlaybackSpeed() {
+    const speedSelect = document.getElementById('fcPlaybackSpeed');
+    if (speedSelect) {
+        fcPlaybackSpeed = parseFloat(speedSelect.value);
+    }
+}
 
 function stopAllAudio() {
     window.speechSynthesis.cancel();
@@ -966,24 +974,24 @@ function runAutoPlaySequence() {
                 // Sử dụng API Google Translate cho tiếng Việt để có giọng chuẩn và rõ ràng
                 const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=vi&client=tw-ob&q=${encodeURIComponent(card.meaning)}`;
                 window.currentViAudio = new Audio(url);
-                window.currentViAudio.playbackRate = 1.0;
+                window.currentViAudio.playbackRate = fcPlaybackSpeed;
                 
                 window.currentViAudio.onended = () => {
                     if (!isFcSlideshow || seqId !== currentAutoPlayId) return;
                     autoPlaySequenceTimeout = setTimeout(() => {
                         if (!isFcSlideshow || seqId !== currentAutoPlayId) return;
                         nextFlashcard();
-                    }, 500); 
+                    }, 500 / fcPlaybackSpeed); 
                 };
                 
                 window.currentViAudio.onerror = () => {
                     // Nếu lỗi (mất mạng/bị chặn), chuyển về dùng giọng ảo của trình duyệt
-                    playSpeechRobust(card.meaning, 'vi-VN', 0.85, () => {
+                    playSpeechRobust(card.meaning, 'vi-VN', 0.85 * fcPlaybackSpeed, () => {
                         if (!isFcSlideshow || seqId !== currentAutoPlayId) return;
                         autoPlaySequenceTimeout = setTimeout(() => {
                             if (!isFcSlideshow || seqId !== currentAutoPlayId) return;
                             nextFlashcard();
-                        }, 500);
+                        }, 500 / fcPlaybackSpeed);
                     });
                 };
                 
@@ -995,7 +1003,7 @@ function runAutoPlaySequence() {
             } else {
                 nextFlashcard();
             }
-        }, 500); // 0.5 giây nghỉ
+        }, 500 / fcPlaybackSpeed); // 0.5 giây nghỉ điều chỉnh theo tốc độ
     });
 }
 
@@ -1003,17 +1011,20 @@ function toggleSlideshow() {
     isFcSlideshow = !isFcSlideshow;
     const btn = document.getElementById('fcSlideshowBtn');
     const icon = document.getElementById('fcSlideshowIcon');
+    const speedControl = document.getElementById('fcSpeedControl');
 
     if (isFcSlideshow) {
         btn.classList.remove('text-slate-400', 'bg-slate-800', 'hover:bg-slate-700');
         btn.classList.add('text-amber-400', 'bg-amber-900/20', 'border', 'border-amber-500/30', 'hover:bg-amber-900/40');
         icon.className = 'fa-solid fa-pause';
+        if (speedControl) speedControl.classList.remove('hidden');
         if (autoPlaySequenceTimeout) clearTimeout(autoPlaySequenceTimeout);
         runAutoPlaySequence();
     } else {
         btn.classList.remove('text-amber-400', 'bg-amber-900/20', 'border', 'border-amber-500/30', 'hover:bg-amber-900/40');
         btn.classList.add('text-slate-400', 'bg-slate-800', 'hover:bg-slate-700');
         icon.className = 'fa-solid fa-play';
+        if (speedControl) speedControl.classList.add('hidden');
         if (autoPlaySequenceTimeout) clearTimeout(autoPlaySequenceTimeout);
         stopAllAudio(); // Dừng phát âm
     }
@@ -1272,11 +1283,13 @@ async function startFlashcardMode() {
     isFcSlideshow = false;
     const slideshowBtn = document.getElementById('fcSlideshowBtn');
     const slideshowIcon = document.getElementById('fcSlideshowIcon');
+    const speedControl = document.getElementById('fcSpeedControl');
     if (slideshowBtn && slideshowIcon) {
         slideshowBtn.classList.remove('text-amber-400', 'bg-amber-900/20', 'border', 'border-amber-500/30', 'hover:bg-amber-900/40');
         slideshowBtn.classList.add('text-slate-400', 'bg-slate-800', 'hover:bg-slate-700');
         slideshowIcon.className = 'fa-solid fa-play';
     }
+    if (speedControl) speedControl.classList.add('hidden');
 
     // Đảm bảo luôn bật chế độ tự động đọc khi mới vào
     isFcAutoPlay = true;
@@ -1843,7 +1856,7 @@ function speakWord(event, onEndCallback = null) {
 
     if (speakWordTimeoutId) clearTimeout(speakWordTimeoutId);
     speakWordTimeoutId = setTimeout(() => {
-        playSpeechRobust(text, 'en-US', 0.85, onEndCallback);
+        playSpeechRobust(text, 'en-US', 0.85 * fcPlaybackSpeed, onEndCallback);
     }, 50);
 }
 
