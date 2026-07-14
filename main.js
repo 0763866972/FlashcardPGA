@@ -1424,7 +1424,7 @@ async function generateBulkExamples(wordsArray, assignedKey, onlyExample = false
 
     let batchSize = 5;
     if (isGroq) {
-        batchSize = 3;
+        batchSize = 2;
     } else {
         if (targetMode === 'dictation') {
             batchSize = 20;
