@@ -933,6 +933,92 @@ function revealExampleVi(event) {
     viEl.classList.toggle('opacity-70');
 }
 
+let isFcSlideshow = false;
+let autoPlaySequenceTimeout = null;
+let currentAutoPlayId = 0;
+window.currentViAudio = null;
+
+function stopAllAudio() {
+    window.speechSynthesis.cancel();
+    if (window.currentViAudio) {
+        window.currentViAudio.pause();
+        window.currentViAudio.removeAttribute('src');
+        window.currentViAudio.load();
+        window.currentViAudio = null;
+    }
+}
+
+function runAutoPlaySequence() {
+    if (!isFcSlideshow) return;
+    
+    currentAutoPlayId++;
+    const seqId = currentAutoPlayId;
+    
+    // Đọc tiếng Anh
+    speakWord(null, () => {
+        if (!isFcSlideshow || seqId !== currentAutoPlayId) return;
+        
+        // Nghỉ 1 chút xíu rồi đọc tiếng Việt
+        autoPlaySequenceTimeout = setTimeout(() => {
+            if (!isFcSlideshow || seqId !== currentAutoPlayId) return;
+            const card = currentFlashcards[flashcardIndex];
+            if (card && card.meaning) {
+                // Sử dụng API Google Translate cho tiếng Việt để có giọng chuẩn và rõ ràng
+                const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=vi&client=tw-ob&q=${encodeURIComponent(card.meaning)}`;
+                window.currentViAudio = new Audio(url);
+                window.currentViAudio.playbackRate = 1.0;
+                
+                window.currentViAudio.onended = () => {
+                    if (!isFcSlideshow || seqId !== currentAutoPlayId) return;
+                    autoPlaySequenceTimeout = setTimeout(() => {
+                        if (!isFcSlideshow || seqId !== currentAutoPlayId) return;
+                        nextFlashcard();
+                    }, 500); 
+                };
+                
+                window.currentViAudio.onerror = () => {
+                    // Nếu lỗi (mất mạng/bị chặn), chuyển về dùng giọng ảo của trình duyệt
+                    playSpeechRobust(card.meaning, 'vi-VN', 0.85, () => {
+                        if (!isFcSlideshow || seqId !== currentAutoPlayId) return;
+                        autoPlaySequenceTimeout = setTimeout(() => {
+                            if (!isFcSlideshow || seqId !== currentAutoPlayId) return;
+                            nextFlashcard();
+                        }, 500);
+                    });
+                };
+                
+                window.currentViAudio.play().catch(e => {
+                    if (window.currentViAudio && window.currentViAudio.onerror) {
+                        window.currentViAudio.onerror();
+                    }
+                });
+            } else {
+                nextFlashcard();
+            }
+        }, 500); // 0.5 giây nghỉ
+    });
+}
+
+function toggleSlideshow() {
+    isFcSlideshow = !isFcSlideshow;
+    const btn = document.getElementById('fcSlideshowBtn');
+    const icon = document.getElementById('fcSlideshowIcon');
+
+    if (isFcSlideshow) {
+        btn.classList.remove('text-slate-400', 'bg-slate-800', 'hover:bg-slate-700');
+        btn.classList.add('text-amber-400', 'bg-amber-900/20', 'border', 'border-amber-500/30', 'hover:bg-amber-900/40');
+        icon.className = 'fa-solid fa-pause';
+        if (autoPlaySequenceTimeout) clearTimeout(autoPlaySequenceTimeout);
+        runAutoPlaySequence();
+    } else {
+        btn.classList.remove('text-amber-400', 'bg-amber-900/20', 'border', 'border-amber-500/30', 'hover:bg-amber-900/40');
+        btn.classList.add('text-slate-400', 'bg-slate-800', 'hover:bg-slate-700');
+        icon.className = 'fa-solid fa-play';
+        if (autoPlaySequenceTimeout) clearTimeout(autoPlaySequenceTimeout);
+        stopAllAudio(); // Dừng phát âm
+    }
+}
+
 /**
  * toggleAutoPlay - Bật/tắt chế độ tự động đọc từ (text-to-speech) khi lật thẻ.
  * Khi bật: nút sáng lên, đọc luôn từ hiện tại.
@@ -948,13 +1034,13 @@ function toggleAutoPlay() {
         btn.classList.remove('text-slate-400', 'bg-slate-800', 'hover:bg-slate-700');
         btn.classList.add('text-brand-400', 'bg-brand-900/20', 'border', 'border-brand-500/30', 'hover:bg-brand-900/40');
         icon.className = 'fa-solid fa-volume-high';
-        speakWord(null); // Đọc từ hiện tại ngay
+        speakWord(null); 
     } else {
         // Tắt: Mờ nút + dừng đọc
         btn.classList.remove('text-brand-400', 'bg-brand-900/20', 'border', 'border-brand-500/30', 'hover:bg-brand-900/40');
         btn.classList.add('text-slate-400', 'bg-slate-800', 'hover:bg-slate-700');
         icon.className = 'fa-solid fa-volume-xmark';
-        window.speechSynthesis.cancel(); // Dừng phát âm
+        stopAllAudio(); // Dừng phát âm
     }
 }
 
@@ -1183,6 +1269,15 @@ function executeDeleteFcWord(event) {
 // - Random trộn danh sách (nếu cần) và chuyển giao diện sang #flashcardContainer.
 // =====================================================================
 async function startFlashcardMode() {
+    isFcSlideshow = false;
+    const slideshowBtn = document.getElementById('fcSlideshowBtn');
+    const slideshowIcon = document.getElementById('fcSlideshowIcon');
+    if (slideshowBtn && slideshowIcon) {
+        slideshowBtn.classList.remove('text-amber-400', 'bg-amber-900/20', 'border', 'border-amber-500/30', 'hover:bg-amber-900/40');
+        slideshowBtn.classList.add('text-slate-400', 'bg-slate-800', 'hover:bg-slate-700');
+        slideshowIcon.className = 'fa-solid fa-play';
+    }
+
     // Đảm bảo luôn bật chế độ tự động đọc khi mới vào
     isFcAutoPlay = true;
     const autoPlayBtn = document.getElementById('fcAutoPlayBtn');
@@ -1704,7 +1799,7 @@ ${jsonStructure}`;
 // Mảng toàn cục lưu trữ âm thanh để chống lỗi Garbage Collection (trình duyệt xóa nhầm âm thanh)
 window.__ttsUtterances = [];
 
-function playSpeechRobust(text, lang = 'en-US', rate = 0.85) {
+function playSpeechRobust(text, lang = 'en-US', rate = 0.85, onEndCallback = null) {
     // Dọn dẹp hàng đợi cũ để tránh kẹt âm thanh
     window.speechSynthesis.cancel();
 
@@ -1713,6 +1808,11 @@ function playSpeechRobust(text, lang = 'en-US', rate = 0.85) {
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = lang;
         utterance.rate = rate;
+        
+        if (onEndCallback) {
+            utterance.onend = onEndCallback;
+            utterance.onerror = onEndCallback;
+        }
 
         const voices = window.speechSynthesis.getVoices();
         const targetVoices = voices.filter(v => v.lang.startsWith(lang.split('-')[0]));
@@ -1735,7 +1835,7 @@ function playSpeechRobust(text, lang = 'en-US', rate = 0.85) {
 }
 
 let speakWordTimeoutId = null;
-function speakWord(event) {
+function speakWord(event, onEndCallback = null) {
     if (event) event.stopPropagation();
     if (currentFlashcards.length === 0) return;
     const text = currentFlashcards[flashcardIndex].word;
@@ -1743,7 +1843,7 @@ function speakWord(event) {
 
     if (speakWordTimeoutId) clearTimeout(speakWordTimeoutId);
     speakWordTimeoutId = setTimeout(() => {
-        playSpeechRobust(text, 'en-US', 0.85);
+        playSpeechRobust(text, 'en-US', 0.85, onEndCallback);
     }, 50);
 }
 
@@ -2155,9 +2255,12 @@ function renderFlashcard() {
         isFlipped = false;
     }
 
-    if (isFcAutoPlay) {
+    if (isFcSlideshow) {
+        if (autoPlaySequenceTimeout) clearTimeout(autoPlaySequenceTimeout);
+        autoPlaySequenceTimeout = setTimeout(() => runAutoPlaySequence(), 600);
+    } else if (isFcAutoPlay) {
         // Tăng độ trễ lên 600ms (đủ lâu để TTS engine trên Windows khởi tạo thành công)
-        if (isFcWordListenMode && !isFcMeaningBlurred) {
+        if (typeof isFcWordListenMode !== 'undefined' && isFcWordListenMode && typeof isFcMeaningBlurred !== 'undefined' && !isFcMeaningBlurred) {
             // Chế độ Nghe & Gõ VÀ Nghĩa tiếng Việt ĐANG HIỆN RÕ:
             // -> Người dùng muốn tự dịch từ tiếng Việt sang tiếng Anh và gõ.
             // -> Không tự động đọc từ lúc này, đợi họ Enter kiểm tra thì mới đọc.
@@ -2200,7 +2303,7 @@ function jumpToFlashcardInline(val) {
 }
 
 function nextFlashcard() {
-    window.speechSynthesis.cancel();
+    stopAllAudio();
     if (flashcardIndex < currentFlashcards.length - 1) {
         flashcardIndex++;
     } else {
@@ -2215,7 +2318,7 @@ function nextFlashcard() {
 }
 
 function prevFlashcard() {
-    window.speechSynthesis.cancel();
+    stopAllAudio();
     if (flashcardIndex > 0) {
         flashcardIndex--;
     } else {
