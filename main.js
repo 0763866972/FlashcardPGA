@@ -1906,8 +1906,11 @@ let speakWordTimeoutId = null;
 function speakWord(event, onEndCallback = null) {
     if (event) event.stopPropagation();
     if (currentFlashcards.length === 0) return;
-    const text = currentFlashcards[flashcardIndex].word;
+    let text = currentFlashcards[flashcardIndex].word;
     if (!text) return;
+
+    // Đổi dấu / thành dấu phẩy để giọng đọc ngắt nghỉ tự nhiên thay vì đọc chữ "slash"
+    text = text.replace(/\//g, ', ');
 
     if (speakWordTimeoutId) clearTimeout(speakWordTimeoutId);
     speakWordTimeoutId = setTimeout(() => {
