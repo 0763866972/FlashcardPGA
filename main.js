@@ -994,14 +994,21 @@ function runAutoPlaySequence() {
         });
     };
     
-    // Đọc tiếng Anh (Từ vựng chính)
-    speakWord(null, () => {
+    // Đọc Từ vựng chính bằng Google TTS (Thay vì Web Speech API)
+    const card = currentFlashcards[flashcardIndex];
+    if (!card) return;
+    
+    let text = card.word;
+    text = text.replace(/\//g, ', ');
+    const langGoogle = isVietnameseText(text) ? 'vi' : 'en';
+    const langWeb = isVietnameseText(text) ? 'vi-VN' : 'en-US';
+
+    playGoogleTTS(text, langGoogle, langWeb, () => {
         if (!isFcSlideshow || seqId !== currentAutoPlayId) return;
         
         // Nghỉ 1 chút xíu rồi đọc tiếng Việt
         autoPlaySequenceTimeout = setTimeout(() => {
             if (!isFcSlideshow || seqId !== currentAutoPlayId) return;
-            const card = currentFlashcards[flashcardIndex];
             
             const handleExampleSequence = () => {
                 if (!isFcSlideshow || seqId !== currentAutoPlayId) return;
@@ -1884,43 +1891,73 @@ ${jsonStructure}`;
 
 // Mảng toàn cục lưu trữ âm thanh để chống lỗi Garbage Collection (trình duyệt xóa nhầm âm thanh)
 window.__ttsUtterances = [];
+window.globalAudioTTS = null;
 
-function playSpeechRobust(text, lang = 'en-US', rate = 0.85, onEndCallback = null) {
-    // Dọn dẹp hàng đợi cũ để tránh kẹt âm thanh
+function playSpeechRobust(text, lang = 'en-US', rate = 1.0, onEndCallback = null) {
+    // Dọn dẹp hàng đợi Web Speech API cũ để tránh kẹt
     window.speechSynthesis.cancel();
+    
+    // Dừng Audio Google TTS đang phát (nếu có)
+    if (window.globalAudioTTS) {
+        window.globalAudioTTS.pause();
+        window.globalAudioTTS.removeAttribute('src');
+        window.globalAudioTTS.load();
+        window.globalAudioTTS = null;
+    }
 
-    // Đợi 50ms để trình duyệt thực sự dọn dẹp xong hàng đợi trước khi đọc từ mới
-    setTimeout(() => {
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = lang;
-        utterance.rate = rate;
-        
-        if (onEndCallback) {
-            utterance.onend = onEndCallback;
-            utterance.onerror = onEndCallback;
-        }
+    // Xác định mã ngôn ngữ cho Google TTS
+    const langGoogle = lang.startsWith('vi') ? 'vi' : 'en';
+    const url = `https://translate.googleapis.com/translate_tts?client=gtx&ie=UTF-8&tl=${langGoogle}&q=${encodeURIComponent(text)}`;
+    
+    window.globalAudioTTS = new Audio(url);
+    // Điều chỉnh tốc độ cho Google TTS (đúng với rate user chọn: 1.0 -> 1.4)
+    window.globalAudioTTS.playbackRate = rate;
 
-        const voices = window.speechSynthesis.getVoices();
-        const targetVoices = voices.filter(v => v.lang.startsWith(lang.split('-')[0]));
+    window.globalAudioTTS.onended = () => {
+        if (onEndCallback) onEndCallback();
+    };
 
-        if (targetVoices.length > 0) {
-            const preferredVoice = targetVoices.find(v => v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Microsoft Mark') || v.name.includes('Samantha'));
-            utterance.voice = preferredVoice || targetVoices[0];
-        }
+    window.globalAudioTTS.onerror = () => {
+        // === FALLBACK: NẾU GOOGLE TTS LỖI HOẶC BỊ CHẶN, CHUYỂN VỀ WEB SPEECH API CŨ ===
+        setTimeout(() => {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = lang;
+            // Web Speech API nói nhanh hơn Google 1 chút, nên ta dùng hệ số 0.85 * rate
+            utterance.rate = 0.85 * rate;
+            
+            if (onEndCallback) {
+                utterance.onend = onEndCallback;
+                utterance.onerror = onEndCallback;
+            }
 
-        // [2] HACK FIX CHO LỖI GARBAGE COLLECTION BỊ NUỐT ÂM THANH:
-        // Trình duyệt đôi khi "dọn rác" quá sớm, xóa luôn đối tượng utterance khỏi RAM
-        // trước khi nó kịp phát ra loa. Kết quả là hàm speak() chạy nhưng không có tiếng.
-        // Cách giải quyết: Nhét đối tượng này vào mảng toàn cục (__ttsUtterances) để giữ nó sống sót.
-        window.__ttsUtterances.push(utterance);
-        // Giữ lại 10 đoạn âm thanh gần nhất thôi để không tốn RAM
-        if (window.__ttsUtterances.length > 10) window.__ttsUtterances.shift();
+            const voices = window.speechSynthesis.getVoices();
+            const targetVoices = voices.filter(v => v.lang.startsWith(lang.split('-')[0]));
 
-        window.speechSynthesis.speak(utterance);
-    }, 50);
+            if (targetVoices.length > 0) {
+                const preferredVoice = targetVoices.find(v => v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Microsoft Mark') || v.name.includes('Samantha'));
+                utterance.voice = preferredVoice || targetVoices[0];
+            }
+
+            window.__ttsUtterances.push(utterance);
+            if (window.__ttsUtterances.length > 10) window.__ttsUtterances.shift();
+
+            window.speechSynthesis.speak(utterance);
+        }, 50);
+    };
+
+    // Bắt đầu phát Google TTS
+    window.globalAudioTTS.play().catch(e => {
+        if (window.globalAudioTTS && window.globalAudioTTS.onerror) window.globalAudioTTS.onerror();
+    });
 }
 
 let speakWordTimeoutId = null;
+
+function isVietnameseText(text) {
+    const vnPattern = /[àáãạảăắằẳẵặâấầẩẫậèéẹẻẽêềếểễệđìíĩỉịòóõọỏôốồổỗộơớờởỡợùúũụủưứừửữựỳýỵỷỹ]/i;
+    return vnPattern.test(text);
+}
+
 function speakWord(event, onEndCallback = null) {
     if (event) event.stopPropagation();
     if (currentFlashcards.length === 0) return;
@@ -1932,7 +1969,8 @@ function speakWord(event, onEndCallback = null) {
 
     if (speakWordTimeoutId) clearTimeout(speakWordTimeoutId);
     speakWordTimeoutId = setTimeout(() => {
-        playSpeechRobust(text, 'en-US', 0.85 * fcPlaybackSpeed, onEndCallback);
+        const lang = isVietnameseText(text) ? 'vi-VN' : 'en-US';
+        playSpeechRobust(text, lang, fcPlaybackSpeed, onEndCallback);
     }, 50);
 }
 
@@ -1951,7 +1989,7 @@ function speakMeaning(event) {
 
         if (speakMeaningTimeoutId) clearTimeout(speakMeaningTimeoutId);
         speakMeaningTimeoutId = setTimeout(() => {
-            playSpeechRobust(text, 'en-US', 0.85);
+            playSpeechRobust(text, 'en-US', fcPlaybackSpeed);
         }, 50);
         return;
     }
