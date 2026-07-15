@@ -1892,6 +1892,7 @@ ${jsonStructure}`;
 // Mảng toàn cục lưu trữ âm thanh để chống lỗi Garbage Collection (trình duyệt xóa nhầm âm thanh)
 window.__ttsUtterances = [];
 window.globalAudioTTS = null;
+window.globalTTSDebounceTimer = null;
 
 function playSpeechRobust(text, lang = 'en-US', rate = 1.0, onEndCallback = null) {
     // Dọn dẹp hàng đợi Web Speech API cũ để tránh kẹt
@@ -1905,50 +1906,59 @@ function playSpeechRobust(text, lang = 'en-US', rate = 1.0, onEndCallback = null
         window.globalAudioTTS = null;
     }
 
-    // Xác định mã ngôn ngữ cho Google TTS
-    const langGoogle = lang.startsWith('vi') ? 'vi' : 'en';
-    const url = `https://translate.googleapis.com/translate_tts?client=gtx&ie=UTF-8&tl=${langGoogle}&q=${encodeURIComponent(text)}`;
-    
-    window.globalAudioTTS = new Audio(url);
-    // Điều chỉnh tốc độ cho Google TTS (đúng với rate user chọn: 1.0 -> 1.4)
-    window.globalAudioTTS.playbackRate = rate;
+    // === CƠ CHẾ CHỐNG SPAM GOOGLE (DEBOUNCE) ===
+    // Nếu người dùng bấm lật thẻ hoặc bấm nút đọc liên tục, ta sẽ hủy lệnh đọc trước đó
+    // và chỉ thực sự gọi Google API sau khi người dùng dừng bấm khoảng 250ms.
+    if (window.globalTTSDebounceTimer) {
+        clearTimeout(window.globalTTSDebounceTimer);
+    }
 
-    window.globalAudioTTS.onended = () => {
-        if (onEndCallback) onEndCallback();
-    };
+    window.globalTTSDebounceTimer = setTimeout(() => {
+        // Xác định mã ngôn ngữ cho Google TTS
+        const langGoogle = lang.startsWith('vi') ? 'vi' : 'en';
+        const url = `https://translate.googleapis.com/translate_tts?client=gtx&ie=UTF-8&tl=${langGoogle}&q=${encodeURIComponent(text)}`;
+        
+        window.globalAudioTTS = new Audio(url);
+        // Điều chỉnh tốc độ cho Google TTS (đúng với rate user chọn: 1.0 -> 1.4)
+        window.globalAudioTTS.playbackRate = rate;
 
-    window.globalAudioTTS.onerror = () => {
-        // === FALLBACK: NẾU GOOGLE TTS LỖI HOẶC BỊ CHẶN, CHUYỂN VỀ WEB SPEECH API CŨ ===
-        setTimeout(() => {
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = lang;
-            // Web Speech API nói nhanh hơn Google 1 chút, nên ta dùng hệ số 0.85 * rate
-            utterance.rate = 0.85 * rate;
-            
-            if (onEndCallback) {
-                utterance.onend = onEndCallback;
-                utterance.onerror = onEndCallback;
-            }
+        window.globalAudioTTS.onended = () => {
+            if (onEndCallback) onEndCallback();
+        };
 
-            const voices = window.speechSynthesis.getVoices();
-            const targetVoices = voices.filter(v => v.lang.startsWith(lang.split('-')[0]));
+        window.globalAudioTTS.onerror = () => {
+            // === FALLBACK: NẾU GOOGLE TTS LỖI HOẶC BỊ CHẶN, CHUYỂN VỀ WEB SPEECH API CŨ ===
+            setTimeout(() => {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = lang;
+                // Web Speech API nói nhanh hơn Google 1 chút, nên ta dùng hệ số 0.85 * rate
+                utterance.rate = 0.85 * rate;
+                
+                if (onEndCallback) {
+                    utterance.onend = onEndCallback;
+                    utterance.onerror = onEndCallback;
+                }
 
-            if (targetVoices.length > 0) {
-                const preferredVoice = targetVoices.find(v => v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Microsoft Mark') || v.name.includes('Samantha'));
-                utterance.voice = preferredVoice || targetVoices[0];
-            }
+                const voices = window.speechSynthesis.getVoices();
+                const targetVoices = voices.filter(v => v.lang.startsWith(lang.split('-')[0]));
 
-            window.__ttsUtterances.push(utterance);
-            if (window.__ttsUtterances.length > 10) window.__ttsUtterances.shift();
+                if (targetVoices.length > 0) {
+                    const preferredVoice = targetVoices.find(v => v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Microsoft Mark') || v.name.includes('Samantha'));
+                    utterance.voice = preferredVoice || targetVoices[0];
+                }
 
-            window.speechSynthesis.speak(utterance);
-        }, 50);
-    };
+                window.__ttsUtterances.push(utterance);
+                if (window.__ttsUtterances.length > 10) window.__ttsUtterances.shift();
 
-    // Bắt đầu phát Google TTS
-    window.globalAudioTTS.play().catch(e => {
-        if (window.globalAudioTTS && window.globalAudioTTS.onerror) window.globalAudioTTS.onerror();
-    });
+                window.speechSynthesis.speak(utterance);
+            }, 50);
+        };
+
+        // Bắt đầu phát Google TTS
+        window.globalAudioTTS.play().catch(e => {
+            if (window.globalAudioTTS && window.globalAudioTTS.onerror) window.globalAudioTTS.onerror();
+        });
+    }, 250); // Chờ 250ms để chống spam
 }
 
 let speakWordTimeoutId = null;
