@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Scanner</title>
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔍</text></svg>">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #334155;
+        }
+        /* Style for the drag & drop zone */
+        /* Excel-like Table Styling */
+        .excel-table {
+            width: 100%;
+            min-width: 1200px;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .excel-table th, .excel-table td {
+            border: 1px solid #94a3b8;
+            padding: 8px 12px;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+        .excel-table th {
+            text-align: center;
+            font-weight: 600;
+        }
+        .col-stt { width: 50px; text-align: center; background-color: #f1f5f9; }
+        .th-noun { background-color: #fef08a; } /* Vàng nhạt */
+        .th-adj { background-color: #bae6fd; } /* Xanh nhạt */
+        .th-verb { background-color: #fef08a; } /* Vàng nhạt */
+        .th-adv { background-color: #bae6fd; } /* Xanh nhạt */
+        .th-conj { background-color: #fef08a; } /* Vàng nhạt */
+        
+        .word-text { color: #2563eb; } /* Xanh dương cho từ vựng */
+        .meaning-text { color: #dc2626; } /* Đỏ cho nghĩa tiếng Việt */
+
+        /* Loading spinner */
+        .spinner {
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top: 3px solid white;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8 flex flex-col items-center">
+
+    <div class="w-full max-w-7xl mx-auto space-y-6">
+        <!-- Header -->
+        <div class="flex items-center justify-between bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+            <div>
+                <h1 class="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-keyboard text-brand-500"></i> Auto Vocab Scanner
+                </h1>
+                <p class="text-slate-500 text-sm mt-1">Dán đoạn văn bản vào, AI sẽ tự động phân tích và lập bảng danh tính động trạng.</p>
+                <p class="text-[11px] font-bold tracking-widest mt-1.5">
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-500 to-cyan-500 drop-shadow-sm uppercase">
+                        Design by Phan Gia An
+                    </span>
+                </p>
+            </div>
+            <div class="flex items-center gap-3">
+                <select id="aiModelSelect" onchange="saveModelPref()" class="border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-500 bg-white shadow-sm font-semibold text-slate-700 cursor-pointer">
+                    <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash Lite</option>
+                    <option value="openai/gpt-oss-120b">GPT-OSS 120B (Groq)</option>
+                </select>
+                
+                <div class="relative flex items-center">
+                    <button onclick="toggleKeyConfig()" id="toggleKeyConfigBtn" title="Cấu hình API Key" class="relative bg-white hover:bg-slate-50 border border-slate-200 text-brand-500 text-sm w-9 h-9 flex justify-center items-center rounded-xl transition-all duration-300 shadow-sm hover:shadow-md shrink-0 group">
+                        <i class="fa-solid fa-key group-hover:scale-110 transition-transform"></i>
+                        <span id="activeKeyCountBadge" class="absolute -top-1.5 -right-1.5 bg-brand-500 text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full border border-white shadow-sm hidden">0</span>
+                    </button>
+
+                    <!-- Absolute Dropdown Panel -->
+                    <div id="keyConfigSection" class="hidden absolute top-full right-0 mt-3 bg-white border border-slate-200 p-5 rounded-2xl shadow-xl flex flex-col gap-5 transition-all duration-300 z-50 w-[340px] origin-top-right">
+                        <div class="flex items-center justify-between">
+                            <label class="text-sm text-slate-600 font-bold">Số lượng Key:</label>
+                            <div class="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-xl p-1 shadow-inner">
+                                <button onclick="changeKeyCount(-1)" class="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-brand-600 rounded-lg hover:bg-white transition-all shadow-sm"><i class="fa-solid fa-minus text-[10px]"></i></button>
+                                <input type="number" id="keyCountInput" value="1" min="1" max="10" readonly class="bg-transparent text-sm text-brand-600 font-black outline-none w-8 text-center select-none pointer-events-none p-0 border-none focus:ring-0" style="background: transparent !important; color: inherit !important; box-shadow: none !important;">
+                                <button onclick="changeKeyCount(1)" class="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-brand-600 rounded-lg hover:bg-white transition-all shadow-sm"><i class="fa-solid fa-plus text-[10px]"></i></button>
+                            </div>
+                        </div>
+
+                        <div id="keyInputsContainer" class="flex flex-col gap-3 max-h-[250px] overflow-y-auto pr-1">
+                            <!-- Dynamically populated inputs -->
+                        </div>
+
+                        <div class="flex items-center justify-between pt-4 border-t border-slate-100 mt-1">
+                            <a id="getKeyLink" href="https://aistudio.google.com/app/apikey" target="_blank" class="text-sm font-bold text-brand-600 hover:text-brand-500 flex items-center gap-1.5 transition-all">
+                                <i class="fa-solid fa-link text-xs"></i> Lấy API Key
+                            </a>
+                            <button onclick="saveApiKey()" class="bg-brand-600 hover:bg-brand-500 text-white text-sm px-5 py-2.5 rounded-xl font-bold transition-all flex items-center gap-2 shadow-lg shadow-brand-500/20 active:scale-95">
+                                <i class="fa-solid fa-floppy-disk"></i> Lưu
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Text Input -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+            <h3 class="text-lg font-semibold text-slate-700 mb-3"><i class="fa-solid fa-keyboard text-brand-500"></i> Dán / Nhập Đoạn Văn Bản (Text)</h3>
+            <textarea id="textInput" rows="12" class="w-full border border-slate-300 rounded-xl p-4 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all text-slate-700" placeholder="Paste đoạn văn tiếng Anh vào đây, AI sẽ tự động phân tích và nhặt từ vựng ra..."></textarea>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex justify-center">
+            <button id="scanBtn" onclick="processContent()" class="bg-brand-500 hover:bg-brand-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-brand-500/30 transition-all flex items-center gap-3">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> <span id="scanBtnText">Phân Tích Dữ Liệu</span>
+                <div id="scanSpinner" class="spinner hidden"></div>
+            </button>
+        </div>
+
+        <!-- Error Message -->
+        <div id="errorMsg" class="hidden bg-rose-50 border border-rose-200 text-rose-600 p-4 rounded-xl text-center text-sm font-medium"></div>
+
+        <!-- Table Result -->
+        <div id="resultContainer" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-slate-200 overflow-x-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-lg text-slate-800">Kết Quả Phân Tích</h3>
+                <button onclick="copyTableData()" class="bg-emerald-100 hover:bg-emerald-200 text-emerald-700 px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2">
+                    <i class="fa-regular fa-copy"></i> Copy Data
+                </button>
+            </div>
+            
+            <table class="excel-table" id="vocabTable">
+                <thead>
+                    <tr>
+                        <th class="col-stt">STT</th>
+                        <th class="th-noun" colspan="2">Danh từ</th>
+                        <th class="th-adj" colspan="2">Tính từ</th>
+                        <th class="th-verb" colspan="2">Động từ</th>
+                        <th class="th-adv" colspan="2">Trạng từ</th>
+                        <th class="th-conj" colspan="2">Liên từ</th>
+                    </tr>
+                </thead>
+                <tbody id="vocabTableBody">
+                    <!-- Rows will be generated here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Configure Tailwind Brand Color -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 50: '#f0f9ff', 100: '#e0f2fe', 200: '#bae6fd', 300: '#7dd3fc', 400: '#38bdf8', 500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1' }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Logic -->
+    <script>
+        let keyCount = 1;
+        let apiKeys = [];
+
+        function getStorageKeyForModel() {
+            const val = document.getElementById('aiModelSelect').value;
+            if (val.includes('gpt-oss') || val.includes('llama') || val.includes('mixtral')) return 'toeic_ai_apikey_groq';
+            return 'toeic_ai_apikey'; // Gemini
+        }
+
+        // Initialize API Key and Model from localStorage
+        document.addEventListener("DOMContentLoaded", () => {
+            const savedModel = localStorage.getItem('toeic_ai_model');
+            if (savedModel) {
+                const select = document.getElementById('aiModelSelect');
+                for (let i = 0; i < select.options.length; i++) {
+                    if (select.options[i].value === savedModel) {
+                        select.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+            
+            loadApiKeyForCurrentModel();
+        });
+
+        function loadApiKeyForCurrentModel() {
+            const storageKey = getStorageKeyForModel();
+            const savedKey = localStorage.getItem(storageKey);
+            
+            const linkEl = document.getElementById('getKeyLink');
+            if (linkEl) {
+                if (storageKey === 'toeic_ai_apikey_groq') {
+                    linkEl.href = 'https://console.groq.com/keys';
+                } else {
+                    linkEl.href = 'https://aistudio.google.com/app/apikey';
+                }
+            }
+
+            if (savedKey) {
+                apiKeys = savedKey.split(',').filter(k => k.trim());
+                keyCount = apiKeys.length || 1;
+            } else {
+                apiKeys = [];
+                keyCount = 1;
+            }
+            document.getElementById('keyCountInput').value = keyCount;
+            renderKeyInputs();
+            updateKeyBadge();
+        }
+
+        function toggleKeyConfig() {
+            document.getElementById('keyConfigSection').classList.toggle('hidden');
+        }
+
+        function changeKeyCount(delta) {
+            let newVal = keyCount + delta;
+            if (newVal >= 1 && newVal <= 10) {
+                keyCount = newVal;
+                document.getElementById('keyCountInput').value = keyCount;
+                renderKeyInputs();
+            }
+        }
+
+        function renderKeyInputs() {
+            const container = document.getElementById('keyInputsContainer');
+            container.innerHTML = '';
+            for (let i = 0; i < keyCount; i++) {
+                const val = apiKeys[i] || '';
+                container.innerHTML += `
+                    <div class="flex items-center gap-2 relative">
+                        <div class="w-6 text-xs font-bold text-slate-400 text-right">#${i + 1}</div>
+                        <input type="password" id="apiKey_${i}" value="${val}" placeholder="Nhập API Key ${i + 1}" class="flex-1 bg-white border border-slate-200 text-slate-700 text-xs rounded-lg focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none px-3 py-2 pr-8 transition-all">
+                        <button onclick="toggleKeyVisibility(${i})" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                            <i id="keyEye_${i}" class="fa-regular fa-eye text-xs"></i>
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        function toggleKeyVisibility(index) {
+            const input = document.getElementById(`apiKey_${index}`);
+            const icon = document.getElementById(`keyEye_${index}`);
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        function saveApiKey() {
+            apiKeys = [];
+            for (let i = 0; i < keyCount; i++) {
+                const val = document.getElementById(`apiKey_${i}`).value.trim();
+                if (val) apiKeys.push(val);
+            }
+            if (apiKeys.length > 0) {
+                const storageKey = getStorageKeyForModel();
+                localStorage.setItem(storageKey, apiKeys.join(','));
+                updateKeyBadge();
+                toggleKeyConfig();
+                alert('Đã lưu ' + apiKeys.length + ' API Key thành công!');
+            } else {
+                alert('Vui lòng nhập ít nhất 1 API Key!');
+            }
+        }
+
+        function updateKeyBadge() {
+            const badge = document.getElementById('activeKeyCountBadge');
+            const storageKey = getStorageKeyForModel();
+            const savedKey = localStorage.getItem(storageKey);
+            if (savedKey) {
+                const keys = savedKey.split(',').filter(k => k.trim());
+                if (keys.length > 0) {
+                    badge.innerText = keys.length;
+                    badge.classList.remove('hidden');
+                    return;
+                }
+            }
+            badge.classList.add('hidden');
+        }
+
+        function saveModelPref() {
+            const model = document.getElementById('aiModelSelect').value;
+            localStorage.setItem('toeic_ai_model', model);
+            loadApiKeyForCurrentModel();
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('errorMsg');
+            el.innerText = msg;
+            el.classList.remove('hidden');
+        }
+
+        function hideError() {
+            document.getElementById('errorMsg').classList.add('hidden');
+        }
+
+        function splitTextIntoChunks(text, numChunks) {
+            if (numChunks <= 1) return [text];
+            const chunks = [];
+            const chunkSize = Math.ceil(text.length / numChunks);
+            let currentIndex = 0;
+
+            while (currentIndex < text.length) {
+                let endIndex = currentIndex + chunkSize;
+                if (endIndex < text.length) {
+                    while (endIndex > currentIndex && !/\s/.test(text[endIndex])) endIndex--;
+                    if (endIndex === currentIndex) endIndex = currentIndex + chunkSize;
+                } else {
+                    endIndex = text.length;
+                }
+                chunks.push(text.substring(currentIndex, endIndex).trim());
+                currentIndex = endIndex;
+            }
+            return chunks.filter(c => c.length > 0);
+        }
+
+        async function processContent() {
+            const storageKey = getStorageKeyForModel();
+            const apiKeyRaw = localStorage.getItem(storageKey);
+            if (!apiKeyRaw) {
+                showError("Vui lòng cấu hình API Key (biểu tượng chìa khóa góc trên) để thực hiện quét!");
+                return;
+            }
+
+            const textInput = document.getElementById('textInput').value.trim();
+
+            if (!textInput) {
+                showError("Vui lòng nhập đoạn văn bản vào ô!");
+                return;
+            }
+
+            const selectedModel = document.getElementById('aiModelSelect').value;
+            const isGroq = !selectedModel.includes('gemini');
+
+            hideError();
+            document.getElementById('resultContainer').classList.add('hidden');
+            
+            const scanBtn = document.getElementById('scanBtn');
+            const scanBtnText = document.getElementById('scanBtnText');
+            const scanSpinner = document.getElementById('scanSpinner');
+            
+            scanBtn.disabled = true;
+            scanBtnText.innerText = "Đang phân tích...";
+            scanSpinner.classList.remove('hidden');
+
+            try {
+                const keysArray = apiKeyRaw.split(',').map(k => k.trim()).filter(k => k);
+                window.clickKeyIndex = window.clickKeyIndex || 0;
+
+                let prompt = `Nhiệm vụ của bạn là trích xuất TOÀN BỘ các từ vựng tiếng Anh có ý nghĩa trong đoạn văn bản được cung cấp. BẠN PHẢI QUÉT THẬT KỸ VÀ KHÔNG ĐƯỢC BỎ SÓT BẤT KỲ TỪ NÀO (như retractable, refracting, aperture,...).
+Tuyệt đối BỎ QUA các mạo từ và giới từ cơ bản (ví dụ: a, an, the, in, on, at, of, to, for, with...).
+Tuyệt đối BỎ QUA các danh từ riêng (tên người, tên địa danh, tên công ty, model sản phẩm, ví dụ: Carol, Barger, Makatasi, Belter, BTR-1483...).
+Hãy chuyển các từ về dạng nguyên thể, NHƯNG NẾU từ đó đang đóng vai trò là một tính từ/danh từ đặc thù trong câu (ví dụ: "retractable", "refracting") thì hãy giữ nguyên form của nó để dịch cho chuẩn xác.
+Dịch từng từ tiếng Anh đã tìm thấy sang tiếng Việt sao cho sát nghĩa nhất với ngữ cảnh của đoạn văn. 
+Sau đó, phân loại TẤT CẢ các từ vựng này vào 5 nhóm từ loại cơ bản: Danh từ, Tính từ, Động từ, Trạng từ, Liên từ.
+
+QUAN TRỌNG: CHỈ TRẢ VỀ DUY NHẤT 1 ĐỐI TƯỢNG JSON (KHÔNG bọc trong markdown \`\`\`json, KHÔNG giải thích thêm).
+Cấu trúc JSON bắt buộc phải giống chính xác như sau:
+{
+  "nouns": [{"w": "từ", "m": "nghĩa"}],
+  "adjectives": [{"w": "từ", "m": "nghĩa"}],
+  "verbs": [{"w": "từ", "m": "nghĩa"}],
+  "adverbs": [{"w": "từ", "m": "nghĩa"}],
+  "conjunctions": [{"w": "từ", "m": "nghĩa"}]
+}
+Nếu một nhóm không có từ nào, hãy trả về mảng rỗng [].`;
+
+                let finalData = { nouns: [], adjectives: [], verbs: [], adverbs: [], conjunctions: [] };
+
+                // Chunking support only for Groq (Gemini can handle long text in 1 request)
+                let numChunks = 1;
+                if (isGroq) {
+                    if (textInput.length > 500) numChunks = 3;
+                    if (textInput.length > 3000) numChunks = 4;
+                }
+                
+                const chunks = splitTextIntoChunks(textInput, numChunks);
+                scanBtnText.innerText = `Đang phân tích (${chunks.length} đoạn)...`;
+
+                for (let i = 0; i < chunks.length; i++) {
+                    const currentChunk = chunks[i];
+                    let aiText = "";
+                    let retryCount = 0;
+                    let success = false;
+
+                    while (!success && retryCount < 5) {
+                        const apiKey = keysArray[window.clickKeyIndex % keysArray.length];
+                        window.clickKeyIndex++;
+                        
+                        try {
+                            if (isGroq) {
+                                const url = `https://api.groq.com/openai/v1/chat/completions`;
+                                const payload = {
+                                    model: selectedModel,
+                                    messages: [
+                                        { role: "system", content: "You are a meticulous AI that carefully extracts ALL meaningful English vocabulary (excluding basic articles/prepositions, and excluding proper nouns/names/models), translates it accurately to Vietnamese based on context, and strictly classifies it into nouns, adjectives, verbs, adverbs, and conjunctions. You must not miss any vocabulary. Strictly follow the required JSON output schema." },
+                                        { role: "user", content: prompt + `\n\nĐoạn văn bản tiếng Anh cần phân tích:\n${currentChunk}` }
+                                    ],
+                                    temperature: 0.1,
+                                    response_format: { type: "json_object" }
+                                };
+                                const response = await fetch(url, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+                                    body: JSON.stringify(payload)
+                                });
+                                
+                                if (response.status === 429) {
+                                    scanBtnText.innerText = `Đang phân tích (${i+1}/${chunks.length}) - Nghẽn API, chờ 3s...`;
+                                    await new Promise(r => setTimeout(r, 3000));
+                                    retryCount++;
+                                    continue;
+                                }
+                                if (!response.ok) throw new Error("Lỗi API Groq (Mã: " + response.status + ")");
+                                
+                                const data = await response.json();
+                                aiText = data.choices[0].message.content;
+                                success = true;
+                            } else {
+                                const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`;
+                                const payload = { contents: [{ parts: [{ text: prompt }, { text: `\n\nĐoạn văn bản tiếng Anh cần phân tích:\n${currentChunk}` }] }] };
+                                const response = await fetch(url, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify(payload)
+                                });
+                                
+                                if (response.status === 429) {
+                                    scanBtnText.innerText = `Đang phân tích (${i+1}/${chunks.length}) - Nghẽn API, chờ 3s...`;
+                                    await new Promise(r => setTimeout(r, 3000));
+                                    retryCount++;
+                                    continue;
+                                }
+                                if (!response.ok) throw new Error("Lỗi API Gemini (Mã: " + response.status + ")");
+                                
+                                const data = await response.json();
+                                aiText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                                success = true;
+                            }
+                        } catch (err) {
+                            if (retryCount >= 4) throw err;
+                            scanBtnText.innerText = `Lỗi kết nối, thử lại (${retryCount+1}/5)...`;
+                            await new Promise(r => setTimeout(r, 2000));
+                            retryCount++;
+                        }
+                    }
+
+                    const parsed = parseAIResponse(aiText);
+                    mergeResults(finalData, parsed);
+                }
+
+                renderTable(finalData);
+
+            } catch (err) {
+                showError("Lỗi: " + err.message);
+                console.error(err);
+            } finally {
+                scanBtn.disabled = false;
+                scanBtnText.innerText = "Phân Tích Dữ Liệu";
+                scanSpinner.classList.add('hidden');
+            }
+        }
+
+        function parseAIResponse(aiText) {
+            if (!aiText) return { nouns: [], adjectives: [], verbs: [], adverbs: [], conjunctions: [] };
+            let cleanJson = aiText.trim();
+            if (cleanJson.startsWith('```json')) cleanJson = cleanJson.substring(7);
+            else if (cleanJson.startsWith('```')) cleanJson = cleanJson.substring(3);
+            if (cleanJson.endsWith('```')) cleanJson = cleanJson.substring(0, cleanJson.length - 3);
+            try {
+                return JSON.parse(cleanJson.trim());
+            } catch (e) {
+                console.error("JSON parse error:", e);
+                return { nouns: [], adjectives: [], verbs: [], adverbs: [], conjunctions: [] };
+            }
+        }
+
+        function mergeResults(finalData, parsed) {
+            if (parsed.nouns) finalData.nouns.push(...parsed.nouns);
+            if (parsed.adjectives) finalData.adjectives.push(...parsed.adjectives);
+            if (parsed.verbs) finalData.verbs.push(...parsed.verbs);
+            if (parsed.adverbs) finalData.adverbs.push(...parsed.adverbs);
+            if (parsed.conjunctions) finalData.conjunctions.push(...parsed.conjunctions);
+        }
+
+        function renderTable(data) {
+            const nouns = data.nouns || [];
+            const adjectives = data.adjectives || [];
+            const verbs = data.verbs || [];
+            const adverbs = data.adverbs || [];
+            const conjunctions = data.conjunctions || [];
+
+            const maxRows = Math.max(nouns.length, adjectives.length, verbs.length, adverbs.length, conjunctions.length);
+            
+            const tbody = document.getElementById('vocabTableBody');
+            tbody.innerHTML = '';
+
+            if (maxRows === 0) {
+                tbody.innerHTML = `<tr><td colspan="11" class="text-center text-slate-500 italic py-4">Không tìm thấy từ vựng tiếng Anh nào hợp lệ.</td></tr>`;
+                document.getElementById('resultContainer').classList.remove('hidden');
+                return;
+            }
+
+            for (let i = 0; i < maxRows; i++) {
+                const n = nouns[i] || { w: '', m: '' };
+                const adj = adjectives[i] || { w: '', m: '' };
+                const v = verbs[i] || { w: '', m: '' };
+                const adv = adverbs[i] || { w: '', m: '' };
+                const conj = conjunctions[i] || { w: '', m: '' };
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="col-stt font-semibold text-slate-500">${i + 1}</td>
+                    <!-- Danh từ -->
+                    <td class="word-text">${n.w}</td>
+                    <td class="meaning-text">${n.m}</td>
+                    <!-- Tính từ -->
+                    <td class="word-text">${adj.w}</td>
+                    <td class="meaning-text">${adj.m}</td>
+                    <!-- Động từ -->
+                    <td class="word-text">${v.w}</td>
+                    <td class="meaning-text">${v.m}</td>
+                    <!-- Trạng từ -->
+                    <td class="word-text">${adv.w}</td>
+                    <td class="meaning-text">${adv.m}</td>
+                    <!-- Liên từ -->
+                    <td class="word-text">${conj.w}</td>
+                    <td class="meaning-text">${conj.m}</td>
+                `;
+                tbody.appendChild(tr);
+            }
+
+            document.getElementById('resultContainer').classList.remove('hidden');
+            
+            // Scroll to table smoothly
+            setTimeout(() => {
+                document.getElementById('resultContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+
+        function copyTableData() {
+            const table = document.getElementById('vocabTable');
+            let text = "";
+            
+            // Add Header
+            text += "STT\tDanh từ\t\tTính từ\t\tĐộng từ\t\tTrạng từ\t\tLiên từ\n";
+            
+            // Add rows
+            for (let i = 1; i < table.rows.length; i++) {
+                const row = table.rows[i];
+                const cols = row.cells;
+                if (cols.length === 1) continue; // Skip empty message
+                
+                const stt = cols[0].innerText;
+                const nW = cols[1].innerText;
+                const nM = cols[2].innerText;
+                const adjW = cols[3].innerText;
+                const adjM = cols[4].innerText;
+                const vW = cols[5].innerText;
+                const vM = cols[6].innerText;
+                const advW = cols[7].innerText;
+                const advM = cols[8].innerText;
+                const conjW = cols[9].innerText;
+                const conjM = cols[10].innerText;
+
+                text += `${stt}\t${nW}\t${nM}\t${adjW}\t${adjM}\t${vW}\t${vM}\t${advW}\t${advM}\t${conjW}\t${conjM}\n`;
+            }
+
+            navigator.clipboard.writeText(text).then(() => {
+                alert("Đã copy dữ liệu bảng (có thể dán trực tiếp vào Excel)!");
+            }).catch(err => {
+                alert("Không thể copy: " + err);
+            });
+        }
+    </script>
+</body>
+</html>

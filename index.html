@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="referrer" content="no-referrer">
-    <title>TOEIC Vocabulary Masterclass - Học Từ Vựng AI</title>
+    <title>Vocab Masterclass</title>
     <!-- Prevent FOUC -->
     <script>
         if (localStorage.getItem('toeic_theme') === 'light') {
@@ -58,9 +58,12 @@
             <div>
                 <h1
                     class="text-xl font-extrabold tracking-tight bg-gradient-to-r from-blue-400 to-indigo-300 bg-clip-text text-transparent group-hover:from-blue-300 group-hover:to-indigo-200 transition-colors">
-                    VOCABULARY MASTERCLASS <span class="text-[10px] text-slate-500 font-medium">v2.0</span></h1>
-                <p class="text-xs text-slate-400 font-medium tracking-wide">Design by <span
-                        class="text-brand-400 font-bold">Phan Gia An</span></p>
+                    VOCABULARY MASTERCLASS</h1>
+                <p class="text-[11px] font-bold tracking-widest mt-1">
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-500 to-cyan-500 drop-shadow-sm group-hover:from-brand-400 group-hover:to-cyan-400 transition-all uppercase">
+                        Design by Phan Gia An
+                    </span>
+                </p>
             </div>
         </div>
 
@@ -372,6 +375,10 @@
                 <button onclick="startQuizMode()" id="quizBtn"
                     class="w-full relative overflow-hidden group bg-violet-600 hover:bg-violet-500 text-white font-bold py-3 px-5 rounded-xl shadow-[0_0_20px_rgba(124,58,237,0.25)] hover:shadow-[0_0_30px_rgba(124,58,237,0.4)] active:scale-[0.98] transition-all duration-300 flex items-center justify-start gap-3 border border-violet-400/30 mt-1">
                     <i class="fa-solid fa-gamepad"></i> <span class="tracking-wide">Chế độ Học (Quiz)</span>
+                </button>
+                <button onclick="window.open('pga.html', '_blank')" id="pgaBtn"
+                    class="w-full relative overflow-hidden group bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 px-5 rounded-xl shadow-[0_0_20px_rgba(8,145,178,0.25)] hover:shadow-[0_0_30px_rgba(8,145,178,0.4)] active:scale-[0.98] transition-all duration-300 flex items-center justify-start gap-3 border border-cyan-400/30 mt-1">
+                    <i class="fa-solid fa-magnifying-glass-chart"></i> <span class="tracking-wide">Quét Từ Vựng AI</span>
                 </button>
             </div>
         </section>
