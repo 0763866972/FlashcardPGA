@@ -1,4 +1,11 @@
 <!DOCTYPE html>
+<!--
+  =============================================================
+  AUTO VOCABULARY SCANNER (AI POWERED)
+  Design & Developer: Phan Gia An
+  Version: 1.0
+  =============================================================
+-->
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
@@ -386,9 +393,15 @@ Nếu một nhóm không có từ nào, hãy trả về mảng rỗng [].`;
 
                 let finalData = { nouns: [], adjectives: [], verbs: [], adverbs: [], conjunctions: [] };
 
-                // Chunking support only for Groq (Gemini can handle long text in 1 request)
+                // ==========================================
+                // 1. CƠ CHẾ CHIA ĐOẠN VĂN BẢN (CHUNKING)
+                // ==========================================
+                // Mặc định không chia đoạn (numChunks = 1), dành riêng cho bộ não siêu to của Gemini.
+                // Do Gemini có context window lớn nên có thể xử lý nguyên bài dài trong 1 lần gửi.
                 let numChunks = 1;
                 if (isGroq) {
+                    // Ngược lại, Groq chạy nhanh nhưng bị giới hạn token đầu vào/đầu ra khá gắt.
+                    // Nếu văn bản quá dài, ta phải "băm" nhỏ nó ra thành 3 hoặc 4 đoạn để Groq xử lý từ từ, tránh văng lỗi quá tải token.
                     if (textInput.length > 500) numChunks = 3;
                     if (textInput.length > 3000) numChunks = 4;
                 }
@@ -402,7 +415,15 @@ Nếu một nhóm không có từ nào, hãy trả về mảng rỗng [].`;
                     let retryCount = 0;
                     let success = false;
 
+                    // ==========================================
+                    // 2. CƠ CHẾ CHỐNG NGHẼN (RETRY) & XOAY VÒNG KEY
+                    // ==========================================
+                    // Vòng lặp này sẽ cố gắng gọi API tối đa 5 lần nếu gặp lỗi nghẽn mạng (429) hoặc lỗi hệ thống.
                     while (!success && retryCount < 5) {
+                        // Kỹ thuật Load Balancing (Cân bằng tải): 
+                        // Mỗi lần chuẩn bị gọi API (dù là do bấm nút mới hay do gọi lại vì bị lỗi nghẽn),
+                        // biến 'clickKeyIndex' sẽ tăng lên 1. Dùng phép chia lấy dư (%) để quay vòng chọn 1 API Key mới trong danh sách.
+                        // Đảm bảo không có Key nào bị vắt kiệt sức, lách luật Rate Limit hoàn hảo!
                         const apiKey = keysArray[window.clickKeyIndex % keysArray.length];
                         window.clickKeyIndex++;
                         
