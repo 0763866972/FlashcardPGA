@@ -693,6 +693,13 @@ Nếu một nhóm không có từ nào, hãy trả về mảng rỗng [].`;
                 document.body.style.userSelect = '';
             });
 
+            // Clear selection when clicking outside the table
+            document.addEventListener('mousedown', (e) => {
+                if (!e.target.closest('#vocabTable')) {
+                    clearSelection();
+                }
+            });
+
             // Handle Ctrl+C for selected cells
             window.addEventListener('keydown', (e) => {
                 if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
@@ -719,7 +726,15 @@ Nếu một nhóm không có từ nào, hãy trả về mảng rỗng [].`;
                     });
                     
                     navigator.clipboard.writeText(copyStr).then(() => {
-                        // Optional visual feedback like a tiny toast or highlight blink
+                        // Thêm hiệu ứng chớp tắt nhẹ trước khi biến mất để user biết đã copy thành công
+                        selectedCells.forEach(cell => {
+                            cell.style.transition = 'background-color 0.2s ease';
+                            cell.style.backgroundColor = '#bae6fd'; // Sáng lên 1 chút
+                        });
+                        setTimeout(() => {
+                            selectedCells.forEach(cell => cell.style.transition = '');
+                            clearSelection(); // Tự động xóa bôi xanh sau khi copy
+                        }, 200);
                     });
                 }
             });
