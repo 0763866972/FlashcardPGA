@@ -158,7 +158,18 @@ let fcAiLength = 'short';
 // Điều này giúp giữ nguyên logic đọc/ghi cũ mà không cần sửa code hàng loạt.
 // =====================================================================
 let activeVocabGroupId = localStorage.getItem('toeic_active_group_id') || 'default';
-let vocabGroups = JSON.parse(localStorage.getItem('toeic_vocab_groups') || '[{"id":"default","name":"Mặc định"}]');
+let vocabGroups;
+try {
+    vocabGroups = JSON.parse(localStorage.getItem('toeic_vocab_groups') || '[{"id":"default","name":"Mặc định"}]');
+} catch (e) {
+    vocabGroups = [{"id":"default","name":"Mặc định"}];
+}
+
+// Tự động xoá bộ nhớ đệm AI bị lỗi (chỉ chạy 1 lần) để fix triệt để lỗi hiển thị sai câu ví dụ
+if (!localStorage.getItem('toeic_ai_cache_cleared_bugfix_1')) {
+    localStorage.removeItem('toeic_ai_cache');
+    localStorage.setItem('toeic_ai_cache_cleared_bugfix_1', 'true');
+}
 
 /**
  * getRealVocabKey - Chuyển đổi key localStorage thành key thực tế theo thư mục đang active.
@@ -243,6 +254,8 @@ function renderGroupSelect() {
         select.appendChild(opt);
     });
 }
+// Automatically call renderGroupSelect when the script loads
+renderGroupSelect();
 
 /**
  * changeVocabGroup - Chuyển sang thư mục từ vựng khác.
@@ -270,9 +283,9 @@ function changeVocabGroup() {
     if (typeof updateStarredCount === 'function') updateStarredCount();
 
     // Phục hồi lại phiên học riêng của thư mục này (nếu có)
-    if (typeof aiDifficultyLevel !== 'undefined') {
-        restoreSessionForDifficulty(aiDifficultyLevel);
-    }
+    // if (typeof aiDifficultyLevel !== 'undefined') {
+    //     restoreSessionForDifficulty(aiDifficultyLevel);
+    // }
 }
 
 /** Tạo thư mục mới: Hỏi tên → tạo ID unique → lưu → chuyển sang thư mục mới */
@@ -1143,6 +1156,17 @@ function getStarredWords() {
                 const newCacheKey = `${item.word.toLowerCase()}_${(item.meaning || '').toLowerCase().replace(/\s+/g, '')}_${aiDifficultyLevel}`;
                 const oldCacheKey = `${item.word.toLowerCase()}_${aiDifficultyLevel}`;
                 let cacheEntry = aiCache[newCacheKey] || aiCache[oldCacheKey];
+                
+                if (!cacheEntry) {
+                    const fallbackSuffixes = ['_fc_short', '_fc_long', '_medium', '_hard', '_easy', ''];
+                    const baseKey = `${item.word.toLowerCase()}_${(item.meaning || '').toLowerCase().replace(/\s+/g, '')}`;
+                    const baseOldKey = item.word.toLowerCase();
+                    for (let suffix of fallbackSuffixes) {
+                        if (aiCache[`${baseKey}${suffix}`]) { cacheEntry = aiCache[`${baseKey}${suffix}`]; break; }
+                        if (aiCache[`${baseOldKey}${suffix}`]) { cacheEntry = aiCache[`${baseOldKey}${suffix}`]; break; }
+                    }
+                }
+
                 if (!cacheEntry) {
                     const legacyNewCacheKey = `${item.word.toLowerCase()}_${(item.meaning || '').toLowerCase().replace(/\s+/g, '')}`;
                     const legacyOldCacheKey = item.word.toLowerCase();
@@ -1462,17 +1486,17 @@ async function startFlashcardMode() {
 
             if (!w.aiExample || !w.aiExample.family || w.aiExample.family.length === 0) {
                 const possibleKeys = [
-                    `${w.word.toLowerCase()}_${w.meaning.toLowerCase().replace(/\\s+/g, '')}_fc_long`,
+                    `${w.word.toLowerCase()}_${w.meaning.toLowerCase().replace(/\s+/g, '')}_fc_long`,
                     `${w.word.toLowerCase()}_fc_long`,
-                    `${w.word.toLowerCase()}_${w.meaning.toLowerCase().replace(/\\s+/g, '')}_fc_short`,
+                    `${w.word.toLowerCase()}_${w.meaning.toLowerCase().replace(/\s+/g, '')}_fc_short`,
                     `${w.word.toLowerCase()}_fc_short`,
-                    `${w.word.toLowerCase()}_${w.meaning.toLowerCase().replace(/\\s+/g, '')}_medium`,
+                    `${w.word.toLowerCase()}_${w.meaning.toLowerCase().replace(/\s+/g, '')}_medium`,
                     `${w.word.toLowerCase()}_medium`,
-                    `${w.word.toLowerCase()}_${w.meaning.toLowerCase().replace(/\\s+/g, '')}_hard`,
+                    `${w.word.toLowerCase()}_${w.meaning.toLowerCase().replace(/\s+/g, '')}_hard`,
                     `${w.word.toLowerCase()}_hard`,
-                    `${w.word.toLowerCase()}_${w.meaning.toLowerCase().replace(/\\s+/g, '')}_easy`,
+                    `${w.word.toLowerCase()}_${w.meaning.toLowerCase().replace(/\s+/g, '')}_easy`,
                     `${w.word.toLowerCase()}_easy`,
-                    `${w.word.toLowerCase()}_${w.meaning.toLowerCase().replace(/\\s+/g, '')}`,
+                    `${w.word.toLowerCase()}_${w.meaning.toLowerCase().replace(/\s+/g, '')}`,
                     w.word.toLowerCase()
                 ];
                 for (let pk of possibleKeys) {
@@ -1787,16 +1811,15 @@ ${jsonStructure}`;
                     try { aiCache = JSON.parse(localStorage.getItem('toeic_ai_cache') || "{}"); } catch (e) { }
                     data.examples.forEach((ex, idx) => {
                         let wTarget;
-                        // [AI BUGFIX] Đối chiếu 3 tầng để tránh gán nhầm dữ liệu nếu AI trả về thiếu/sai ID:
-                        // 1. Ưu tiên khớp theo ID (chính xác nhất)
-                        if (ex.id && batch[ex.id - 1]) {
-                            wTarget = batch[ex.id - 1];
-                        }
-                        // 2. Nếu không có ID, đối chiếu theo tên từ vựng (khớp chuỗi)
-                        else if (ex.word) {
+                        // [AI BUGFIX] Ưu tiên khớp bằng tên từ vựng trước vì AI hay trả về sai ID
+                        if (ex.word) {
                             wTarget = batch.find(b => b.word.toLowerCase() === ex.word.toLowerCase());
                         }
-                        // 3. Nếu vẫn không có, lấy theo thứ tự mảng (fallback cuối cùng)
+                        // Khớp bằng ID nếu không khớp được từ
+                        if (!wTarget && ex.id && batch[ex.id - 1]) {
+                            wTarget = batch[ex.id - 1];
+                        }
+                        // Fallback theo index
                         if (!wTarget) {
                             wTarget = batch[idx];
                         }

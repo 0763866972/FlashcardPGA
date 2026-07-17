@@ -61,6 +61,13 @@
             animation: spin 1s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* Cell selection styling */
+        .excel-table td.selected-cell {
+            background-color: rgba(14, 165, 233, 0.2) !important;
+            outline: 1px solid #0ea5e9;
+            outline-offset: -1px;
+        }
     </style>
 </head>
 <body class="min-h-screen p-4 md:p-8 flex flex-col items-center">
@@ -607,11 +614,116 @@ Nếu một nhóm không có từ nào, hãy trả về mảng rỗng [].`;
             }
 
             navigator.clipboard.writeText(text).then(() => {
-                alert("Đã copy dữ liệu bảng (có thể dán trực tiếp vào Excel)!");
+                alert("Đã copy toàn bộ dữ liệu bảng (có thể dán trực tiếp vào Excel)!");
             }).catch(err => {
                 alert("Không thể copy: " + err);
             });
         }
+
+        // ==========================================
+        // EXCEL-LIKE CELL SELECTION & COPY LOGIC
+        // ==========================================
+        let isSelecting = false;
+        let startRow = -1;
+        let startCol = -1;
+
+        function getCellCoordinates(cell) {
+            const row = cell.parentElement.rowIndex;
+            const col = cell.cellIndex;
+            return { row, col };
+        }
+
+        function clearSelection() {
+            document.querySelectorAll('.selected-cell').forEach(td => td.classList.remove('selected-cell'));
+        }
+
+        function selectRectangle(r1, c1, r2, c2) {
+            clearSelection();
+            const table = document.getElementById('vocabTable');
+            const minRow = Math.min(r1, r2);
+            const maxRow = Math.max(r1, r2);
+            const minCol = Math.min(c1, c2);
+            const maxCol = Math.max(c1, c2);
+            
+            for (let r = minRow; r <= maxRow; r++) {
+                const row = table.rows[r];
+                if (!row) continue;
+                for (let c = minCol; c <= maxCol; c++) {
+                    const cell = row.cells[c];
+                    if (cell && cell.tagName === 'TD') {
+                        cell.classList.add('selected-cell');
+                    }
+                }
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const table = document.getElementById('vocabTable');
+            
+            table.addEventListener('mousedown', (e) => {
+                if (e.target.tagName !== 'TD') return;
+                if (e.button !== 0) return; // Only left click
+
+                isSelecting = true;
+                const coords = getCellCoordinates(e.target);
+                startRow = coords.row;
+                startCol = coords.col;
+
+                clearSelection();
+                e.target.classList.add('selected-cell');
+                
+                // Disable text selection globally while dragging cells
+                document.body.style.userSelect = 'none';
+            });
+
+            table.addEventListener('mouseover', (e) => {
+                if (!isSelecting) return;
+                let target = e.target;
+                if (target.tagName !== 'TD') {
+                    target = target.closest('td');
+                }
+                if (!target) return;
+                
+                const coords = getCellCoordinates(target);
+                selectRectangle(startRow, startCol, coords.row, coords.col);
+            });
+
+            window.addEventListener('mouseup', () => {
+                isSelecting = false;
+                document.body.style.userSelect = '';
+            });
+
+            // Handle Ctrl+C for selected cells
+            window.addEventListener('keydown', (e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+                    const selectedCells = document.querySelectorAll('.selected-cell');
+                    if (selectedCells.length === 0) return; // Fallback to default copy if no cells selected
+                    
+                    e.preventDefault(); // Prevent default text copy
+                    
+                    let rowMap = {};
+                    selectedCells.forEach(cell => {
+                        const r = cell.parentElement.rowIndex;
+                        const c = cell.cellIndex;
+                        if (!rowMap[r]) rowMap[r] = [];
+                        rowMap[r].push({ col: c, text: cell.innerText });
+                    });
+                    
+                    const rows = Object.keys(rowMap).sort((a,b) => a - b);
+                    let copyStr = "";
+                    
+                    rows.forEach(r => {
+                        rowMap[r].sort((a,b) => a.col - b.col);
+                        const rowText = rowMap[r].map(cell => cell.text).join('\t');
+                        copyStr += rowText + "\n";
+                    });
+                    
+                    navigator.clipboard.writeText(copyStr).then(() => {
+                        // Optional visual feedback like a tiny toast or highlight blink
+                    });
+                }
+            });
+        });
     </script>
 </body>
 </html>
