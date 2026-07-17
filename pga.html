@@ -147,9 +147,15 @@
         <div id="resultContainer" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-slate-200 overflow-x-auto">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="font-bold text-lg text-slate-800">Kết Quả Phân Tích</h3>
-                <button onclick="copyTableData()" class="bg-emerald-100 hover:bg-emerald-200 text-emerald-700 px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2">
-                    <i class="fa-regular fa-copy"></i> Copy Data
-                </button>
+                <div class="flex items-center gap-3">
+                    <div class="relative">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                        <input type="text" id="tableSearchInput" onkeyup="searchTable()" placeholder="Tìm từ vựng..." class="pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all w-48 shadow-sm">
+                    </div>
+                    <button onclick="copyTableData()" class="bg-emerald-100 hover:bg-emerald-200 text-emerald-700 px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2">
+                        <i class="fa-regular fa-copy"></i> Copy Data
+                    </button>
+                </div>
             </div>
             
             <table class="excel-table" id="vocabTable">
@@ -595,6 +601,9 @@ Nếu một nhóm không có từ nào, hãy trả về mảng rỗng [].`;
             // Add rows
             for (let i = 1; i < table.rows.length; i++) {
                 const row = table.rows[i];
+                // Bỏ qua các dòng đang bị ẩn do search
+                if (row.style.display === "none") continue;
+                
                 const cols = row.cells;
                 if (cols.length === 1) continue; // Skip empty message
                 
@@ -618,6 +627,32 @@ Nếu một nhóm không có từ nào, hãy trả về mảng rỗng [].`;
             }).catch(err => {
                 alert("Không thể copy: " + err);
             });
+        }
+        
+        function searchTable() {
+            const input = document.getElementById("tableSearchInput");
+            const filter = input.value.toLowerCase();
+            const tbody = document.getElementById("vocabTableBody");
+            const tr = tbody.getElementsByTagName("tr");
+
+            for (let i = 0; i < tr.length; i++) {
+                const cols = tr[i].getElementsByTagName("td");
+                if (cols.length <= 1) continue; // Bỏ qua dòng thông báo trống
+                
+                let match = false;
+                // Duyệt qua tất cả các cột trừ cột STT (index 0)
+                for (let j = 1; j < cols.length; j++) {
+                    if (cols[j].innerText.toLowerCase().indexOf(filter) > -1) {
+                        match = true;
+                        break;
+                    }
+                }
+                
+                tr[i].style.display = match ? "" : "none";
+            }
+            
+            // Hủy bôi xanh khi có thay đổi bộ lọc để tránh lỗi tính toán
+            clearSelection();
         }
 
         // ==========================================
