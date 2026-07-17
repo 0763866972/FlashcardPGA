@@ -157,9 +157,12 @@
                     <p class="text-xs text-slate-500 mt-1"><i class="fa-solid fa-circle-info mr-1"></i>Bôi đen & Copy (Ctrl+C). Bấm <kbd class="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded font-mono text-[10px] text-slate-600 font-bold mx-0.5 shadow-sm">ESC</kbd> để hủy đánh dấu.</p>
                 </div>
                 <div class="flex items-center gap-3">
-                    <div class="relative">
-                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
-                        <input type="text" id="tableSearchInput" onkeyup="searchTable()" placeholder="Tìm từ vựng..." class="pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all w-48 shadow-sm">
+                    <div class="relative flex items-center">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 text-slate-400 text-sm pointer-events-none"></i>
+                        <input type="text" id="tableSearchInput" oninput="searchTable(); toggleClearSearchBtn()" placeholder="Tìm từ vựng..." class="pl-9 pr-8 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all w-48 shadow-sm">
+                        <button id="clearSearchBtn" onclick="clearSearch()" class="absolute right-2.5 text-slate-400 hover:text-slate-600 hidden transition-colors" title="Xóa tìm kiếm">
+                            <i class="fa-solid fa-circle-xmark text-sm"></i>
+                        </button>
                     </div>
                     <button onclick="copyTableData()" class="bg-emerald-100 hover:bg-emerald-200 text-emerald-700 px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2">
                         <i class="fa-regular fa-copy"></i> Copy Data
@@ -662,6 +665,24 @@ Nếu một nhóm không có từ nào, hãy trả về mảng rỗng [].`;
             
             // Hủy bôi xanh khi có thay đổi bộ lọc để tránh lỗi tính toán
             clearSelection();
+        }
+
+        function toggleClearSearchBtn() {
+            const input = document.getElementById("tableSearchInput");
+            const btn = document.getElementById("clearSearchBtn");
+            if (input.value.length > 0) {
+                btn.classList.remove("hidden");
+            } else {
+                btn.classList.add("hidden");
+            }
+        }
+
+        function clearSearch() {
+            const input = document.getElementById("tableSearchInput");
+            input.value = "";
+            toggleClearSearchBtn();
+            searchTable();
+            input.focus();
         }
 
         // ==========================================
