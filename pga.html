@@ -68,6 +68,12 @@
             outline: 1px solid #0ea5e9;
             outline-offset: -1px;
         }
+        
+        .excel-table td.copied-cell {
+            background-color: rgba(34, 197, 94, 0.2) !important;
+            outline: 1px solid #22c55e;
+            outline-offset: -1px;
+        }
     </style>
 </head>
 <body class="min-h-screen p-4 md:p-8 flex flex-col items-center">
@@ -737,7 +743,7 @@ Nếu một nhóm không có từ nào, hãy trả về mảng rỗng [].`;
 
             // Handle Ctrl+C for selected cells
             window.addEventListener('keydown', (e) => {
-                if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+                if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
                     const selectedCells = document.querySelectorAll('.selected-cell');
                     if (selectedCells.length === 0) return; // Fallback to default copy if no cells selected
                     
@@ -760,19 +766,51 @@ Nếu một nhóm không có từ nào, hãy trả về mảng rỗng [].`;
                         copyStr += rowText + "\n";
                     });
                     
-                    navigator.clipboard.writeText(copyStr).then(() => {
-                        // Thêm hiệu ứng chớp tắt nhẹ trước khi biến mất để user biết đã copy thành công
+                    const markAsCopied = () => {
                         selectedCells.forEach(cell => {
-                            cell.style.transition = 'background-color 0.2s ease';
-                            cell.style.backgroundColor = '#bae6fd'; // Sáng lên 1 chút
+                            cell.classList.remove('selected-cell');
+                            cell.classList.add('copied-cell');
                         });
-                        setTimeout(() => {
-                            selectedCells.forEach(cell => cell.style.transition = '');
-                            clearSelection(); // Tự động xóa bôi xanh sau khi copy
-                        }, 200);
-                    });
+                    };
+
+                    try {
+                        if (navigator.clipboard && navigator.clipboard.writeText) {
+                            navigator.clipboard.writeText(copyStr).then(markAsCopied).catch(err => {
+                                console.error("Clipboard API failed, using fallback.", err);
+                                fallbackCopy(copyStr);
+                                markAsCopied();
+                            });
+                        } else {
+                            fallbackCopy(copyStr);
+                            markAsCopied();
+                        }
+                    } catch (err) {
+                        fallbackCopy(copyStr);
+                        markAsCopied();
+                    }
+                } else if (e.key === 'Escape') {
+                    // Xóa toàn bộ vùng chọn hiện tại và các ô đã copy khi ấn ESC
+                    clearSelection();
+                    document.querySelectorAll('.copied-cell').forEach(td => td.classList.remove('copied-cell'));
                 }
             });
+
+            function fallbackCopy(text) {
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                textArea.style.top = "0";
+                textArea.style.left = "0";
+                textArea.style.position = "fixed";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                } catch (err) {
+                    console.error('Fallback copy failed', err);
+                }
+                document.body.removeChild(textArea);
+            }
         });
     </script>
 </body>
