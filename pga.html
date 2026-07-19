@@ -49,7 +49,40 @@
         .th-conj { background-color: #fef08a; } /* Vàng nhạt */
         
         .word-text { color: #2563eb; } /* Xanh dương cho từ vựng */
-        .meaning-text { color: #dc2626; } /* Đỏ cho nghĩa tiếng Việt */
+        .meaning-text { color: #dc2626; transition: color 0.2s; } /* Đỏ cho nghĩa tiếng Việt */
+
+        /* Chế độ học (Ẩn nghĩa) - Phong cách Premium Skeleton */
+        @keyframes shimmer {
+            0% { background-position: -200px 0; }
+            100% { background-position: 200px 0; }
+        }
+        body.hide-meanings .meaning-text:not(.meaning-revealed) {
+            color: transparent !important;
+            cursor: pointer;
+            position: relative;
+            user-select: none;
+        }
+        body.hide-meanings .meaning-text:not(.meaning-revealed)::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 12px;
+            width: 60%;
+            min-width: 50px;
+            height: 14px;
+            transform: translateY(-50%);
+            background-color: #e2e8f0;
+            background-image: linear-gradient(90deg, #e2e8f0 25%, #f8fafc 50%, #e2e8f0 75%);
+            background-size: 200px 100%;
+            animation: shimmer 2s infinite linear;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        body.hide-meanings .meaning-text:not(.meaning-revealed):hover::after {
+            background-image: none;
+            background-color: #cbd5e1;
+            transform: translateY(-50%) scale(1.05);
+        }
 
         /* Loading spinner */
         .spinner {
@@ -62,16 +95,17 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        /* Cell selection styling */
-        .excel-table td.selected-cell {
-            background-color: rgba(14, 165, 233, 0.2) !important;
-            outline: 1px solid #0ea5e9;
-            outline-offset: -1px;
-        }
-        
         .excel-table td.copied-cell {
             background-color: rgba(34, 197, 94, 0.2) !important;
             outline: 1px solid #22c55e;
+            outline-offset: -1px;
+        }
+
+        /* Cell selection styling (Defined after copied-cell so it overrides when selected) */
+        .excel-table td.selected-cell,
+        .excel-table td.copied-cell.selected-cell {
+            background-color: rgba(14, 165, 233, 0.2) !important;
+            outline: 1px solid #0ea5e9;
             outline-offset: -1px;
         }
     </style>
@@ -157,6 +191,9 @@
                     <p class="text-xs text-slate-500 mt-1"><i class="fa-solid fa-circle-info mr-1"></i>Bôi đen & Copy (Ctrl+C). Bấm <kbd class="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded font-mono text-[10px] text-slate-600 font-bold mx-0.5 shadow-sm">ESC</kbd> để hủy đánh dấu.</p>
                 </div>
                 <div class="flex items-center gap-3">
+                    <button id="toggleMeaningBtn" onclick="toggleMeanings()" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2 border border-indigo-100 shadow-sm" title="Bật/Tắt chế độ học (Ẩn nghĩa)">
+                        <i class="fa-solid fa-eye-slash" id="meaningEyeIcon"></i> <span id="meaningBtnText">Ẩn Nghĩa</span>
+                    </button>
                     <div class="relative flex items-center">
                         <i class="fa-solid fa-magnifying-glass absolute left-3 text-slate-400 text-sm pointer-events-none"></i>
                         <input type="text" id="tableSearchInput" oninput="searchTable(); toggleClearSearchBtn()" placeholder="Tìm từ vựng..." class="pl-9 pr-8 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all w-48 shadow-sm">
@@ -164,7 +201,7 @@
                             <i class="fa-solid fa-circle-xmark text-sm"></i>
                         </button>
                     </div>
-                    <button onclick="copyTableData()" class="bg-emerald-100 hover:bg-emerald-200 text-emerald-700 px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2">
+                    <button onclick="copyTableData()" class="bg-emerald-100 hover:bg-emerald-200 text-emerald-700 px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2 shadow-sm">
                         <i class="fa-regular fa-copy"></i> Copy Data
                     </button>
                 </div>
@@ -686,6 +723,30 @@ Nếu một nhóm không có từ nào, hãy trả về mảng rỗng [].`;
         }
 
         // ==========================================
+        // STUDY MODE LOGIC (ẨN/HIỆN NGHĨA)
+        // ==========================================
+        let isMeaningHidden = false;
+        function toggleMeanings() {
+            isMeaningHidden = !isMeaningHidden;
+            const icon = document.getElementById('meaningEyeIcon');
+            const btnText = document.getElementById('meaningBtnText');
+            
+            if (isMeaningHidden) {
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+                btnText.innerText = "Hiện Nghĩa";
+                document.body.classList.add('hide-meanings');
+            } else {
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+                btnText.innerText = "Ẩn Nghĩa";
+                document.body.classList.remove('hide-meanings');
+                // Hủy các ô đã mở
+                document.querySelectorAll('.meaning-revealed').forEach(el => el.classList.remove('meaning-revealed'));
+            }
+        }
+
+        // ==========================================
         // EXCEL-LIKE CELL SELECTION & COPY LOGIC
         // ==========================================
         let isSelecting = false;
@@ -726,16 +787,24 @@ Nếu một nhóm không có từ nào, hãy trả về mảng rỗng [].`;
             const table = document.getElementById('vocabTable');
             
             table.addEventListener('mousedown', (e) => {
-                if (e.target.tagName !== 'TD') return;
+                let targetCell = e.target;
+                if (targetCell.tagName !== 'TD') targetCell = targetCell.closest('td');
+                if (!targetCell) return;
                 if (e.button !== 0) return; // Only left click
 
+                // Chế độ học: Nếu bấm vào ô nghĩa đang bị ẩn thì mở nó ra và không bôi đen
+                if (isMeaningHidden && targetCell.classList.contains('meaning-text') && !targetCell.classList.contains('meaning-revealed')) {
+                    targetCell.classList.add('meaning-revealed');
+                    return; // Ngừng việc bôi đen
+                }
+
                 isSelecting = true;
-                const coords = getCellCoordinates(e.target);
+                const coords = getCellCoordinates(targetCell);
                 startRow = coords.row;
                 startCol = coords.col;
 
                 clearSelection();
-                e.target.classList.add('selected-cell');
+                targetCell.classList.add('selected-cell');
                 
                 // Disable text selection globally while dragging cells
                 document.body.style.userSelect = 'none';
