@@ -51,29 +51,16 @@
         .word-text { color: #2563eb; } /* Xanh dương cho từ vựng */
         .meaning-text { color: #dc2626; transition: color 0.2s; } /* Đỏ cho nghĩa tiếng Việt */
 
-        /* Chế độ học (Ẩn nghĩa) - Phong cách Premium Tĩnh */
+        /* Chế độ học (Ẩn nghĩa) - Phong cách Blur mờ ảo */
         body.hide-meanings .meaning-text:not(.meaning-revealed) {
             color: transparent !important;
+            text-shadow: 0 0 8px #94a3b8;
             cursor: pointer;
-            position: relative;
             user-select: none;
+            transition: text-shadow 0.3s ease;
         }
-        body.hide-meanings .meaning-text:not(.meaning-revealed)::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 12px;
-            width: 60%;
-            min-width: 50px;
-            height: 14px;
-            transform: translateY(-50%);
-            background-color: #cbd5e1;
-            border-radius: 8px;
-            transition: all 0.2s ease;
-        }
-        body.hide-meanings .meaning-text:not(.meaning-revealed):hover::after {
-            background-color: #94a3b8;
-            transform: translateY(-50%) scale(1.05);
+        body.hide-meanings .meaning-text:not(.meaning-revealed):hover {
+            text-shadow: 0 0 5px #64748b;
         }
 
         /* Loading spinner */
