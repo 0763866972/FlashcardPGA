@@ -839,6 +839,40 @@ function handleFcSpellKeydown(event) {
         return;
     }
 
+    if (event.key === 'Backspace') {
+        const inputEl = event.target;
+        const feedbackEl = document.getElementById('fcSpellFeedback');
+        const isWrong = feedbackEl && !feedbackEl.classList.contains('hidden');
+        const isCorrect = inputEl.classList.contains('border-emerald-500');
+
+        if (isWrong || isCorrect) {
+            // Đã hiển thị đúng/sai -> bấm Backspace để xóa hết và tập ghi lại
+            event.preventDefault();
+            inputEl.value = '';
+            
+            // Xóa trạng thái sai
+            if (isWrong) {
+                feedbackEl.classList.add('hidden');
+                inputEl.classList.remove('border-rose-500', 'focus:border-rose-500', 'text-rose-400');
+            }
+            
+            // Xóa trạng thái đúng
+            if (isCorrect) {
+                inputEl.classList.remove('border-emerald-500', 'bg-emerald-900/30', 'text-emerald-400', 'shadow-[0_0_15px_rgba(16,185,129,0.3)]');
+            }
+            
+            // Trả về trạng thái mặc định
+            inputEl.className = "w-full bg-slate-900 border-2 border-slate-600 focus:border-brand-500 rounded-xl px-4 py-3 text-center text-xl text-white outline-none font-bold placeholder-slate-500 transition-all shadow-inner relative z-10";
+
+            // Bật lại chế độ ẩn (blur) để người dùng phải tự nhớ và gõ lại
+            document.getElementById('fcWord').classList.add('blur-md', 'opacity-40', 'select-none', 'cursor-pointer');
+            const phoneticEl = document.getElementById('fcPhonetic');
+            if (phoneticEl) phoneticEl.classList.add('blur-md', 'opacity-40', 'select-none', 'cursor-pointer');
+            
+            return;
+        }
+    }
+
     if (event.key === 'Enter') {
         if (event.repeat) return;
         event.preventDefault();
