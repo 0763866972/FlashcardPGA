@@ -101,6 +101,9 @@
                 </select>
             </div>
             <div class="flex items-center gap-3">
+                <button onclick="toggleAutoRead()" id="autoReadBtn" class="px-4 py-2 bg-white text-slate-600 font-bold rounded-lg border border-slate-200 hover:bg-slate-50 transition shadow-sm active:scale-95">
+                    <i class="fa-solid fa-volume-high mr-2" id="autoReadIcon"></i> <span>Tự động đọc</span>
+                </button>
                 <button onclick="toggleAutoPlay()" id="autoPlayBtn" class="px-4 py-2 bg-white text-slate-600 font-bold rounded-lg border border-slate-200 hover:bg-slate-50 transition shadow-sm active:scale-95">
                     <i class="fa-solid fa-headphones mr-2" id="autoPlayIcon"></i> <span>Rảnh tai</span>
                 </button>
@@ -149,6 +152,7 @@
         let hintLevel = 0; // 0: None, 1: 1 char, 2: 2 chars, 3: First word full + 2 chars
         let isGlobalRevealed = false;
         let isAutoPlaying = false;
+        let isAutoReadWord = false;
         let autoPlayInterval = null;
         
         // Cố gắng tải danh sách giọng nói trước (Chrome bug fix)
@@ -324,6 +328,21 @@
         
         function sleep(ms) {
             return new Promise(r => setTimeout(r, ms));
+        }
+
+        function toggleAutoRead() {
+            isAutoReadWord = !isAutoReadWord;
+            const btn = document.getElementById('autoReadBtn');
+            const icon = document.getElementById('autoReadIcon');
+            if (isAutoReadWord) {
+                btn.classList.remove('bg-white', 'text-slate-600', 'border-slate-200');
+                btn.classList.add('bg-brand-500', 'text-white', 'border-brand-500');
+                icon.classList.add('animate-pulse');
+            } else {
+                btn.classList.remove('bg-brand-500', 'text-white', 'border-brand-500');
+                btn.classList.add('bg-white', 'text-slate-600', 'border-slate-200');
+                icon.classList.remove('animate-pulse');
+            }
         }
 
         function toggleAutoPlay() {
@@ -502,6 +521,7 @@
                             const matchedWord = current.words.find(w => !w.revealed && val === w.check);
                             if (matchedWord) {
                                 matchedWord.revealed = true;
+                                if (isAutoReadWord) playTTS(matchedWord.check);
                                 renderCard(); 
                                 setTimeout(() => {
                                     const nextInput = container.querySelector('input');
@@ -520,6 +540,7 @@
                                 const matchedWord = current.words.find(w => !w.revealed && val === w.check);
                                 if (matchedWord) {
                                     matchedWord.revealed = true;
+                                    if (isAutoReadWord) playTTS(matchedWord.check);
                                     renderCard(); 
                                     setTimeout(() => {
                                         const nextInput = container.querySelector('input');
@@ -599,6 +620,7 @@
                         
                         hiddenBox.onclick = () => {
                             wordObj.revealed = true;
+                            if (isAutoReadWord) playTTS(wordObj.check);
                             renderCard();
                         };
                         container.appendChild(hiddenBox);
