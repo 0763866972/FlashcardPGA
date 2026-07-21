@@ -75,9 +75,14 @@
 
     <!-- Màn hình Nhập Dữ Liệu -->
     <div id="setupScreen" class="w-full max-w-3xl bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-        <h2 class="text-lg font-bold mb-4 text-slate-700"><i class="fa-solid fa-paste mr-2"></i>Nhập danh sách từ đồng nghĩa</h2>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <h2 class="text-lg font-bold text-slate-700"><i class="fa-solid fa-paste mr-2"></i>Nhập danh sách từ đồng nghĩa</h2>
+            <button onclick="toggleSpellcheck()" id="spellcheckBtn" class="text-xs bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 px-3 py-1.5 rounded-lg transition-all font-bold flex items-center shrink-0 w-fit">
+                <i class="fa-solid fa-spell-check mr-1.5"></i> <span>Bật soát lỗi</span>
+            </button>
+        </div>
         <p class="text-sm text-slate-500 mb-4">Định dạng: <code>từ 1 = từ 2 (loại từ) = từ 3 : Nghĩa tiếng việt</code></p>
-        <textarea id="rawData" rows="10" class="w-full p-4 border border-slate-200 rounded-xl bg-slate-50 text-slate-700 font-mono text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition" placeholder="enable (v) sb/ sth to do sth = allow = permit = approve : cho phép&#10;fast = quick = rapid : nhanh"></textarea>
+        <textarea id="rawData" spellcheck="false" lang="en" rows="10" class="w-full p-4 border border-slate-200 rounded-xl bg-slate-50 text-slate-700 font-mono text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition" placeholder="enable (v) sb/ sth to do sth = allow = permit = approve : cho phép&#10;fast = quick = rapid : nhanh"></textarea>
         
         <button onclick="parseData()" class="mt-4 w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl shadow-md transition-all active:scale-[0.98]">
             <i class="fa-solid fa-rocket mr-2"></i> Bắt đầu học
@@ -88,24 +93,27 @@
     <div id="flashcardScreen" class="w-full max-w-3xl hidden flex flex-col gap-6">
         
         <!-- Controls -->
-        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap gap-4 items-center justify-between">
-            <div class="flex items-center gap-3">
-                <button onclick="toggleMode()" id="modeBtn" class="px-4 py-2 bg-indigo-50 text-indigo-700 font-bold rounded-lg border border-indigo-200 hover:bg-indigo-100 transition">
-                    <i class="fa-solid fa-eye-slash mr-2" id="modeIcon"></i> <span id="modeText">Lật thẻ (Click)</span>
+        <div class="bg-white p-3 sm:p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-4 items-center justify-between">
+            <div class="flex flex-wrap justify-center items-stretch gap-2 sm:gap-3 w-full md:w-auto">
+                <button onclick="toggleMode()" id="modeBtn" class="flex-1 md:flex-none flex items-center justify-center px-4 py-2.5 bg-indigo-50 text-indigo-700 font-bold rounded-lg border border-indigo-200 hover:bg-indigo-100 transition min-w-[140px]">
+                    <i class="fa-solid fa-eye-slash mr-2" id="modeIcon"></i> <span id="modeText" class="whitespace-nowrap">Lật thẻ (Click)</span>
                 </button>
-                <select id="hintLevel" onchange="changeHint()" class="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 outline-none cursor-pointer">
+                <select id="hintLevel" onchange="changeHint()" class="flex-1 md:flex-none px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 outline-none cursor-pointer hover:border-slate-300 transition min-w-[140px]">
                     <option value="0">Không gợi ý</option>
                     <option value="1">Gợi ý 1 chữ đầu</option>
                     <option value="2">Gợi ý 2 chữ đầu</option>
-                    <option value="3">Hiện từ đầu, còn lại gợi ý 2 chữ</option>
+                    <option value="3">Từ đầu tiên + 2 chữ</option>
                 </select>
             </div>
-            <div class="flex items-center gap-3">
-                <button onclick="toggleAutoRead()" id="autoReadBtn" class="px-4 py-2 bg-white text-slate-600 font-bold rounded-lg border border-slate-200 hover:bg-slate-50 transition shadow-sm active:scale-95">
-                    <i class="fa-solid fa-volume-high mr-2" id="autoReadIcon"></i> <span>Tự động đọc</span>
+            
+            <div class="w-full md:w-px h-px md:h-8 bg-slate-200 hidden sm:block"></div>
+            
+            <div class="flex flex-wrap justify-center items-stretch gap-2 sm:gap-3 w-full md:w-auto">
+                <button onclick="toggleAutoRead()" id="autoReadBtn" class="flex-1 md:flex-none flex items-center justify-center px-4 py-2.5 bg-white text-slate-600 font-bold rounded-lg border border-slate-200 hover:bg-slate-50 transition shadow-sm active:scale-95 min-w-[140px]">
+                    <i class="fa-solid fa-volume-high mr-2" id="autoReadIcon"></i> <span class="whitespace-nowrap">Tự động đọc</span>
                 </button>
-                <button onclick="toggleAutoPlay()" id="autoPlayBtn" class="px-4 py-2 bg-white text-slate-600 font-bold rounded-lg border border-slate-200 hover:bg-slate-50 transition shadow-sm active:scale-95">
-                    <i class="fa-solid fa-headphones mr-2" id="autoPlayIcon"></i> <span>Rảnh tai</span>
+                <button onclick="toggleAutoPlay()" id="autoPlayBtn" class="flex-1 md:flex-none flex items-center justify-center px-4 py-2.5 bg-white text-slate-600 font-bold rounded-lg border border-slate-200 hover:bg-slate-50 transition shadow-sm active:scale-95 min-w-[140px]">
+                    <i class="fa-solid fa-headphones mr-2" id="autoPlayIcon"></i> <span class="whitespace-nowrap">Rảnh tai</span>
                 </button>
             </div>
         </div>
@@ -328,6 +336,24 @@
         
         function sleep(ms) {
             return new Promise(r => setTimeout(r, ms));
+        }
+
+        function toggleSpellcheck() {
+            const textarea = document.getElementById('rawData');
+            const btn = document.getElementById('spellcheckBtn');
+            const isEnabled = textarea.getAttribute('spellcheck') === 'true';
+            
+            if (isEnabled) {
+                textarea.setAttribute('spellcheck', 'false');
+                btn.innerHTML = '<i class="fa-solid fa-spell-check mr-1.5"></i> <span>Bật soát lỗi</span>';
+                btn.classList.remove('bg-rose-500', 'text-white', 'border-rose-600', 'hover:bg-rose-600');
+                btn.classList.add('bg-rose-50', 'text-rose-600', 'border-rose-200', 'hover:bg-rose-100');
+            } else {
+                textarea.setAttribute('spellcheck', 'true');
+                btn.innerHTML = '<i class="fa-solid fa-check-double mr-1.5"></i> <span>Tắt soát lỗi</span>';
+                btn.classList.remove('bg-rose-50', 'text-rose-600', 'border-rose-200', 'hover:bg-rose-100');
+                btn.classList.add('bg-rose-500', 'text-white', 'border-rose-600', 'hover:bg-rose-600');
+            }
         }
 
         function toggleAutoRead() {
