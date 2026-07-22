@@ -406,8 +406,8 @@
                     html += `
                         <tr class="border-b border-slate-100 last:border-0 ${rowBg} transition-colors ${rowColor}">
                             <td class="p-4 text-center font-bold opacity-60">${index + 1}</td>
-                            <td class="p-4 font-bold text-brand-600">${wordsStr}</td>
-                            <td class="p-4">${item.meaning}</td>
+                            <td class="p-4 font-bold text-brand-600 focus:outline-none focus:bg-white focus:ring-2 focus:ring-brand-500/50 rounded-lg transition-all outline-none" contenteditable="true" onblur="updateWordFromTable(${index}, 'words', this.innerText, this)" title="Click để sửa">${wordsStr}</td>
+                            <td class="p-4 focus:outline-none focus:bg-white focus:ring-2 focus:ring-brand-500/50 rounded-lg transition-all outline-none" contenteditable="true" onblur="updateWordFromTable(${index}, 'meaning', this.innerText, this)" title="Click để sửa">${item.meaning}</td>
                             <td class="p-4 text-center">
                                 <div class="flex items-center justify-center gap-1">
                                     <button onclick="toggleStarFromTable(${index})" class="w-8 h-8 rounded-full hover:bg-white transition-all shadow-sm flex items-center justify-center border border-transparent hover:border-slate-200" title="Đánh dấu sao">
@@ -477,6 +477,94 @@
             });
             textarea.value = updatedLines.join('\n');
             localStorage.setItem('tudongnghia_raw_data', textarea.value);
+        }
+
+        function updateRawDataLine(oldMeaning, newItem) {
+            const textarea = document.getElementById('rawData');
+            if (!textarea) return;
+            let lines = textarea.value.split('\n');
+            let updatedLines = lines.map(line => {
+                let lastColon = line.lastIndexOf(':');
+                if (lastColon === -1) return line;
+                let meanPart = line.substring(lastColon + 1).trim();
+                if (meanPart === oldMeaning) {
+                    const newWordsStr = newItem.words.map(w => w.display).join(' = ');
+                    return `${newWordsStr} : ${newItem.meaning}`;
+                }
+                return line;
+            });
+            textarea.value = updatedLines.join('\n');
+            localStorage.setItem('tudongnghia_raw_data', textarea.value);
+        }
+
+        function updateWordFromTable(index, field, newValue, tdElement) {
+            const item = originalSynonymsData[index];
+            if (!item) return;
+            
+            // Xóa khoảng trắng thừa và ký tự xuống dòng
+            newValue = newValue.replace(/\n/g, ' ').trim();
+            if (!newValue) {
+                // Nếu sửa thành rỗng, phục hồi lại giá trị cũ
+                if (field === 'words') {
+                    tdElement.innerText = item.words.map(w => w.display).join(' = ');
+                } else if (field === 'meaning') {
+                    tdElement.innerText = item.meaning;
+                }
+                return;
+            }
+
+            const oldMeaning = item.meaning;
+            const oldWordsStr = item.words.map(w => w.display).join(' = ');
+            
+            if (field === 'words') {
+                if (oldWordsStr === newValue) return;
+                // Parse lại words
+                let wordsRaw = newValue.split('=').map(w => w.trim()).filter(w => w);
+                if (wordsRaw.length === 0) {
+                    tdElement.innerText = oldWordsStr;
+                    return;
+                }
+                
+                let annotation = '';
+                const match = wordsRaw[0].match(/\(([^)]+)\)/);
+                if (match) {
+                    annotation = `(${match[1].trim()})`;
+                }
+                
+                item.words = wordsRaw.map(w => {
+                    let checkW = w.replace(/\([^)]*\)/g, '').trim().toLowerCase();
+                    checkW = checkW.replace(/\s+/g, ' ');
+                    return { display: w, check: checkW, revealed: false };
+                });
+                item.annotation = annotation;
+                
+            } else if (field === 'meaning') {
+                if (oldMeaning === newValue) return;
+                item.meaning = newValue;
+                
+                // Update starredLines if it was starred
+                if (item.isStarred) {
+                    starredLines = starredLines.map(m => m === oldMeaning ? newValue : m);
+                    localStorage.setItem('tudongnghia_starred', JSON.stringify(starredLines));
+                }
+            }
+            
+            // Cập nhật lại textarea raw_data
+            updateRawDataLine(oldMeaning, item);
+            
+            // Sync with synonymsData
+            const currentItem = synonymsData.find(d => d.meaning === oldMeaning);
+            if (currentItem) {
+                currentItem.meaning = item.meaning;
+                currentItem.words = JSON.parse(JSON.stringify(item.words)); // deep copy
+                currentItem.annotation = item.annotation;
+            }
+            
+            renderCard(); 
+            // Format lại UI cell
+            if (field === 'words') {
+                tdElement.innerText = item.words.map(w => w.display).join(' = ');
+            }
         }
 
         function executeDeleteCard(e) {
