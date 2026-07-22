@@ -155,24 +155,24 @@
         <div class="glass-card rounded-[2.5rem] overflow-hidden w-full max-w-5xl mx-auto mt-12 flex flex-col shadow-2xl shadow-brand-500/10">
             
             <!-- Header (Nghĩa Tiếng Việt) -->
-            <div class="bg-white/60 px-8 py-6 relative border-b border-white/50 flex flex-col items-center justify-center">
-                <button onclick="toggleStarCard()" class="absolute top-4 left-6 w-10 h-10 rounded-full hover:bg-white/80 text-slate-400 hover:text-amber-500 flex items-center justify-center transition-all shadow-sm" title="Đánh dấu sao">
+            <div class="bg-gradient-to-br from-brand-900 to-indigo-900 px-8 py-6 relative border-b border-brand-500/30 flex flex-col items-center justify-center">
+                <button onclick="toggleStarCard()" class="absolute top-4 left-6 w-10 h-10 rounded-full hover:bg-white/20 text-brand-300/70 hover:text-amber-400 flex items-center justify-center transition-all" title="Đánh dấu sao">
                     <i id="cardStarIcon" class="fa-regular fa-star text-lg"></i>
                 </button>
                 <div class="absolute top-4 right-6 flex items-center gap-2 z-20">
                     <div class="relative flex items-center justify-center">
-                        <button onclick="showDeleteCardConfirm(event)" id="cardDeleteBtn" class="w-10 h-10 rounded-full hover:bg-white/80 text-slate-400 hover:text-rose-500 flex items-center justify-center transition-all shadow-sm" title="Xóa thẻ này khỏi danh sách">
+                        <button onclick="showDeleteCardConfirm(event)" id="cardDeleteBtn" class="w-10 h-10 rounded-full hover:bg-white/20 text-brand-300/70 hover:text-rose-400 flex items-center justify-center transition-all" title="Xóa thẻ này khỏi danh sách">
                             <i class="fa-solid fa-trash-can text-lg"></i>
                         </button>
 
                         <!-- Delete Confirm Popup moved to end of body to prevent 3D clipping -->
                     </div>
-                    <button onclick="toggleCardReveal()" class="w-10 h-10 rounded-full hover:bg-white/80 text-slate-400 hover:text-brand-500 flex items-center justify-center transition-all shadow-sm" title="Ẩn/Hiện">
+                    <button onclick="toggleCardReveal()" class="w-10 h-10 rounded-full hover:bg-white/20 text-brand-300/70 hover:text-white flex items-center justify-center transition-all" title="Ẩn/Hiện">
                         <i id="cardRevealIcon" class="fa-solid fa-eye-slash text-lg"></i>
                     </button>
                 </div>
-                <div class="text-xs font-bold text-brand-400 tracking-widest uppercase mb-2" id="progressText">1/1</div>
-                <h2 id="meaningDisplay" class="text-3xl md:text-4xl font-extrabold bg-gradient-to-br from-rose-500 to-orange-400 bg-clip-text text-transparent text-center leading-tight drop-shadow-sm pb-1">Loading...</h2>
+                <div class="text-xs font-bold text-brand-300 tracking-widest uppercase mb-2 opacity-80" id="progressText">1/1</div>
+                <h2 id="meaningDisplay" class="text-3xl md:text-4xl font-extrabold text-white text-center leading-tight drop-shadow-md pb-1">Loading...</h2>
             </div>
             
             <!-- Các từ đồng nghĩa -->
@@ -277,6 +277,12 @@
                 let wordsRaw = synsPart.split('=').map(w => w.trim()).filter(w => w);
                 if (wordsRaw.length === 0) continue;
                 
+                let annotation = '';
+                const match = wordsRaw[0].match(/\(([^)]+)\)/);
+                if (match) {
+                    annotation = `(${match[1].trim()})`;
+                }
+                
                 let words = wordsRaw.map(w => {
                     let checkW = w.replace(/\([^)]*\)/g, '').trim().toLowerCase();
                     checkW = checkW.replace(/\s+/g, ' ');
@@ -286,7 +292,8 @@
                 originalSynonymsData.push({
                     meaning: meanPart,
                     words: words,
-                    isStarred: starredLines.includes(meanPart)
+                    isStarred: starredLines.includes(meanPart),
+                    annotation: annotation
                 });
             }
             renderTable();
@@ -951,7 +958,7 @@
                 const charTyped = typedWord[i] || '';
                 const charCorrect = correctWord[i] || '';
                 
-                if (charTyped === charCorrect) {
+                if (charTyped.toLowerCase() === charCorrect.toLowerCase()) {
                     html += `<span class="text-emerald-500">${charCorrect}</span>`;
                 } else {
                     const displayChar = charCorrect === ' ' ? '&nbsp;' : (charCorrect || '_');
@@ -1012,7 +1019,11 @@
             if (synonymsData.length === 0) return;
             const current = synonymsData[currentIndex];
             
-            document.getElementById('meaningDisplay').innerText = current.meaning;
+            let displayMeaning = current.meaning;
+            if (current.annotation) {
+                displayMeaning += ` <span class="text-brand-300/80 text-lg md:text-2xl font-semibold ml-2 inline-block">${current.annotation}</span>`;
+            }
+            document.getElementById('meaningDisplay').innerHTML = displayMeaning;
             document.getElementById('progressText').innerText = `${currentIndex + 1}/${synonymsData.length}`;
             
             const topEyeIcon = document.getElementById('cardRevealIcon');
@@ -1042,11 +1053,16 @@
                     if (wordObj.revealed) {
                         const box = document.createElement('div');
                         if (wordObj.isFailed) {
-                            box.className = "h-[54px] px-8 bg-rose-50 text-rose-600 font-bold text-xl rounded-full flex items-center justify-center border-2 border-rose-400 shadow-[0_4px_12px_rgba(244,63,94,0.15)] min-w-[120px] transition-all cursor-pointer hover:bg-rose-100";
+                            box.className = "h-[54px] px-8 bg-rose-50 text-rose-600 font-bold text-xl rounded-full flex items-center justify-center border-2 border-rose-400 shadow-[0_4px_12px_rgba(244,63,94,0.15)] min-w-[120px] transition-all cursor-pointer hover:bg-rose-100 tracking-wide";
+                            if (wordObj.lastTyped !== undefined) {
+                                box.innerHTML = generateDiffHtml(wordObj.lastTyped, wordObj.display);
+                            } else {
+                                box.innerText = wordObj.display;
+                            }
                         } else {
                             box.className = "h-[54px] px-8 bg-emerald-50 text-emerald-600 font-bold text-xl rounded-full flex items-center justify-center border-2 border-emerald-400 shadow-[0_4px_12px_rgba(52,211,153,0.15)] min-w-[120px] transition-all cursor-pointer hover:bg-emerald-100";
+                            box.innerText = wordObj.display;
                         }
-                        box.innerText = wordObj.display;
                         box.title = "Chuột phải để nghe phát âm";
                         box.oncontextmenu = (e) => {
                             e.preventDefault();
@@ -1119,6 +1135,7 @@
                                         if (bestWordObj) {
                                             bestWordObj.revealed = true;
                                             bestWordObj.isFailed = true;
+                                            bestWordObj.lastTyped = val;
                                             if (isAutoReadWord) playTTS(bestWordObj.check);
                                             renderCard();
                                             setTimeout(() => {
@@ -1167,6 +1184,7 @@
                                     // Bỏ qua (Skip) từ hiện tại: tự động mở từ và trỏ sang ô tiếp theo
                                     wordObj.revealed = true;
                                     wordObj.isFailed = true;
+                                    wordObj.lastTyped = '';
                                     if (isAutoReadWord) playTTS(wordObj.check);
                                     renderCard();
                                     setTimeout(() => {
@@ -1182,6 +1200,13 @@
                                     e.target.classList.add('border-slate-200', 'text-slate-700', 'bg-slate-50', 'focus:border-brand-500');
                                     const diffBox = wrapper.querySelector('.diff-box');
                                     if (diffBox) diffBox.remove();
+                                }
+                            } else if (e.key === 'Tab') {
+                                e.preventDefault();
+                                const currentLen = e.target.value.length;
+                                if (currentLen < wordObj.display.length) {
+                                    e.target.value = wordObj.display.substring(0, currentLen + 1);
+                                    e.target.dispatchEvent(new Event('input'));
                                 }
                             }
                         };
