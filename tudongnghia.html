@@ -773,7 +773,7 @@
         function playTTSAsync(text, lang = 'en-US') {
             return new Promise(resolve => {
                 const now = Date.now();
-                if (now - lastTTSCallTime < 250) { }
+                if (now - lastTTSCallTime < 250) { return; }
                 lastTTSCallTime = now;
 
                 window.speechSynthesis.cancel();
@@ -789,13 +789,16 @@
                 window.globalAudioTTS.onended = resolve;
                 window.globalAudioTTS.onerror = () => fallbackTTS(text, lang, resolve);
                 
-                window.globalAudioTTS.play().catch(() => fallbackTTS(text, lang, resolve));
+                window.globalAudioTTS.play().catch((err) => {
+                    if (err.name === 'AbortError') return;
+                    fallbackTTS(text, lang, resolve);
+                });
             });
         }
 
         function playTTS(text, lang = 'en-US') {
             const now = Date.now();
-            if (now - lastTTSCallTime < 250) { }
+            if (now - lastTTSCallTime < 250) { return; }
             lastTTSCallTime = now;
 
             window.speechSynthesis.cancel();
@@ -811,7 +814,10 @@
             window.globalAudioTTS.onended = null;
             window.globalAudioTTS.onerror = () => fallbackTTS(text, lang);
             
-            window.globalAudioTTS.play().catch(() => fallbackTTS(text, lang));
+            window.globalAudioTTS.play().catch((err) => {
+                if (err.name === 'AbortError') return;
+                fallbackTTS(text, lang);
+            });
         }
         
         function sleep(ms) {

@@ -2026,7 +2026,8 @@ function playSpeechRobust(text, lang = 'en-US', rate = 1.0, onEndCallback = null
     // Dùng timestamp thay vì setTimeout để đảm bảo Audio.play() nằm trong user gesture synchronously (tránh lỗi iOS/iPad)
     const now = Date.now();
     if (now - lastTTSCallTime < 250) {
-        // Nếu gọi quá nhanh (dưới 250ms), ta sẽ hủy đọc cái cũ và đọc ngay cái mới luôn
+        // Nếu gọi quá nhanh (dưới 250ms), bỏ qua để chống spam
+        return;
     }
     lastTTSCallTime = now;
 
@@ -2076,6 +2077,7 @@ function playSpeechRobust(text, lang = 'en-US', rate = 1.0, onEndCallback = null
 
     // Bắt đầu phát Google TTS (Synchronous - iOS sẽ cho phép nếu từ user click)
     window.globalAudioTTS.play().catch(e => {
+        if (e.name === 'AbortError') return;
         if (window.globalAudioTTS && window.globalAudioTTS.onerror) window.globalAudioTTS.onerror();
     });
 }
