@@ -103,7 +103,7 @@
                             <th class="p-4 font-bold w-12 text-center">#</th>
                             <th class="p-4 font-bold">Từ Đồng Nghĩa</th>
                             <th class="p-4 font-bold">Nghĩa Tiếng Việt</th>
-                            <th class="p-4 font-bold w-16 text-center">Sao</th>
+                            <th class="p-4 font-bold w-24 text-center">Thao tác</th>
                         </tr>
                     </thead>
                     <tbody id="setupTableBody" class="text-slate-700 text-sm bg-white">
@@ -159,9 +159,26 @@
                 <button onclick="toggleStarCard()" class="absolute top-4 left-6 w-10 h-10 rounded-full hover:bg-white/80 text-slate-400 hover:text-amber-500 flex items-center justify-center transition-all shadow-sm" title="Đánh dấu sao">
                     <i id="cardStarIcon" class="fa-regular fa-star text-lg"></i>
                 </button>
-                <button onclick="toggleCardReveal()" class="absolute top-4 right-6 w-10 h-10 rounded-full hover:bg-white/80 text-slate-400 hover:text-brand-500 flex items-center justify-center transition-all shadow-sm" title="Ẩn/Hiện">
-                    <i id="cardRevealIcon" class="fa-solid fa-eye-slash"></i>
-                </button>
+                <div class="absolute top-4 right-6 flex items-center gap-2 z-20">
+                    <div class="relative flex items-center justify-center">
+                        <button onclick="showDeleteCardConfirm(event)" id="cardDeleteBtn" class="w-10 h-10 rounded-full hover:bg-white/80 text-slate-400 hover:text-rose-500 flex items-center justify-center transition-all shadow-sm" title="Xóa thẻ này khỏi danh sách">
+                            <i class="fa-solid fa-trash-can text-lg"></i>
+                        </button>
+
+                        <!-- Delete Confirm Popup (Positioned ABOVE the trash icon) -->
+                        <div id="cardDeleteConfirmPopup" class="hidden fixed w-44 bg-white/95 backdrop-blur-xl border border-slate-200/80 rounded-2xl shadow-2xl p-2.5 z-[9999] animate-fade-in origin-bottom">
+                            <div class="flex gap-2">
+                                <button onclick="hideDeleteCardConfirm(event)" class="flex-1 py-1.5 bg-slate-100 hover:bg-slate-200 font-bold text-slate-600 text-[13px] rounded-xl transition-all">Hủy</button>
+                                <button onclick="executeDeleteCard(event)" class="flex-1 py-1.5 bg-rose-500 hover:bg-rose-600 font-bold text-white text-[13px] rounded-xl shadow-md shadow-rose-500/30 transition-all">Xóa</button>
+                            </div>
+                            <!-- Arrow pointing down to trash icon -->
+                            <div class="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white/95 backdrop-blur-xl border-b border-r border-slate-200/80 rotate-45 rounded-sm"></div>
+                        </div>
+                    </div>
+                    <button onclick="toggleCardReveal()" class="w-10 h-10 rounded-full hover:bg-white/80 text-slate-400 hover:text-brand-500 flex items-center justify-center transition-all shadow-sm" title="Ẩn/Hiện">
+                        <i id="cardRevealIcon" class="fa-solid fa-eye-slash text-lg"></i>
+                    </button>
+                </div>
                 <div class="text-xs font-bold text-brand-400 tracking-widest uppercase mb-2" id="progressText">1/1</div>
                 <h2 id="meaningDisplay" class="text-3xl md:text-4xl font-extrabold bg-gradient-to-br from-rose-500 to-orange-400 bg-clip-text text-transparent text-center leading-tight drop-shadow-sm pb-1">Loading...</h2>
             </div>
@@ -197,7 +214,7 @@
                             <th class="p-4 font-bold w-12 text-center">#</th>
                             <th class="p-4 font-bold">Từ Đồng Nghĩa</th>
                             <th class="p-4 font-bold">Nghĩa Tiếng Việt</th>
-                            <th class="p-4 font-bold w-16 text-center">Sao</th>
+                            <th class="p-4 font-bold w-24 text-center">Thao tác</th>
                         </tr>
                     </thead>
                     <tbody id="studyTableBody" class="text-slate-700 text-sm">
@@ -393,9 +410,14 @@
                             <td class="p-4 font-bold text-brand-600">${wordsStr}</td>
                             <td class="p-4">${item.meaning}</td>
                             <td class="p-4 text-center">
-                                <button onclick="toggleStarFromTable(${index})" class="w-8 h-8 rounded-full hover:bg-white transition-all shadow-sm flex items-center justify-center mx-auto border border-transparent hover:border-slate-200">
-                                    <i class="${starIcon} text-lg"></i>
-                                </button>
+                                <div class="flex items-center justify-center gap-1">
+                                    <button onclick="toggleStarFromTable(${index})" class="w-8 h-8 rounded-full hover:bg-white transition-all shadow-sm flex items-center justify-center border border-transparent hover:border-slate-200" title="Đánh dấu sao">
+                                        <i class="${starIcon} text-lg"></i>
+                                    </button>
+                                    <button onclick="deleteCardFromTable(${index})" class="w-8 h-8 rounded-full hover:bg-white text-slate-400 hover:text-rose-500 transition-all shadow-sm flex items-center justify-center border border-transparent hover:border-slate-200" title="Xóa từ này">
+                                        <i class="fa-solid fa-trash-can text-sm"></i>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     `;
@@ -404,6 +426,104 @@
             
             if (setupTbody) setupTbody.innerHTML = html;
             if (studyTbody) studyTbody.innerHTML = html;
+        }
+
+        function showDeleteCardConfirm(e) {
+            if (e) e.stopPropagation();
+            const btn = document.getElementById('cardDeleteBtn');
+            const popup = document.getElementById('cardDeleteConfirmPopup');
+            if (!btn || !popup) return;
+            
+            popup.classList.remove('hidden');
+            const rect = btn.getBoundingClientRect();
+            popup.style.top = `${rect.top - 52}px`;
+            popup.style.left = `${rect.left + (rect.width / 2) - 88}px`;
+        }
+
+        function hideDeleteCardConfirm(e) {
+            if (e) e.stopPropagation();
+            const popup = document.getElementById('cardDeleteConfirmPopup');
+            if (popup) popup.classList.add('hidden');
+        }
+
+        function removeMeaningFromRawData(meaning) {
+            const textarea = document.getElementById('rawData');
+            if (!textarea) return;
+            let lines = textarea.value.split('\n');
+            let updatedLines = lines.filter(line => {
+                let lastColon = line.lastIndexOf(':');
+                if (lastColon === -1) return true;
+                let meanPart = line.substring(lastColon + 1).trim();
+                return meanPart !== meaning;
+            });
+            textarea.value = updatedLines.join('\n');
+            localStorage.setItem('tudongnghia_raw_data', textarea.value);
+        }
+
+        function executeDeleteCard(e) {
+            if (e) e.stopPropagation();
+            hideDeleteCardConfirm();
+            if (synonymsData.length === 0) return;
+            
+            const current = synonymsData[currentIndex];
+            if (!current) return;
+            
+            removeMeaningFromRawData(current.meaning);
+
+            const origIdx = originalSynonymsData.findIndex(o => o.meaning === current.meaning);
+            if (origIdx !== -1) originalSynonymsData.splice(origIdx, 1);
+            
+            synonymsData.splice(currentIndex, 1);
+
+            if (current.isStarred) {
+                starredLines = starredLines.filter(m => m !== current.meaning);
+                localStorage.setItem('tudongnghia_starred', JSON.stringify(starredLines));
+            }
+
+            renderTable();
+
+            if (synonymsData.length === 0) {
+                alert("Đã xóa hết từ vựng!");
+                document.getElementById('flashcardScreen').classList.add('hidden');
+                document.getElementById('setupScreen').classList.remove('hidden');
+            } else {
+                if (currentIndex >= synonymsData.length) {
+                    currentIndex = synonymsData.length - 1;
+                }
+                applyGlobalRevealState();
+                renderCard();
+            }
+        }
+
+        function deleteCardFromTable(index) {
+            const item = originalSynonymsData[index];
+            if (!item) return;
+            
+            if (confirm(`Bạn có chắc muốn xóa từ "${item.words.map(w => w.display).join(' = ')} : ${item.meaning}"?`)) {
+                removeMeaningFromRawData(item.meaning);
+
+                originalSynonymsData.splice(index, 1);
+                
+                const synIdx = synonymsData.findIndex(d => d.meaning === item.meaning);
+                if (synIdx !== -1) synonymsData.splice(synIdx, 1);
+
+                if (item.isStarred) {
+                    starredLines = starredLines.filter(m => m !== item.meaning);
+                    localStorage.setItem('tudongnghia_starred', JSON.stringify(starredLines));
+                }
+
+                if (currentIndex >= synonymsData.length) {
+                    currentIndex = Math.max(0, synonymsData.length - 1);
+                }
+
+                renderTable();
+                if (synonymsData.length > 0) {
+                    renderCard();
+                } else {
+                    document.getElementById('flashcardScreen').classList.add('hidden');
+                    document.getElementById('setupScreen').classList.remove('hidden');
+                }
+            }
         }
 
         function toggleStarFromTable(index) {
@@ -851,6 +971,7 @@
         }
 
         function renderCard() {
+            hideDeleteCardConfirm();
             if (synonymsData.length === 0) return;
             const current = synonymsData[currentIndex];
             
@@ -1072,6 +1193,15 @@
             silentParseData(); // Initial load for table
         });
         
+        document.addEventListener('click', (e) => {
+            const popup = document.getElementById('cardDeleteConfirmPopup');
+            const deleteBtn = document.getElementById('cardDeleteBtn');
+            if (popup && !popup.classList.contains('hidden')) {
+                if (!popup.contains(e.target) && !deleteBtn.contains(e.target)) {
+                    popup.classList.add('hidden');
+                }
+            }
+        });
     </script>
 </body>
 </html>
