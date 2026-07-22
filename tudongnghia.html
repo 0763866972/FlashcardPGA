@@ -68,23 +68,62 @@
 </head>
 <body class="text-slate-800 antialiased selection:bg-brand-200 selection:text-brand-900 flex flex-col items-center p-4 md:p-8">
 
-    <div class="w-full max-w-4xl flex items-center justify-between mb-8">
+    <div class="w-full max-w-4xl flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
         <h1 class="text-2xl font-black text-slate-800"><i class="fa-solid fa-link text-brand-500 mr-2"></i> Từ Đồng Nghĩa</h1>
-        <a href="index.html" class="px-4 py-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 shadow-sm transition"><i class="fa-solid fa-house mr-1"></i> Trang chủ</a>
+        <div class="flex items-center gap-3">
+            <button onclick="toggleStarFilter()" id="starFilterBtn" class="hidden px-4 py-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200 shadow-sm transition items-center">
+                <i class="fa-regular fa-star mr-1.5" id="starFilterIcon"></i> <span id="starFilterText">Học tất cả</span>
+            </button>
+            <a href="index.html" class="px-4 py-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 shadow-sm transition whitespace-nowrap"><i class="fa-solid fa-house mr-1"></i> Trang chủ</a>
+        </div>
     </div>
 
     <!-- Màn hình Nhập Dữ Liệu -->
-    <div id="setupScreen" class="w-full max-w-3xl bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+    <div id="setupScreen" class="w-full max-w-4xl bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-            <h2 class="text-lg font-bold text-slate-700"><i class="fa-solid fa-paste mr-2"></i>Nhập danh sách từ đồng nghĩa</h2>
-            <button onclick="toggleSpellcheck()" id="spellcheckBtn" class="text-xs bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 px-3 py-1.5 rounded-lg transition-all font-bold flex items-center shrink-0 w-fit">
-                <i class="fa-solid fa-spell-check mr-1.5"></i> <span>Bật soát lỗi</span>
-            </button>
+            <h2 class="text-xl font-bold text-slate-700 flex items-center">
+                <i class="fa-solid fa-list-ul mr-3 text-brand-500"></i>Danh sách từ đồng nghĩa
+            </h2>
+            <div class="flex items-center gap-2">
+                <button onclick="toggleSetupMode()" id="setupToggleBtn" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 transition flex items-center shadow-inner text-sm">
+                    <i class="fa-solid fa-pen-to-square mr-2"></i> Chỉnh sửa
+                </button>
+                <button onclick="checkSpelling()" id="spellcheckBtn" class="text-sm bg-rose-600 hover:bg-rose-500 text-white shadow-[0_4px_12px_rgba(225,29,72,0.2)] px-3 py-2 rounded-xl transition-all font-bold flex items-center shrink-0 w-fit">
+                    <i class="fa-solid fa-spell-check mr-1.5"></i> <span id="spellcheckBtnText">Soát lỗi</span>
+                </button>
+            </div>
         </div>
-        <p class="text-sm text-slate-500 mb-4">Định dạng: <code>từ 1 = từ 2 (loại từ) = từ 3 : Nghĩa tiếng việt</code></p>
-        <textarea id="rawData" spellcheck="false" lang="en" rows="10" class="w-full p-4 border border-slate-200 rounded-xl bg-slate-50 text-slate-700 font-mono text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition" placeholder="enable (v) sb/ sth to do sth = allow = permit = approve : cho phép&#10;fast = quick = rapid : nhanh"></textarea>
         
-        <button onclick="parseData()" class="mt-4 w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl shadow-md transition-all active:scale-[0.98]">
+        <!-- Table Mode -->
+        <div id="setupTableView" class="w-full mb-4">
+            <div class="overflow-x-auto rounded-xl border border-slate-200 max-h-[500px] overflow-y-auto bg-slate-50 relative">
+                <table class="w-full text-left border-collapse min-w-[600px]">
+                    <thead class="sticky top-0 bg-slate-100 z-10 shadow-sm">
+                        <tr class="border-b border-slate-200 text-slate-600 text-sm">
+                            <th class="p-4 font-bold w-12 text-center">#</th>
+                            <th class="p-4 font-bold">Từ Đồng Nghĩa</th>
+                            <th class="p-4 font-bold">Nghĩa Tiếng Việt</th>
+                            <th class="p-4 font-bold w-16 text-center">Sao</th>
+                        </tr>
+                    </thead>
+                    <tbody id="setupTableBody" class="text-slate-700 text-sm bg-white">
+                        <tr><td colspan="4" class="p-8 text-center text-slate-400">Đang tải dữ liệu...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Edit Mode -->
+        <div id="setupEditView" class="w-full hidden mb-4">
+            <p class="text-sm text-slate-500 mb-3">Định dạng: <code>từ 1 = từ 2 (loại từ) = từ 3 : Nghĩa tiếng việt</code></p>
+            <textarea id="rawData" spellcheck="false" lang="en" rows="10" class="w-full p-4 border border-slate-200 rounded-xl bg-slate-50 text-slate-700 font-mono text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition" placeholder="enable (v) sb/ sth to do sth = allow = permit = approve : cho phép&#10;fast = quick = rapid : nhanh"></textarea>
+            
+            <div id="spellSuggestions" class="hidden mt-3 p-3 bg-rose-50/50 border border-rose-200 rounded-xl max-h-48 overflow-y-auto space-y-2">
+                <!-- Suggestions will go here -->
+            </div>
+        </div>
+        
+        <button onclick="parseData()" class="mt-2 w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-brand-500/20 transition-all active:scale-[0.98]">
             <i class="fa-solid fa-rocket mr-2"></i> Bắt đầu học
         </button>
     </div>
@@ -93,29 +132,23 @@
     <div id="flashcardScreen" class="w-full max-w-3xl hidden flex flex-col gap-6">
         
         <!-- Controls -->
-        <div class="bg-white p-3 sm:p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-4 items-center justify-between">
-            <div class="flex flex-wrap justify-center items-stretch gap-2 sm:gap-3 w-full md:w-auto">
-                <button onclick="toggleMode()" id="modeBtn" class="flex-1 md:flex-none flex items-center justify-center px-4 py-2.5 bg-indigo-50 text-indigo-700 font-bold rounded-lg border border-indigo-200 hover:bg-indigo-100 transition min-w-[140px]">
-                    <i class="fa-solid fa-eye-slash mr-2" id="modeIcon"></i> <span id="modeText" class="whitespace-nowrap">Lật thẻ (Click)</span>
-                </button>
-                <select id="hintLevel" onchange="changeHint()" class="flex-1 md:flex-none px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 outline-none cursor-pointer hover:border-slate-300 transition min-w-[140px]">
-                    <option value="0">Không gợi ý</option>
-                    <option value="1">Gợi ý 1 chữ đầu</option>
-                    <option value="2">Gợi ý 2 chữ đầu</option>
-                    <option value="3">Từ đầu tiên + 2 chữ</option>
-                </select>
-            </div>
-            
-            <div class="w-full md:w-px h-px md:h-8 bg-slate-200 hidden sm:block"></div>
-            
-            <div class="flex flex-wrap justify-center items-stretch gap-2 sm:gap-3 w-full md:w-auto">
-                <button onclick="toggleAutoRead()" id="autoReadBtn" class="flex-1 md:flex-none flex items-center justify-center px-4 py-2.5 bg-white text-slate-600 font-bold rounded-lg border border-slate-200 hover:bg-slate-50 transition shadow-sm active:scale-95 min-w-[140px]">
-                    <i class="fa-solid fa-volume-high mr-2" id="autoReadIcon"></i> <span class="whitespace-nowrap">Tự động đọc</span>
-                </button>
-                <button onclick="toggleAutoPlay()" id="autoPlayBtn" class="flex-1 md:flex-none flex items-center justify-center px-4 py-2.5 bg-white text-slate-600 font-bold rounded-lg border border-slate-200 hover:bg-slate-50 transition shadow-sm active:scale-95 min-w-[140px]">
-                    <i class="fa-solid fa-headphones mr-2" id="autoPlayIcon"></i> <span class="whitespace-nowrap">Rảnh tai</span>
-                </button>
-            </div>
+        <div class="bg-white p-3 sm:p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-center gap-3">
+            <button onclick="toggleMode()" id="modeBtn" class="flex-1 md:flex-none flex items-center justify-center px-4 py-2.5 bg-indigo-50 text-indigo-700 font-bold rounded-lg border border-indigo-200 hover:bg-indigo-100 transition min-w-[140px]">
+                <i class="fa-solid fa-eye-slash mr-2" id="modeIcon"></i> <span id="modeText" class="whitespace-nowrap">Lật thẻ (Click)</span>
+            </button>
+            <select id="hintLevel" onchange="changeHint()" class="flex-1 md:flex-none px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 outline-none cursor-pointer hover:border-slate-300 transition min-w-[140px]">
+                <option value="0">Không gợi ý</option>
+                <option value="1">Gợi ý 1 chữ đầu</option>
+                <option value="2">Gợi ý 2 chữ đầu</option>
+                <option value="3">Từ đầu tiên + 2 chữ</option>
+            </select>
+
+            <button onclick="toggleAutoRead()" id="autoReadBtn" class="flex-1 md:flex-none flex items-center justify-center px-4 py-2.5 bg-white text-slate-600 font-bold rounded-lg border border-slate-200 hover:bg-slate-50 transition shadow-sm active:scale-95 min-w-[140px]">
+                <i class="fa-solid fa-volume-high mr-2" id="autoReadIcon"></i> <span class="whitespace-nowrap">Tự động đọc</span>
+            </button>
+            <button onclick="toggleAutoPlay()" id="autoPlayBtn" class="flex-1 md:flex-none flex items-center justify-center px-4 py-2.5 bg-white text-slate-600 font-bold rounded-lg border border-slate-200 hover:bg-slate-50 transition shadow-sm active:scale-95 min-w-[140px]">
+                <i class="fa-solid fa-headphones mr-2" id="autoPlayIcon"></i> <span class="whitespace-nowrap">Rảnh tai</span>
+            </button>
         </div>
 
         <!-- Study Board -->
@@ -123,6 +156,9 @@
             
             <!-- Header (Nghĩa Tiếng Việt) -->
             <div class="bg-white/60 px-8 py-6 relative border-b border-white/50 flex flex-col items-center justify-center">
+                <button onclick="toggleStarCard()" class="absolute top-4 left-6 w-10 h-10 rounded-full hover:bg-white/80 text-slate-400 hover:text-amber-500 flex items-center justify-center transition-all shadow-sm" title="Đánh dấu sao">
+                    <i id="cardStarIcon" class="fa-regular fa-star text-lg"></i>
+                </button>
                 <button onclick="toggleCardReveal()" class="absolute top-4 right-6 w-10 h-10 rounded-full hover:bg-white/80 text-slate-400 hover:text-brand-500 flex items-center justify-center transition-all shadow-sm" title="Ẩn/Hiện">
                     <i id="cardRevealIcon" class="fa-solid fa-eye-slash"></i>
                 </button>
@@ -151,10 +187,33 @@
             </div>
         </div>
 
+        <!-- Danh sách từ vựng (Khi Đang Học) -->
+        <div class="mt-8 bg-white p-4 sm:p-6 rounded-[2rem] shadow-sm border border-slate-200 w-full max-w-5xl mx-auto">
+            <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center"><i class="fa-solid fa-list mr-2 text-brand-500"></i> Danh sách từ đồng nghĩa</h3>
+            <div class="overflow-x-auto rounded-xl border border-slate-200">
+                <table class="w-full text-left border-collapse min-w-[600px]">
+                    <thead>
+                        <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 text-sm">
+                            <th class="p-4 font-bold w-12 text-center">#</th>
+                            <th class="p-4 font-bold">Từ Đồng Nghĩa</th>
+                            <th class="p-4 font-bold">Nghĩa Tiếng Việt</th>
+                            <th class="p-4 font-bold w-16 text-center">Sao</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studyTableBody" class="text-slate-700 text-sm">
+                        <!-- Rendered by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
     </div>
 
     <script>
         let synonymsData = [];
+        let originalSynonymsData = [];
+        let starredLines = JSON.parse(localStorage.getItem('tudongnghia_starred') || "[]");
+        let isStarFilter = false;
         let currentIndex = 0;
         let isTypeMode = false;
         let hintLevel = 0; // 0: None, 1: 1 char, 2: 2 chars, 3: First word full + 2 chars
@@ -172,10 +231,29 @@
             };
         }
 
-        function parseData() {
+        let isEditMode = false;
+        function toggleSetupMode() {
+            isEditMode = !isEditMode;
+            const btn = document.getElementById('setupToggleBtn');
+            const tableView = document.getElementById('setupTableView');
+            const editView = document.getElementById('setupEditView');
+            
+            if (isEditMode) {
+                btn.innerHTML = '<i class="fa-solid fa-list mr-2"></i> Bảng từ vựng';
+                tableView.classList.add('hidden');
+                editView.classList.remove('hidden');
+            } else {
+                btn.innerHTML = '<i class="fa-solid fa-pen-to-square mr-2"></i> Chỉnh sửa';
+                editView.classList.add('hidden');
+                tableView.classList.remove('hidden');
+                silentParseData();
+            }
+        }
+
+        function silentParseData() {
             const raw = document.getElementById('rawData').value;
             const lines = raw.split('\n');
-            synonymsData = [];
+            originalSynonymsData = [];
             
             for (let line of lines) {
                 line = line.trim();
@@ -187,32 +265,173 @@
                 let synsPart = line.substring(0, lastColon).trim();
                 let meanPart = line.substring(lastColon + 1).trim();
                 
-                // Tách các từ, loại bỏ khoảng trắng dư thừa
                 let wordsRaw = synsPart.split('=').map(w => w.trim()).filter(w => w);
                 if (wordsRaw.length === 0) continue;
                 
                 let words = wordsRaw.map(w => {
-                    // Xóa phần trong ngoặc () để check chính tả
                     let checkW = w.replace(/\([^)]*\)/g, '').trim().toLowerCase();
-                    // Loại bỏ nhiều khoảng trắng liên tiếp
                     checkW = checkW.replace(/\s+/g, ' ');
                     return { display: w, check: checkW, revealed: false };
                 });
                 
-                synonymsData.push({
+                originalSynonymsData.push({
                     meaning: meanPart,
-                    words: words
+                    words: words,
+                    isStarred: starredLines.includes(meanPart)
                 });
+            }
+            renderTable();
+        }
+
+        function parseData() {
+            silentParseData();
+            if (isStarFilter) {
+                synonymsData = originalSynonymsData.filter(d => d.isStarred);
+            } else {
+                synonymsData = [...originalSynonymsData];
             }
             
             if (synonymsData.length > 0) {
                 document.getElementById('setupScreen').classList.add('hidden');
                 document.getElementById('flashcardScreen').classList.remove('hidden');
+                document.getElementById('starFilterBtn').classList.remove('hidden');
+                document.getElementById('starFilterBtn').classList.add('flex');
                 currentIndex = 0;
                 renderCard();
             } else {
                 alert("Không tìm thấy dữ liệu hợp lệ! Hãy kiểm tra lại định dạng.");
             }
+        }
+
+        function toggleStarFilter() {
+            isStarFilter = !isStarFilter;
+            const btn = document.getElementById('starFilterBtn');
+            const icon = document.getElementById('starFilterIcon');
+            const text = document.getElementById('starFilterText');
+            
+            if (isStarFilter) {
+                const filtered = originalSynonymsData.filter(d => d.isStarred);
+                if (filtered.length === 0) {
+                    alert("Bạn chưa đánh dấu sao câu nào!");
+                    isStarFilter = false;
+                    return;
+                }
+                
+                btn.classList.replace('bg-white', 'bg-amber-500');
+                btn.classList.replace('text-slate-600', 'text-white');
+                btn.classList.replace('border-slate-200', 'border-amber-500');
+                btn.classList.replace('hover:bg-amber-50', 'hover:bg-amber-600');
+                btn.classList.replace('hover:text-amber-600', 'hover:text-white');
+                icon.className = "fa-solid fa-star mr-2";
+                text.innerText = "Đang học từ đánh sao";
+                
+                synonymsData = filtered;
+                currentIndex = 0;
+            } else {
+                btn.classList.replace('bg-amber-500', 'bg-white');
+                btn.classList.replace('text-white', 'text-slate-600');
+                btn.classList.replace('border-amber-500', 'border-slate-200');
+                btn.classList.replace('hover:bg-amber-600', 'hover:bg-amber-50');
+                btn.classList.replace('hover:text-white', 'hover:text-amber-600');
+                icon.className = "fa-regular fa-star mr-2";
+                text.innerText = "Học tất cả";
+                
+                synonymsData = [...originalSynonymsData];
+                currentIndex = 0;
+            }
+            applyGlobalRevealState();
+            renderCard();
+        }
+
+        function toggleStarCard() {
+            if (synonymsData.length === 0) return;
+            const current = synonymsData[currentIndex];
+            current.isStarred = !current.isStarred;
+            
+            // Sync with original
+            const origItem = originalSynonymsData.find(o => o.meaning === current.meaning);
+            if (origItem) origItem.isStarred = current.isStarred;
+            
+            if (current.isStarred) {
+                if (!starredLines.includes(current.meaning)) starredLines.push(current.meaning);
+            } else {
+                starredLines = starredLines.filter(m => m !== current.meaning);
+            }
+            localStorage.setItem('tudongnghia_starred', JSON.stringify(starredLines));
+            
+            if (isStarFilter && !current.isStarred) {
+                synonymsData = originalSynonymsData.filter(d => d.isStarred);
+                if (synonymsData.length === 0) {
+                    toggleStarFilter(); // toggle back
+                    return;
+                }
+                if (currentIndex >= synonymsData.length) currentIndex = synonymsData.length - 1;
+            }
+            
+            renderCard();
+            renderTable();
+        }
+
+        function renderTable() {
+            const setupTbody = document.getElementById('setupTableBody');
+            const studyTbody = document.getElementById('studyTableBody');
+            
+            let html = '';
+            if (originalSynonymsData.length === 0) {
+                html = '<tr><td colspan="4" class="p-8 text-center text-slate-400">Không có dữ liệu hợp lệ. Chuyển sang chế độ "Chỉnh sửa" để nhập.</td></tr>';
+            } else {
+                originalSynonymsData.forEach((item, index) => {
+                    const wordsStr = item.words.map(w => w.display).join(' = ');
+                    const isStarred = item.isStarred;
+                    const rowBg = isStarred ? 'bg-amber-50/50' : 'hover:bg-slate-50';
+                    const starIcon = isStarred ? 'fa-solid fa-star text-amber-500' : 'fa-regular fa-star text-slate-300 hover:text-amber-400';
+                    const rowColor = isStarred ? 'text-amber-900' : 'text-slate-700';
+                    
+                    html += `
+                        <tr class="border-b border-slate-100 last:border-0 ${rowBg} transition-colors ${rowColor}">
+                            <td class="p-4 text-center font-bold opacity-60">${index + 1}</td>
+                            <td class="p-4 font-bold text-brand-600">${wordsStr}</td>
+                            <td class="p-4">${item.meaning}</td>
+                            <td class="p-4 text-center">
+                                <button onclick="toggleStarFromTable(${index})" class="w-8 h-8 rounded-full hover:bg-white transition-all shadow-sm flex items-center justify-center mx-auto border border-transparent hover:border-slate-200">
+                                    <i class="${starIcon} text-lg"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+            
+            if (setupTbody) setupTbody.innerHTML = html;
+            if (studyTbody) studyTbody.innerHTML = html;
+        }
+
+        function toggleStarFromTable(index) {
+            const item = originalSynonymsData[index];
+            item.isStarred = !item.isStarred;
+            
+            if (item.isStarred) {
+                if (!starredLines.includes(item.meaning)) starredLines.push(item.meaning);
+            } else {
+                starredLines = starredLines.filter(m => m !== item.meaning);
+            }
+            localStorage.setItem('tudongnghia_starred', JSON.stringify(starredLines));
+            
+            // Đồng bộ với synonymsData hiện tại nếu có
+            const currentItem = synonymsData.find(d => d.meaning === item.meaning);
+            if (currentItem) currentItem.isStarred = item.isStarred;
+            
+            if (isStarFilter && !item.isStarred) {
+                synonymsData = originalSynonymsData.filter(d => d.isStarred);
+                if (synonymsData.length === 0) {
+                    toggleStarFilter();
+                    return;
+                }
+                if (currentIndex >= synonymsData.length) currentIndex = synonymsData.length - 1;
+            }
+            
+            renderCard();
+            renderTable();
         }
 
         function toggleMode() {
@@ -338,21 +557,161 @@
             return new Promise(r => setTimeout(r, ms));
         }
 
-        function toggleSpellcheck() {
-            const textarea = document.getElementById('rawData');
+        async function checkSpelling() {
+            if (!isEditMode) {
+                toggleSetupMode(); // Chuyển sang Edit Mode để hiển thị lỗi và form textarea
+            }
+
             const btn = document.getElementById('spellcheckBtn');
-            const isEnabled = textarea.getAttribute('spellcheck') === 'true';
-            
-            if (isEnabled) {
-                textarea.setAttribute('spellcheck', 'false');
-                btn.innerHTML = '<i class="fa-solid fa-spell-check mr-1.5"></i> <span>Bật soát lỗi</span>';
-                btn.classList.remove('bg-rose-500', 'text-white', 'border-rose-600', 'hover:bg-rose-600');
-                btn.classList.add('bg-rose-50', 'text-rose-600', 'border-rose-200', 'hover:bg-rose-100');
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1.5"></i> <span id="spellcheckBtnText">Đang quét...</span>`;
+            btn.disabled = true;
+
+            const textarea = document.getElementById('rawData');
+            const suggestionsDiv = document.getElementById('spellSuggestions');
+            suggestionsDiv.innerHTML = '';
+            suggestionsDiv.classList.add('hidden');
+
+            const text = textarea.value;
+            const lines = text.split('\n');
+            let suggestionsHTML = '';
+            let checkCount = 0;
+            let hasErrors = false;
+
+            for (let i = 0; i < lines.length; i++) {
+                let currentLine = lines[i];
+                if (!currentLine.trim()) continue;
+
+                let lastColon = currentLine.lastIndexOf(':');
+                if (lastColon === -1) continue;
+                
+                let synsPart = currentLine.substring(0, lastColon).trim();
+                let wordsRaw = synsPart.split('=').map(w => w.trim()).filter(w => w);
+
+                for (let j = 0; j < wordsRaw.length; j++) {
+                    let rawW = wordsRaw[j];
+                    let checkW = rawW.replace(/\([^)]*\)/g, '').trim().toLowerCase();
+                    checkW = checkW.replace(/\s+/g, ' ');
+                    
+                    if (!checkW || checkW.includes(' ') || checkW.includes('-')) continue;
+
+                    let suggestion = null;
+                    let datamuseHasWord = false;
+
+                    try {
+                        const res = await fetch(`https://api.datamuse.com/words?sp=${encodeURIComponent(checkW)}&max=5`);
+                        const data = await res.json();
+                        if (data && data.length > 0) {
+                            for (let d of data) {
+                                if (d.word.toLowerCase() === checkW) {
+                                    datamuseHasWord = true;
+                                    break;
+                                }
+                            }
+                            const dWord = data[0].word.toLowerCase();
+                            if (dWord !== checkW && !datamuseHasWord) {
+                                suggestion = dWord;
+                            }
+                        }
+                    } catch (e) {}
+
+                    if (!suggestion && !datamuseHasWord) {
+                        try {
+                            const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=vi&dt=t&dt=bd&dt=sp&q=${encodeURIComponent(checkW)}`;
+                            const res = await fetch(url);
+                            const data = await res.json();
+                            if (data && data[7] && data[7][1]) {
+                                let corrected = data[7][1].replace(/<[^>]*>?/gm, '').toLowerCase().trim();
+                                if (/^[a-z \-']+$/.test(corrected) && corrected && corrected !== checkW) {
+                                    suggestion = corrected;
+                                }
+                            }
+                        } catch (e) {}
+                    }
+
+                    if (!suggestion && !datamuseHasWord) {
+                        try {
+                            const dictRes = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(checkW)}`);
+                            if (!dictRes.ok) {
+                                let guess = checkW;
+                                let foundGuess = null;
+                                while (guess.length > 3) {
+                                    guess = guess.slice(0, -1);
+                                    try {
+                                        const gRes = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(guess)}`);
+                                        if (gRes.ok) { foundGuess = guess; break; }
+                                    } catch (e) {}
+                                }
+                                suggestion = foundGuess ? foundGuess : "[TỪ KHÔNG CÓ THẬT]";
+                            }
+                        } catch (e) {}
+                    }
+
+                    if (suggestion) {
+                        hasErrors = true;
+                        if (suggestion === "[TỪ KHÔNG CÓ THẬT]") {
+                            suggestionsHTML += `<div class="flex items-center justify-between text-sm p-2 bg-rose-100 text-rose-800 rounded-lg">
+                                <span>Dòng ${i + 1}: <b class="line-through opacity-70">${checkW}</b> không tồn tại!</span>
+                            </div>`;
+                        } else {
+                            suggestionsHTML += `<div class="flex items-center justify-between text-sm p-2 bg-amber-50 text-amber-800 rounded-lg shadow-sm border border-amber-100">
+                                <span>Dòng ${i + 1}: <b class="line-through opacity-70 text-slate-500">${checkW}</b> <i class="fa-solid fa-arrow-right mx-1 text-slate-400"></i> <b class="text-amber-700">${suggestion}</b></span>
+                                <button type="button" onclick="applySpellingFix(${i}, '${rawW.replace(/'/g, "\\'")}', '${suggestion.replace(/'/g, "\\'")}', this)" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg shadow-sm text-xs font-bold transition-all active:scale-95"><i class="fa-solid fa-wand-magic-sparkles mr-1 pointer-events-none"></i> Sửa</button>
+                            </div>`;
+                        }
+                    }
+
+                    checkCount++;
+                    if (checkCount % 3 === 0) await sleep(100);
+                }
+            }
+
+            btn.innerHTML = `<i class="fa-solid fa-check mr-1.5"></i> <span id="spellcheckBtnText">Hoàn tất</span>`;
+            if (hasErrors) {
+                suggestionsDiv.innerHTML = `<div class="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider flex items-center gap-1.5"><i class="fa-solid fa-lightbulb text-amber-400"></i> Đề xuất sửa lỗi</div>` + suggestionsHTML;
+                suggestionsDiv.classList.remove('hidden');
             } else {
-                textarea.setAttribute('spellcheck', 'true');
-                btn.innerHTML = '<i class="fa-solid fa-check-double mr-1.5"></i> <span>Tắt soát lỗi</span>';
-                btn.classList.remove('bg-rose-50', 'text-rose-600', 'border-rose-200', 'hover:bg-rose-100');
-                btn.classList.add('bg-rose-500', 'text-white', 'border-rose-600', 'hover:bg-rose-600');
+                suggestionsDiv.innerHTML = `<div class="text-sm text-emerald-600 font-bold flex items-center gap-2"><i class="fa-solid fa-circle-check text-lg"></i> Không phát hiện lỗi chính tả nào. Tuyệt vời!</div>`;
+                suggestionsDiv.classList.remove('hidden');
+                setTimeout(() => { suggestionsDiv.classList.add('hidden'); }, 3000);
+            }
+
+            setTimeout(() => {
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+            }, 2000);
+        }
+
+        function applySpellingFix(lineIndex, oldWord, newWord, btnElement) {
+            const textarea = document.getElementById('rawData');
+            let lines = textarea.value.split('\n');
+            if (lines[lineIndex]) {
+                const checkW = oldWord.replace(/\([^)]*\)/g, '').trim();
+                if (checkW) {
+                    lines[lineIndex] = lines[lineIndex].replace(new RegExp(`\\b${checkW}\\b`), newWord);
+                    textarea.value = lines.join('\n');
+                    localStorage.setItem('tudongnghia_raw_data', textarea.value);
+                    
+                    if (btnElement) {
+                        btnElement.innerHTML = '<i class="fa-solid fa-check"></i> Đã sửa';
+                        btnElement.classList.replace('bg-amber-500', 'bg-emerald-500');
+                        btnElement.classList.replace('hover:bg-amber-600', 'hover:bg-emerald-600');
+                        btnElement.classList.add('pointer-events-none');
+                    }
+
+                    // Highlight the replaced word
+                    let charCount = 0;
+                    for (let i = 0; i < lineIndex; i++) {
+                        charCount += lines[i].length + 1; // +1 cho ký tự xuống dòng \n
+                    }
+                    const wordIndexInLine = lines[lineIndex].indexOf(newWord);
+                    if (wordIndexInLine !== -1) {
+                        const startPos = charCount + wordIndexInLine;
+                        const endPos = startPos + newWord.length;
+                        textarea.focus();
+                        textarea.setSelectionRange(startPos, endPos);
+                    }
+                }
             }
         }
 
@@ -504,6 +863,15 @@
                 topEyeIcon.className = allRevealed ? "fa-solid fa-eye" : "fa-solid fa-eye-slash";
             }
             
+            const topStarIcon = document.getElementById('cardStarIcon');
+            if (topStarIcon) {
+                if (current.isStarred) {
+                    topStarIcon.className = "fa-solid fa-star text-amber-500 text-lg drop-shadow-sm scale-110 transition-transform";
+                } else {
+                    topStarIcon.className = "fa-regular fa-star text-lg text-slate-400";
+                }
+            }
+            
             const container = document.getElementById('wordsContainer');
             container.innerHTML = '';
             
@@ -653,6 +1021,17 @@
                     }
                 }
             });
+
+            if (isTypeMode) {
+                setTimeout(() => {
+                    const firstInput = container.querySelector('input');
+                    if (firstInput) {
+                        firstInput.focus();
+                        const val = firstInput.value;
+                        firstInput.setSelectionRange(val.length, val.length);
+                    }
+                }, 50);
+            }
         }
         // Global Keyboard Shortcuts
         document.addEventListener('keydown', (e) => {
@@ -676,6 +1055,21 @@
                     prevCard();
                 }
             }
+        });
+        
+        // Lưu trữ bộ nhớ nội bộ (localStorage)
+        document.addEventListener('DOMContentLoaded', () => {
+            const textarea = document.getElementById('rawData');
+            const savedData = localStorage.getItem('tudongnghia_raw_data');
+            if (savedData) {
+                textarea.value = savedData;
+            }
+            
+            textarea.addEventListener('input', (e) => {
+                localStorage.setItem('tudongnghia_raw_data', e.target.value);
+            });
+            
+            silentParseData(); // Initial load for table
         });
         
     </script>
