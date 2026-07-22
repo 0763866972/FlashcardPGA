@@ -165,15 +165,7 @@
                             <i class="fa-solid fa-trash-can text-lg"></i>
                         </button>
 
-                        <!-- Delete Confirm Popup (Positioned ABOVE the trash icon) -->
-                        <div id="cardDeleteConfirmPopup" class="hidden fixed w-44 bg-white/95 backdrop-blur-xl border border-slate-200/80 rounded-2xl shadow-2xl p-2.5 z-[9999] animate-fade-in origin-bottom">
-                            <div class="flex gap-2">
-                                <button onclick="hideDeleteCardConfirm(event)" class="flex-1 py-1.5 bg-slate-100 hover:bg-slate-200 font-bold text-slate-600 text-[13px] rounded-xl transition-all">Hủy</button>
-                                <button onclick="executeDeleteCard(event)" class="flex-1 py-1.5 bg-rose-500 hover:bg-rose-600 font-bold text-white text-[13px] rounded-xl shadow-md shadow-rose-500/30 transition-all">Xóa</button>
-                            </div>
-                            <!-- Arrow pointing down to trash icon -->
-                            <div class="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white/95 backdrop-blur-xl border-b border-r border-slate-200/80 rotate-45 rounded-sm"></div>
-                        </div>
+                        <!-- Delete Confirm Popup moved to end of body to prevent 3D clipping -->
                     </div>
                     <button onclick="toggleCardReveal()" class="w-10 h-10 rounded-full hover:bg-white/80 text-slate-400 hover:text-brand-500 flex items-center justify-center transition-all shadow-sm" title="Ẩn/Hiện">
                         <i id="cardRevealIcon" class="fa-solid fa-eye-slash text-lg"></i>
@@ -434,16 +426,36 @@
             const popup = document.getElementById('cardDeleteConfirmPopup');
             if (!btn || !popup) return;
             
+            // Tạm thời hiển thị ẩn để lấy kích thước
+            popup.style.visibility = 'hidden';
             popup.classList.remove('hidden');
-            const rect = btn.getBoundingClientRect();
-            popup.style.top = `${rect.top - 52}px`;
-            popup.style.left = `${rect.left + (rect.width / 2) - 88}px`;
+
+            const btnRect = btn.getBoundingClientRect();
+            const popupRect = popup.getBoundingClientRect();
+
+            // Tính toán vị trí tương đối với màn hình (fixed)
+            const top = btnRect.top - popupRect.height - 12;
+            const left = btnRect.left + (btnRect.width / 2) - (popupRect.width / 2);
+
+            popup.style.top = top + 'px';
+            popup.style.left = left + 'px';
+            popup.style.visibility = 'visible';
+            
+            document.addEventListener('click', hideDeleteCardConfirmOutside);
         }
 
         function hideDeleteCardConfirm(e) {
             if (e) e.stopPropagation();
             const popup = document.getElementById('cardDeleteConfirmPopup');
             if (popup) popup.classList.add('hidden');
+            document.removeEventListener('click', hideDeleteCardConfirmOutside);
+        }
+
+        function hideDeleteCardConfirmOutside(e) {
+            const popup = document.getElementById('cardDeleteConfirmPopup');
+            if (popup && !popup.contains(e.target) && !e.target.closest('#cardDeleteBtn')) {
+                hideDeleteCardConfirm(null);
+            }
         }
 
         function removeMeaningFromRawData(meaning) {
@@ -1193,15 +1205,21 @@
             silentParseData(); // Initial load for table
         });
         
-        document.addEventListener('click', (e) => {
-            const popup = document.getElementById('cardDeleteConfirmPopup');
-            const deleteBtn = document.getElementById('cardDeleteBtn');
-            if (popup && !popup.classList.contains('hidden')) {
-                if (!popup.contains(e.target) && !deleteBtn.contains(e.target)) {
-                    popup.classList.add('hidden');
-                }
-            }
-        });
     </script>
+
+    <!-- Delete Confirm Popup (Fixed position to avoid 3D clipping) -->
+    <div id="cardDeleteConfirmPopup"
+        class="hidden fixed w-44 bg-white/95 backdrop-blur-xl border border-slate-200/60 rounded-2xl shadow-2xl p-2.5 z-[9999] animate-fade-in origin-bottom">
+        <div class="flex gap-2">
+            <button onclick="hideDeleteCardConfirm(event)" style="color: #ffffff !important;"
+                class="flex-1 py-1.5 bg-brand-600 hover:bg-brand-500 font-bold text-[13px] rounded-xl shadow-[0_0_15px_rgba(37,99,235,0.25)] hover:shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all hover:-translate-y-0.5">Hủy</button>
+            <button onclick="executeDeleteCard(event)" style="color: #ffffff !important;"
+                class="flex-1 py-1.5 bg-rose-500 hover:bg-rose-600 font-bold text-[13px] rounded-xl shadow-lg shadow-rose-500/30 transition-all hover:-translate-y-0.5">Xóa</button>
+        </div>
+        <!-- Pointer Arrow -->
+        <div
+            class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white/95 backdrop-blur-xl border-b border-r border-slate-200/60 rotate-45 rounded-sm">
+        </div>
+    </div>
 </body>
 </html>
