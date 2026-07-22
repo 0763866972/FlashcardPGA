@@ -377,6 +377,45 @@ window.onload = function () {
     }
     loadApiKeyForCurrentModel(); // Load API key tương ứng với model
 
+    // 9. Đóng cấu hình API key khi bấm ra ngoài
+    document.addEventListener('click', function (event) {
+        const section = document.getElementById('keyConfigSection');
+        const btn = document.getElementById('toggleKeyConfigBtn');
+        if (section && !section.classList.contains('hidden') && btn) {
+            if (!section.contains(event.target) && !btn.contains(event.target)) {
+                hideKeyConfig();
+            }
+        }
+
+        // Đóng dropdown Chọn số câu khi bấm ra ngoài
+        const dropdown = document.getElementById('testSizeDropdown');
+        const toggleBtn = document.querySelector('[onclick="toggleSizeRow()"]');
+        if (dropdown && !dropdown.classList.contains('hidden')) {
+            if (!dropdown.contains(event.target) && !toggleBtn.contains(event.target)) {
+                dropdown.classList.add('hidden');
+                document.getElementById('sizeChevron').classList.remove('rotate-180');
+            }
+        }
+    });
+
+    // Mở khóa Audio trên iOS ngay lần chạm đầu tiên
+    let audioUnlocked = false;
+    document.addEventListener('click', function unlockAudioOnFirstClick() {
+        if (!audioUnlocked) {
+            if (window.globalAudioTTS) {
+                window.globalAudioTTS.play().catch(() => {});
+                window.globalAudioTTS.pause();
+            }
+            if ('speechSynthesis' in window) {
+                const unlockMsg = new SpeechSynthesisUtterance('');
+                unlockMsg.volume = 0;
+                window.speechSynthesis.speak(unlockMsg);
+            }
+            audioUnlocked = true;
+            document.removeEventListener('click', unlockAudioOnFirstClick);
+        }
+    }, { once: true });
+
     // 3. Khôi phục danh sách từ vựng từ localStorage
     const savedVocab = localStorage.getItem('toeic_vocab_list');
     const viewMode = localStorage.getItem('toeic_vocab_view_mode'); // 'table' hoặc null (textarea)
@@ -1977,77 +2016,69 @@ ${jsonStructure}`;
 
 // Mảng toàn cục lưu trữ âm thanh để chống lỗi Garbage Collection (trình duyệt xóa nhầm âm thanh)
 window.__ttsUtterances = [];
-window.globalAudioTTS = null;
-window.globalTTSDebounceTimer = null;
+if (!window.globalAudioTTS) {
+    window.globalAudioTTS = new Audio();
+}
+let lastTTSCallTime = 0;
 
 function playSpeechRobust(text, lang = 'en-US', rate = 1.0, onEndCallback = null) {
+    // === CƠ CHẾ CHỐNG SPAM GOOGLE (DEBOUNCE) ===
+    // Dùng timestamp thay vì setTimeout để đảm bảo Audio.play() nằm trong user gesture synchronously (tránh lỗi iOS/iPad)
+    const now = Date.now();
+    if (now - lastTTSCallTime < 250) {
+        // Nếu gọi quá nhanh (dưới 250ms), ta sẽ hủy đọc cái cũ và đọc ngay cái mới luôn
+    }
+    lastTTSCallTime = now;
+
     // Dọn dẹp hàng đợi Web Speech API cũ để tránh kẹt
     window.speechSynthesis.cancel();
     
     // Dừng Audio Google TTS đang phát (nếu có)
-    if (window.globalAudioTTS) {
-        window.globalAudioTTS.pause();
-        window.globalAudioTTS.removeAttribute('src');
-        window.globalAudioTTS.load();
-        window.globalAudioTTS = null;
-    }
+    window.globalAudioTTS.pause();
 
-    // === CƠ CHẾ CHỐNG SPAM GOOGLE (DEBOUNCE) ===
-    // Nếu người dùng bấm lật thẻ hoặc bấm nút đọc liên tục, ta sẽ hủy lệnh đọc trước đó
-    // và chỉ thực sự gọi Google API sau khi người dùng dừng bấm khoảng 250ms.
-    if (window.globalTTSDebounceTimer) {
-        clearTimeout(window.globalTTSDebounceTimer);
-    }
+    // Xác định mã ngôn ngữ cho Google TTS
+    const langGoogle = lang.startsWith('vi') ? 'vi' : 'en';
+    const url = `https://translate.googleapis.com/translate_tts?client=gtx&ie=UTF-8&tl=${langGoogle}&q=${encodeURIComponent(text)}`;
+    
+    window.globalAudioTTS.src = url;
+    // Điều chỉnh tốc độ cho Google TTS (đúng với rate user chọn: 1.0 -> 1.4)
+    window.globalAudioTTS.playbackRate = rate;
 
-    window.globalTTSDebounceTimer = setTimeout(() => {
-        // Xác định mã ngôn ngữ cho Google TTS
-        const langGoogle = lang.startsWith('vi') ? 'vi' : 'en';
-        const url = `https://translate.googleapis.com/translate_tts?client=gtx&ie=UTF-8&tl=${langGoogle}&q=${encodeURIComponent(text)}`;
+    window.globalAudioTTS.onended = () => {
+        if (onEndCallback) onEndCallback();
+    };
+
+    window.globalAudioTTS.onerror = () => {
+        // === FALLBACK: NẾU GOOGLE TTS LỖI HOẶC BỊ CHẶN, CHUYỂN VỀ WEB SPEECH API CŨ ===
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = lang;
+        // Web Speech API nói nhanh hơn Google 1 chút, nên ta dùng hệ số 0.85 * rate
+        utterance.rate = 0.85 * rate;
         
-        window.globalAudioTTS = new Audio(url);
-        // Điều chỉnh tốc độ cho Google TTS (đúng với rate user chọn: 1.0 -> 1.4)
-        window.globalAudioTTS.playbackRate = rate;
+        if (onEndCallback) {
+            utterance.onend = onEndCallback;
+            utterance.onerror = onEndCallback;
+        }
 
-        window.globalAudioTTS.onended = () => {
-            if (onEndCallback) onEndCallback();
-        };
+        const voices = window.speechSynthesis.getVoices();
+        const targetVoices = voices.filter(v => v.lang.startsWith(lang.split('-')[0]));
 
-        window.globalAudioTTS.onerror = () => {
-            // === FALLBACK: NẾU GOOGLE TTS LỖI HOẶC BỊ CHẶN, CHUYỂN VỀ WEB SPEECH API CŨ ===
-            setTimeout(() => {
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = lang;
-                // Web Speech API nói nhanh hơn Google 1 chút, nên ta dùng hệ số 0.85 * rate
-                utterance.rate = 0.85 * rate;
-                
-                if (onEndCallback) {
-                    utterance.onend = onEndCallback;
-                    utterance.onerror = onEndCallback;
-                }
+        if (targetVoices.length > 0) {
+            const preferredVoice = targetVoices.find(v => v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Microsoft Mark') || v.name.includes('Samantha'));
+            utterance.voice = preferredVoice || targetVoices[0];
+        }
 
-                const voices = window.speechSynthesis.getVoices();
-                const targetVoices = voices.filter(v => v.lang.startsWith(lang.split('-')[0]));
+        window.__ttsUtterances.push(utterance);
+        if (window.__ttsUtterances.length > 10) window.__ttsUtterances.shift();
 
-                if (targetVoices.length > 0) {
-                    const preferredVoice = targetVoices.find(v => v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Microsoft Mark') || v.name.includes('Samantha'));
-                    utterance.voice = preferredVoice || targetVoices[0];
-                }
+        window.speechSynthesis.speak(utterance);
+    };
 
-                window.__ttsUtterances.push(utterance);
-                if (window.__ttsUtterances.length > 10) window.__ttsUtterances.shift();
-
-                window.speechSynthesis.speak(utterance);
-            }, 50);
-        };
-
-        // Bắt đầu phát Google TTS
-        window.globalAudioTTS.play().catch(e => {
-            if (window.globalAudioTTS && window.globalAudioTTS.onerror) window.globalAudioTTS.onerror();
-        });
-    }, 250); // Chờ 250ms để chống spam
+    // Bắt đầu phát Google TTS (Synchronous - iOS sẽ cho phép nếu từ user click)
+    window.globalAudioTTS.play().catch(e => {
+        if (window.globalAudioTTS && window.globalAudioTTS.onerror) window.globalAudioTTS.onerror();
+    });
 }
-
-let speakWordTimeoutId = null;
 
 function isVietnameseText(text) {
     const vnPattern = /[àáãạảăắằẳẵặâấầẩẫậèéẹẻẽêềếểễệđìíĩỉịòóõọỏôốồổỗộơớờởỡợùúũụủưứừửữựỳýỵỷỹ]/i;
@@ -2063,14 +2094,10 @@ function speakWord(event, onEndCallback = null) {
     // Đổi dấu / thành dấu phẩy để giọng đọc ngắt nghỉ tự nhiên thay vì đọc chữ "slash"
     text = text.replace(/\//g, ', ');
 
-    if (speakWordTimeoutId) clearTimeout(speakWordTimeoutId);
-    speakWordTimeoutId = setTimeout(() => {
-        const lang = isVietnameseText(text) ? 'vi-VN' : 'en-US';
-        playSpeechRobust(text, lang, fcPlaybackSpeed, onEndCallback);
-    }, 50);
+    const lang = isVietnameseText(text) ? 'vi-VN' : 'en-US';
+    playSpeechRobust(text, lang, fcPlaybackSpeed, onEndCallback);
 }
 
-let speakMeaningTimeoutId = null;
 function speakMeaning(event) {
     if (event) event.stopPropagation();
 
@@ -2083,10 +2110,7 @@ function speakMeaning(event) {
             text = text.substring(1, text.length - 1);
         }
 
-        if (speakMeaningTimeoutId) clearTimeout(speakMeaningTimeoutId);
-        speakMeaningTimeoutId = setTimeout(() => {
-            playSpeechRobust(text, 'en-US', fcPlaybackSpeed);
-        }, 50);
+        playSpeechRobust(text, 'en-US', fcPlaybackSpeed);
         return;
     }
 
@@ -4904,12 +4928,8 @@ function toggleSidebar() {
  * ============================================================================ */
 
 /** speakText - Đọc văn bản bằng Web Speech API, ưu tiên voice Google/Natural */
-let speakTextTimeoutId = null;
 function speakText(text, lang = 'en-US') {
-    if (speakTextTimeoutId) clearTimeout(speakTextTimeoutId);
-    speakTextTimeoutId = setTimeout(() => {
-        playSpeechRobust(text, lang, 1.0);
-    }, 50);
+    playSpeechRobust(text, lang, 1.0);
 }
 
 function handleWordClick(event, word) {

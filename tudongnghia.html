@@ -732,9 +732,14 @@
             renderCard();
         }
 
+        window.__ttsUtterances = [];
+        if (!window.globalAudioTTS) {
+            window.globalAudioTTS = new Audio();
+        }
+        let lastTTSCallTime = 0;
+
         function fallbackTTS(text, lang, resolve) {
             if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
                 const msg = new SpeechSynthesisUtterance(text);
                 msg.lang = lang;
                 
@@ -752,8 +757,13 @@
                 if (resolve) {
                     msg.onend = resolve;
                     msg.onerror = resolve;
+                    // Prevent hanging promise
                     setTimeout(resolve, text.length > 30 ? 5000 : 3000); 
                 }
+
+                window.__ttsUtterances.push(msg);
+                if (window.__ttsUtterances.length > 10) window.__ttsUtterances.shift();
+
                 window.speechSynthesis.speak(msg);
             } else {
                 if (resolve) resolve();
@@ -762,26 +772,46 @@
 
         function playTTSAsync(text, lang = 'en-US') {
             return new Promise(resolve => {
-                // Dùng API mở rộng (gtx) để chống bị Google chặn khi đọc liên tục (Spam limit)
+                const now = Date.now();
+                if (now - lastTTSCallTime < 250) { }
+                lastTTSCallTime = now;
+
+                window.speechSynthesis.cancel();
+                window.globalAudioTTS.pause();
+
                 const tl = lang === 'vi-VN' ? 'vi' : 'en';
                 const url = `https://translate.googleapis.com/translate_tts?ie=UTF-8&client=gtx&tl=${tl}&q=${encodeURIComponent(text)}`;
-                const audio = new Audio(url);
-                if (lang === 'vi-VN') audio.playbackRate = 1.25; 
                 
-                audio.onended = resolve;
-                audio.onerror = () => fallbackTTS(text, lang, resolve);
-                audio.play().catch(() => fallbackTTS(text, lang, resolve));
+                window.globalAudioTTS.src = url;
+                if (lang === 'vi-VN') window.globalAudioTTS.playbackRate = 1.25; 
+                else window.globalAudioTTS.playbackRate = 1.0;
+                
+                window.globalAudioTTS.onended = resolve;
+                window.globalAudioTTS.onerror = () => fallbackTTS(text, lang, resolve);
+                
+                window.globalAudioTTS.play().catch(() => fallbackTTS(text, lang, resolve));
             });
         }
 
         function playTTS(text, lang = 'en-US') {
+            const now = Date.now();
+            if (now - lastTTSCallTime < 250) { }
+            lastTTSCallTime = now;
+
+            window.speechSynthesis.cancel();
+            window.globalAudioTTS.pause();
+
             const tl = lang === 'vi-VN' ? 'vi' : 'en';
             const url = `https://translate.googleapis.com/translate_tts?ie=UTF-8&client=gtx&tl=${tl}&q=${encodeURIComponent(text)}`;
-            const audio = new Audio(url);
-            if (lang === 'vi-VN') audio.playbackRate = 1.25;
             
-            audio.onerror = () => fallbackTTS(text, lang);
-            audio.play().catch(() => fallbackTTS(text, lang));
+            window.globalAudioTTS.src = url;
+            if (lang === 'vi-VN') window.globalAudioTTS.playbackRate = 1.25;
+            else window.globalAudioTTS.playbackRate = 1.0;
+            
+            window.globalAudioTTS.onended = null;
+            window.globalAudioTTS.onerror = () => fallbackTTS(text, lang);
+            
+            window.globalAudioTTS.play().catch(() => fallbackTTS(text, lang));
         }
         
         function sleep(ms) {
@@ -1453,6 +1483,24 @@
                 textarea.value = savedData;
             }
             
+            // Mở khóa Audio trên iOS ngay lần chạm đầu tiên
+            let audioUnlocked = false;
+            document.addEventListener('click', function unlockAudioOnFirstClick() {
+                if (!audioUnlocked) {
+                    if (window.globalAudioTTS) {
+                        window.globalAudioTTS.play().catch(() => {});
+                        window.globalAudioTTS.pause();
+                    }
+                    if ('speechSynthesis' in window) {
+                        const unlockMsg = new SpeechSynthesisUtterance('');
+                        unlockMsg.volume = 0;
+                        window.speechSynthesis.speak(unlockMsg);
+                    }
+                    audioUnlocked = true;
+                    document.removeEventListener('click', unlockAudioOnFirstClick);
+                }
+            }, { once: true });
+
             textarea.addEventListener('input', (e) => {
                 localStorage.setItem('tudongnghia_raw_data', e.target.value);
             });
