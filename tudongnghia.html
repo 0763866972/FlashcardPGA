@@ -1090,13 +1090,16 @@
                 btn.classList.add('bg-rose-50', 'text-rose-600', 'border-rose-200', 'animate-pulse');
                 icon.className = "fa-solid fa-stop mr-2";
                 requestWakeLock();
+                if (window.silentBackgroundAudio) window.silentBackgroundAudio.play().catch(()=>{});
                 runAutoPlayCycle();
             } else {
                 btn.classList.remove('bg-rose-50', 'text-rose-600', 'border-rose-200', 'animate-pulse');
                 btn.classList.add('bg-white', 'text-slate-600', 'border-slate-200');
                 icon.className = "fa-solid fa-headphones mr-2";
+                if (window.silentBackgroundAudio) window.silentBackgroundAudio.pause();
                 if (autoPlayInterval) clearTimeout(autoPlayInterval);
                 window.speechSynthesis.cancel();
+                window.globalAudioTTS.pause();
                 releaseWakeLock();
             }
         }

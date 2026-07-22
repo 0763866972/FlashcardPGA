@@ -411,6 +411,20 @@ window.onload = function () {
                 unlockMsg.volume = 0;
                 window.speechSynthesis.speak(unlockMsg);
             }
+            if (!window.silentBackgroundAudio) {
+                window.silentBackgroundAudio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABmYWN0BAAAAAAAAABkYXRhAAAAAA==');
+                window.silentBackgroundAudio.loop = true;
+            }
+            window.silentBackgroundAudio.play().then(() => window.silentBackgroundAudio.pause()).catch(() => {});
+
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.metadata = new MediaMetadata({
+                    title: 'Đang đọc từ vựng',
+                    artist: 'Học rảnh tay'
+                });
+                // Note: The action handlers will be set up when autoplay is toggled, so they call the right functions for index.html or tudongnghia.html
+            }
+
             audioUnlocked = true;
             document.removeEventListener('click', unlockAudioOnFirstClick);
         }
