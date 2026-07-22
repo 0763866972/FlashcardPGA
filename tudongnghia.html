@@ -511,30 +511,28 @@
             const item = originalSynonymsData[index];
             if (!item) return;
             
-            if (confirm(`Bạn có chắc muốn xóa từ "${item.words.map(w => w.display).join(' = ')} : ${item.meaning}"?`)) {
-                removeMeaningFromRawData(item.meaning);
+            removeMeaningFromRawData(item.meaning);
 
-                originalSynonymsData.splice(index, 1);
-                
-                const synIdx = synonymsData.findIndex(d => d.meaning === item.meaning);
-                if (synIdx !== -1) synonymsData.splice(synIdx, 1);
+            originalSynonymsData.splice(index, 1);
+            
+            const synIdx = synonymsData.findIndex(d => d.meaning === item.meaning);
+            if (synIdx !== -1) synonymsData.splice(synIdx, 1);
 
-                if (item.isStarred) {
-                    starredLines = starredLines.filter(m => m !== item.meaning);
-                    localStorage.setItem('tudongnghia_starred', JSON.stringify(starredLines));
-                }
+            if (item.isStarred) {
+                starredLines = starredLines.filter(m => m !== item.meaning);
+                localStorage.setItem('tudongnghia_starred', JSON.stringify(starredLines));
+            }
 
-                if (currentIndex >= synonymsData.length) {
-                    currentIndex = Math.max(0, synonymsData.length - 1);
-                }
+            if (currentIndex >= synonymsData.length) {
+                currentIndex = Math.max(0, synonymsData.length - 1);
+            }
 
-                renderTable();
-                if (synonymsData.length > 0) {
-                    renderCard();
-                } else {
-                    document.getElementById('flashcardScreen').classList.add('hidden');
-                    document.getElementById('setupScreen').classList.remove('hidden');
-                }
+            renderTable();
+            if (synonymsData.length > 0) {
+                renderCard();
+            } else {
+                document.getElementById('flashcardScreen').classList.add('hidden');
+                document.getElementById('setupScreen').classList.remove('hidden');
             }
         }
 
