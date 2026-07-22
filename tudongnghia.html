@@ -155,24 +155,24 @@
         <div class="glass-card rounded-[2.5rem] overflow-hidden w-full max-w-5xl mx-auto mt-12 flex flex-col shadow-2xl shadow-brand-500/10">
             
             <!-- Header (Nghĩa Tiếng Việt) -->
-            <div class="bg-gradient-to-br from-brand-900 to-indigo-900 px-8 py-6 relative border-b border-brand-500/30 flex flex-col items-center justify-center">
-                <button onclick="toggleStarCard()" class="absolute top-4 left-6 w-10 h-10 rounded-full hover:bg-white/20 text-brand-300/70 hover:text-amber-400 flex items-center justify-center transition-all" title="Đánh dấu sao">
+            <div class="bg-white/60 px-8 py-6 relative border-b border-white/50 flex flex-col items-center justify-center">
+                <button onclick="toggleStarCard()" class="absolute top-4 left-6 w-10 h-10 rounded-full hover:bg-white/80 text-slate-400 hover:text-amber-500 flex items-center justify-center transition-all shadow-sm" title="Đánh dấu sao">
                     <i id="cardStarIcon" class="fa-regular fa-star text-lg"></i>
                 </button>
                 <div class="absolute top-4 right-6 flex items-center gap-2 z-20">
                     <div class="relative flex items-center justify-center">
-                        <button onclick="showDeleteCardConfirm(event)" id="cardDeleteBtn" class="w-10 h-10 rounded-full hover:bg-white/20 text-brand-300/70 hover:text-rose-400 flex items-center justify-center transition-all" title="Xóa thẻ này khỏi danh sách">
+                        <button onclick="showDeleteCardConfirm(event)" id="cardDeleteBtn" class="w-10 h-10 rounded-full hover:bg-white/80 text-slate-400 hover:text-rose-500 flex items-center justify-center transition-all shadow-sm" title="Xóa thẻ này khỏi danh sách">
                             <i class="fa-solid fa-trash-can text-lg"></i>
                         </button>
 
                         <!-- Delete Confirm Popup moved to end of body to prevent 3D clipping -->
                     </div>
-                    <button onclick="toggleCardReveal()" class="w-10 h-10 rounded-full hover:bg-white/20 text-brand-300/70 hover:text-white flex items-center justify-center transition-all" title="Ẩn/Hiện">
+                    <button onclick="toggleCardReveal()" class="w-10 h-10 rounded-full hover:bg-white/80 text-slate-400 hover:text-brand-500 flex items-center justify-center transition-all shadow-sm" title="Ẩn/Hiện">
                         <i id="cardRevealIcon" class="fa-solid fa-eye-slash text-lg"></i>
                     </button>
                 </div>
-                <div class="text-xs font-bold text-brand-300 tracking-widest uppercase mb-2 opacity-80" id="progressText">1/1</div>
-                <h2 id="meaningDisplay" class="text-3xl md:text-4xl font-extrabold text-white text-center leading-tight drop-shadow-md pb-1">Loading...</h2>
+                <div class="text-xs font-bold text-brand-400 tracking-widest uppercase mb-2" id="progressText">1/1</div>
+                <h2 id="meaningDisplay" class="text-3xl md:text-4xl font-extrabold bg-gradient-to-br from-rose-500 to-orange-400 bg-clip-text text-transparent text-center leading-tight drop-shadow-sm pb-1">Loading...</h2>
             </div>
             
             <!-- Các từ đồng nghĩa -->
@@ -224,11 +224,11 @@
         let starredLines = JSON.parse(localStorage.getItem('tudongnghia_starred') || "[]");
         let isStarFilter = false;
         let currentIndex = 0;
-        let isTypeMode = false;
-        let hintLevel = 0; // 0: None, 1: 1 char, 2: 2 chars, 3: First word full + 2 chars
+        let isTypeMode = localStorage.getItem('tudongnghia_isTypeMode') === 'true';
+        let hintLevel = parseInt(localStorage.getItem('tudongnghia_hintLevel') || '0'); // 0: None, 1: 1 char, 2: 2 chars, 3: First word full + 2 chars
         let isGlobalRevealed = false;
         let isAutoPlaying = false;
-        let isAutoReadWord = false;
+        let isAutoReadWord = localStorage.getItem('tudongnghia_isAutoReadWord') === 'true';
         let autoPlayInterval = null;
         
         // Cố gắng tải danh sách giọng nói trước (Chrome bug fix)
@@ -573,6 +573,7 @@
 
         function toggleMode() {
             isTypeMode = !isTypeMode;
+            localStorage.setItem('tudongnghia_isTypeMode', isTypeMode);
             const icon = document.getElementById('modeIcon');
             const text = document.getElementById('modeText');
             const hintSelect = document.getElementById('hintLevel');
@@ -592,6 +593,7 @@
 
         function changeHint() {
             hintLevel = parseInt(document.getElementById('hintLevel').value);
+            localStorage.setItem('tudongnghia_hintLevel', hintLevel);
             renderCard();
         }
 
@@ -854,6 +856,7 @@
 
         function toggleAutoRead() {
             isAutoReadWord = !isAutoReadWord;
+            localStorage.setItem('tudongnghia_isAutoReadWord', isAutoReadWord);
             const btn = document.getElementById('autoReadBtn');
             const icon = document.getElementById('autoReadIcon');
             if (isAutoReadWord) {
@@ -1021,7 +1024,7 @@
             
             let displayMeaning = current.meaning;
             if (current.annotation) {
-                displayMeaning += ` <span class="text-brand-300/80 text-lg md:text-2xl font-semibold ml-2 inline-block">${current.annotation}</span>`;
+                displayMeaning += ` <span class="text-slate-400 text-lg md:text-2xl font-semibold ml-2 inline-block" style="-webkit-text-fill-color: #94a3b8;">${current.annotation}</span>`;
             }
             document.getElementById('meaningDisplay').innerHTML = displayMeaning;
             document.getElementById('progressText').innerText = `${currentIndex + 1}/${synonymsData.length}`;
@@ -1304,6 +1307,31 @@
             textarea.addEventListener('input', (e) => {
                 localStorage.setItem('tudongnghia_raw_data', e.target.value);
             });
+            
+            // Khôi phục UI từ settings đã lưu
+            const modeIcon = document.getElementById('modeIcon');
+            const modeText = document.getElementById('modeText');
+            if (isTypeMode) {
+                modeIcon.className = "fa-solid fa-keyboard mr-2";
+                modeText.innerText = "Chế độ Gõ phím";
+            } else {
+                modeIcon.className = "fa-solid fa-hand-pointer mr-2";
+                modeText.innerText = "Lật thẻ (Click)";
+            }
+            
+            document.getElementById('hintLevel').value = hintLevel;
+            
+            const readBtn = document.getElementById('autoReadBtn');
+            const readIcon = document.getElementById('autoReadIcon');
+            if (isAutoReadWord) {
+                readBtn.classList.remove('bg-white', 'text-slate-600', 'border-slate-200');
+                readBtn.classList.add('bg-brand-500', 'text-white', 'border-brand-500');
+                readIcon.classList.add('animate-pulse');
+            } else {
+                readBtn.classList.remove('bg-brand-500', 'text-white', 'border-brand-500');
+                readBtn.classList.add('bg-white', 'text-slate-600', 'border-slate-200');
+                readIcon.classList.remove('animate-pulse');
+            }
             
             silentParseData(); // Initial load for table
         });
