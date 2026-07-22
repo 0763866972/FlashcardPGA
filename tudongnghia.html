@@ -860,6 +860,31 @@
             }
         }
 
+        let wakeLock = null;
+        async function requestWakeLock() {
+            if ('wakeLock' in navigator) {
+                try {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    wakeLock.addEventListener('release', () => {
+                        console.log('Screen Wake Lock released');
+                    });
+                } catch (err) {
+                    console.error(`Wake Lock error: ${err.name}, ${err.message}`);
+                }
+            }
+        }
+        function releaseWakeLock() {
+            if (wakeLock !== null) {
+                wakeLock.release().then(() => wakeLock = null);
+            }
+        }
+        
+        document.addEventListener('visibilitychange', () => {
+            if (wakeLock !== null && document.visibilityState === 'visible' && isAutoPlaying) {
+                requestWakeLock();
+            }
+        });
+
         function toggleAutoPlay() {
             isAutoPlaying = !isAutoPlaying;
             const btn = document.getElementById('autoPlayBtn');
@@ -869,6 +894,7 @@
                 btn.classList.remove('bg-white', 'text-slate-600', 'border-slate-200');
                 btn.classList.add('bg-rose-50', 'text-rose-600', 'border-rose-200', 'animate-pulse');
                 icon.className = "fa-solid fa-stop mr-2";
+                requestWakeLock();
                 runAutoPlayCycle();
             } else {
                 btn.classList.remove('bg-rose-50', 'text-rose-600', 'border-rose-200', 'animate-pulse');
@@ -876,6 +902,7 @@
                 icon.className = "fa-solid fa-headphones mr-2";
                 if (autoPlayInterval) clearTimeout(autoPlayInterval);
                 window.speechSynthesis.cancel();
+                releaseWakeLock();
             }
         }
 
@@ -925,10 +952,10 @@
                 const charCorrect = correctWord[i] || '';
                 
                 if (charTyped === charCorrect) {
-                    html += `<span class="text-emerald-400">${charCorrect}</span>`;
+                    html += `<span class="text-emerald-500">${charCorrect}</span>`;
                 } else {
                     const displayChar = charCorrect === ' ' ? '&nbsp;' : (charCorrect || '_');
-                    html += `<span class="text-rose-400 border-b-2 border-rose-400/50 pb-[2px] mx-[1px]">${displayChar}</span>`;
+                    html += `<span class="text-rose-500 border-b-2 border-rose-400/50 pb-[2px] mx-[1px]">${displayChar}</span>`;
                 }
             }
             return html;
@@ -1014,7 +1041,11 @@
                 if (isTypeMode) {
                     if (wordObj.revealed) {
                         const box = document.createElement('div');
-                        box.className = "h-[54px] px-8 bg-emerald-50 text-emerald-600 font-bold text-xl rounded-full flex items-center justify-center border-2 border-emerald-400 shadow-[0_4px_12px_rgba(52,211,153,0.15)] min-w-[120px] transition-all cursor-pointer hover:bg-emerald-100";
+                        if (wordObj.isFailed) {
+                            box.className = "h-[54px] px-8 bg-rose-50 text-rose-600 font-bold text-xl rounded-full flex items-center justify-center border-2 border-rose-400 shadow-[0_4px_12px_rgba(244,63,94,0.15)] min-w-[120px] transition-all cursor-pointer hover:bg-rose-100";
+                        } else {
+                            box.className = "h-[54px] px-8 bg-emerald-50 text-emerald-600 font-bold text-xl rounded-full flex items-center justify-center border-2 border-emerald-400 shadow-[0_4px_12px_rgba(52,211,153,0.15)] min-w-[120px] transition-all cursor-pointer hover:bg-emerald-100";
+                        }
                         box.innerText = wordObj.display;
                         box.title = "Chuột phải để nghe phát âm";
                         box.oncontextmenu = (e) => {
@@ -1072,41 +1103,76 @@
                                         if (nextInput) nextInput.focus();
                                     }, 50);
                                 } else if (val !== '') {
-                                    // Sai -> Đổi màu đỏ
-                                    e.target.classList.remove('border-slate-200', 'text-slate-700', 'bg-slate-50', 'focus:border-brand-500');
-                                    e.target.classList.add('border-rose-400', 'text-rose-500', 'bg-rose-50', 'focus:border-rose-400');
-                                    
-                                    // Tìm từ chưa mở giống với từ vừa gõ nhất (Smart Spell Check)
-                                    let bestMatch = wordObj.check;
-                                    let minDistance = Infinity;
-                                    current.words.forEach(w => {
-                                        if (!w.revealed) {
-                                            const dist = getLevenshteinDistance(val, w.check);
-                                            if (dist < minDistance) {
-                                                minDistance = dist;
-                                                bestMatch = w.check;
+                                    if (e.target.classList.contains('border-rose-400')) {
+                                        // Nhấn Enter lần 2 (khi đang báo lỗi): tự động điền từ đúng và qua từ tiếp theo
+                                        let minDistance = Infinity;
+                                        let bestWordObj = null;
+                                        current.words.forEach(w => {
+                                            if (!w.revealed) {
+                                                const dist = getLevenshteinDistance(val, w.check);
+                                                if (dist < minDistance) {
+                                                    minDistance = dist;
+                                                    bestWordObj = w;
+                                                }
                                             }
+                                        });
+                                        if (bestWordObj) {
+                                            bestWordObj.revealed = true;
+                                            bestWordObj.isFailed = true;
+                                            if (isAutoReadWord) playTTS(bestWordObj.check);
+                                            renderCard();
+                                            setTimeout(() => {
+                                                const nextInput = container.querySelector('input');
+                                                if (nextInput) nextInput.focus();
+                                            }, 50);
                                         }
-                                    });
-
-                                    let diffBox = wrapper.querySelector('.diff-box');
-                                    if (!diffBox) {
-                                        diffBox = document.createElement('div');
-                                        // Floating Tooltip style
-                                        diffBox.className = "diff-box diff-tooltip absolute top-[64px] left-1/2 w-max px-5 py-2 bg-slate-800 text-white rounded-xl shadow-xl z-20 font-bold text-lg flex items-center justify-center tracking-widest pointer-events-none";
+                                    } else {
+                                        // Nhấn Enter lần 1: báo lỗi và hiện gợi ý
+                                        e.target.classList.remove('border-slate-200', 'text-slate-700', 'bg-slate-50', 'focus:border-brand-500');
+                                        e.target.classList.add('border-rose-400', 'text-rose-500', 'bg-rose-50', 'focus:border-rose-400');
                                         
-                                        // Mũi tên chỉ lên của tooltip
-                                        const arrow = document.createElement('div');
-                                        arrow.className = "absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-slate-800 rotate-45";
-                                        diffBox.appendChild(arrow);
-                                        
-                                        const content = document.createElement('div');
-                                        content.className = "diff-content relative z-10";
-                                        diffBox.appendChild(content);
+                                        // Tìm từ chưa mở giống với từ vừa gõ nhất (Smart Spell Check)
+                                        let bestMatch = wordObj.check;
+                                        let minDistance = Infinity;
+                                        current.words.forEach(w => {
+                                            if (!w.revealed) {
+                                                const dist = getLevenshteinDistance(val, w.check);
+                                                if (dist < minDistance) {
+                                                    minDistance = dist;
+                                                    bestMatch = w.check;
+                                                }
+                                            }
+                                        });
 
-                                        wrapper.appendChild(diffBox);
+                                        let diffBox = wrapper.querySelector('.diff-box');
+                                        if (!diffBox) {
+                                            diffBox = document.createElement('div');
+                                            // Floating Tooltip style (Light Theme)
+                                            diffBox.className = "diff-box diff-tooltip absolute top-[64px] left-1/2 w-max px-5 py-2 bg-white text-slate-700 border-2 border-slate-200/80 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] z-20 font-bold text-lg flex items-center justify-center tracking-widest pointer-events-none";
+                                            
+                                            // Mũi tên chỉ lên của tooltip
+                                            const arrow = document.createElement('div');
+                                            arrow.className = "absolute -top-2 left-1/2 -translate-x-1/2 w-3.5 h-3.5 bg-white border-t-2 border-l-2 border-slate-200/80 rotate-45";
+                                            diffBox.appendChild(arrow);
+                                            
+                                            const content = document.createElement('div');
+                                            content.className = "diff-content relative z-10";
+                                            diffBox.appendChild(content);
+
+                                            wrapper.appendChild(diffBox);
+                                        }
+                                        wrapper.querySelector('.diff-content').innerHTML = generateDiffHtml(val, bestMatch);
                                     }
-                                    wrapper.querySelector('.diff-content').innerHTML = generateDiffHtml(val, bestMatch);
+                                } else if (val === '') {
+                                    // Bỏ qua (Skip) từ hiện tại: tự động mở từ và trỏ sang ô tiếp theo
+                                    wordObj.revealed = true;
+                                    wordObj.isFailed = true;
+                                    if (isAutoReadWord) playTTS(wordObj.check);
+                                    renderCard();
+                                    setTimeout(() => {
+                                        const nextInput = container.querySelector('input');
+                                        if (nextInput) nextInput.focus();
+                                    }, 50);
                                 }
                             } else if (e.key === 'Backspace') {
                                 if (e.target.classList.contains('border-rose-400')) {
@@ -1145,6 +1211,7 @@
                         
                         hiddenBox.onclick = () => {
                             wordObj.revealed = true;
+                            wordObj.isFailed = false;
                             if (isAutoReadWord) playTTS(wordObj.check);
                             renderCard();
                         };
@@ -1175,6 +1242,19 @@
                     const allRevealed = current.words.every(w => w.revealed);
                     if (allRevealed) {
                         nextCard();
+                    }
+                }
+            } else if (e.key === 'Backspace') {
+                if (synonymsData.length > 0 && synonymsData[currentIndex]) {
+                    const current = synonymsData[currentIndex];
+                    const allRevealed = current.words.every(w => w.revealed);
+                    if (allRevealed && isTypeMode) {
+                        e.preventDefault(); // Prevent browser navigation
+                        current.words.forEach(w => {
+                            w.revealed = false;
+                            w.isFailed = false;
+                        });
+                        renderCard();
                     }
                 }
             } else if (e.key === 'ArrowRight') {

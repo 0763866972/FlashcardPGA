@@ -1116,6 +1116,31 @@ function runAutoPlaySequence() {
     });
 }
 
+let wakeLock = null;
+async function requestWakeLock() {
+    if ('wakeLock' in navigator) {
+        try {
+            wakeLock = await navigator.wakeLock.request('screen');
+            wakeLock.addEventListener('release', () => {
+                console.log('Screen Wake Lock released');
+            });
+        } catch (err) {
+            console.error(`Wake Lock error: ${err.name}, ${err.message}`);
+        }
+    }
+}
+function releaseWakeLock() {
+    if (wakeLock !== null) {
+        wakeLock.release().then(() => wakeLock = null);
+    }
+}
+
+document.addEventListener('visibilitychange', () => {
+    if (wakeLock !== null && document.visibilityState === 'visible' && (isFcSlideshow || isFcAutoPlay)) {
+        requestWakeLock();
+    }
+});
+
 function toggleSlideshow() {
     isFcSlideshow = !isFcSlideshow;
     const btn = document.getElementById('fcSlideshowBtn');
@@ -1127,6 +1152,7 @@ function toggleSlideshow() {
         icon.className = 'fa-solid fa-pause';
         if (speedControl) speedControl.classList.remove('hidden');
         if (autoPlaySequenceTimeout) clearTimeout(autoPlaySequenceTimeout);
+        requestWakeLock();
         runAutoPlaySequence();
     } else {
         btn.className = 'bg-slate-100 text-slate-500 hover:bg-amber-50 hover:text-amber-500 px-4 py-2 rounded-xl transition-all text-sm font-bold flex items-center gap-2';
@@ -1134,6 +1160,7 @@ function toggleSlideshow() {
         if (speedControl) speedControl.classList.add('hidden');
         if (autoPlaySequenceTimeout) clearTimeout(autoPlaySequenceTimeout);
         stopAllAudio(); // Dừng phát âm
+        if (!isFcAutoPlay) releaseWakeLock();
     }
 }
 
@@ -1151,12 +1178,14 @@ function toggleAutoPlay() {
         // Bật: Sáng nút + đọc từ
         btn.className = 'bg-sky-100 text-sky-500 hover:bg-sky-200 px-4 py-2 rounded-xl transition-all text-sm font-bold flex items-center gap-2';
         icon.className = 'fa-solid fa-volume-high';
+        requestWakeLock();
         speakWord(null); 
     } else {
         // Tắt: Mờ nút + dừng đọc
         btn.className = 'bg-slate-100 text-slate-500 hover:bg-sky-50 hover:text-sky-500 px-4 py-2 rounded-xl transition-all text-sm font-bold flex items-center gap-2';
         icon.className = 'fa-solid fa-volume-xmark';
         stopAllAudio(); // Dừng phát âm
+        if (!isFcSlideshow) releaseWakeLock();
     }
 }
 
