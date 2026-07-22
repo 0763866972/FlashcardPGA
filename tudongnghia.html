@@ -117,10 +117,10 @@
         <div id="setupEditView" class="w-full hidden mb-4">
             <p class="text-sm text-slate-500 mb-3">Định dạng: <code>từ 1 = từ 2 (loại từ) = từ 3 : Nghĩa tiếng việt</code></p>
             <textarea id="rawData" spellcheck="false" lang="en" rows="10" class="w-full p-4 border border-slate-200 rounded-xl bg-slate-50 text-slate-700 font-mono text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition" placeholder="enable (v) sb/ sth to do sth = allow = permit = approve : cho phép&#10;fast = quick = rapid : nhanh"></textarea>
-            
-            <div id="spellSuggestions" class="hidden mt-3 p-3 bg-rose-50/50 border border-rose-200 rounded-xl max-h-48 overflow-y-auto space-y-2">
-                <!-- Suggestions will go here -->
-            </div>
+        </div>
+        
+        <div id="spellSuggestions" class="hidden mt-3 mb-4 p-3 bg-rose-50/50 border border-rose-200 rounded-xl max-h-48 overflow-y-auto space-y-2">
+            <!-- Suggestions will go here -->
         </div>
         
         <button onclick="parseData()" class="mt-2 w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-brand-500/20 transition-all active:scale-[0.98]">
@@ -406,8 +406,12 @@
                     html += `
                         <tr class="border-b border-slate-100 last:border-0 ${rowBg} transition-colors ${rowColor}">
                             <td class="p-4 text-center font-bold opacity-60">${index + 1}</td>
-                            <td class="p-4 font-bold text-brand-600 focus:outline-none focus:bg-white focus:ring-2 focus:ring-brand-500/50 rounded-lg transition-all outline-none" contenteditable="true" onblur="updateWordFromTable(${index}, 'words', this.innerText, this)" title="Click để sửa">${wordsStr}</td>
-                            <td class="p-4 focus:outline-none focus:bg-white focus:ring-2 focus:ring-brand-500/50 rounded-lg transition-all outline-none" contenteditable="true" onblur="updateWordFromTable(${index}, 'meaning', this.innerText, this)" title="Click để sửa">${item.meaning}</td>
+                            <td class="p-2 align-middle relative focus-within:z-10">
+                                <div class="p-2 font-bold text-brand-600 focus:outline-none focus:bg-white focus:ring-2 focus:ring-brand-500/50 rounded-lg transition-all outline-none cursor-text relative" contenteditable="true" onblur="updateWordFromTable(${index}, 'words', this.innerText, this)" title="Click để sửa">${wordsStr}</div>
+                            </td>
+                            <td class="p-2 align-middle relative focus-within:z-10">
+                                <div class="p-2 focus:outline-none focus:bg-white focus:ring-2 focus:ring-brand-500/50 rounded-lg transition-all outline-none cursor-text relative" contenteditable="true" onblur="updateWordFromTable(${index}, 'meaning', this.innerText, this)" title="Click để sửa">${item.meaning}</div>
+                            </td>
                             <td class="p-4 text-center">
                                 <div class="flex items-center justify-center gap-1">
                                     <button onclick="toggleStarFromTable(${index})" class="w-8 h-8 rounded-full hover:bg-white transition-all shadow-sm flex items-center justify-center border border-transparent hover:border-slate-200" title="Đánh dấu sao">
@@ -785,10 +789,6 @@
         }
 
         async function checkSpelling() {
-            if (!isEditMode) {
-                toggleSetupMode(); // Chuyển sang Edit Mode để hiển thị lỗi và form textarea
-            }
-
             const btn = document.getElementById('spellcheckBtn');
             const originalHtml = btn.innerHTML;
             btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1.5"></i> <span id="spellcheckBtnText">Đang quét...</span>`;
@@ -804,6 +804,9 @@
             let suggestionsHTML = '';
             let checkCount = 0;
             let hasErrors = false;
+            
+            const rows = document.getElementById('setupTableBody').children;
+            let validLineIndex = 0;
 
             for (let i = 0; i < lines.length; i++) {
                 let currentLine = lines[i];
@@ -876,21 +879,35 @@
 
                     if (suggestion) {
                         hasErrors = true;
+                        
+                        const tr = rows[validLineIndex];
+                        let inlineHtml = '';
+                        
                         if (suggestion === "[TỪ KHÔNG CÓ THẬT]") {
                             suggestionsHTML += `<div class="flex items-center justify-between text-sm p-2 bg-rose-100 text-rose-800 rounded-lg">
                                 <span>Dòng ${i + 1}: <b class="line-through opacity-70">${checkW}</b> không tồn tại!</span>
                             </div>`;
+                            inlineHtml = `<div class="mt-1.5"><span class="text-rose-400 bg-rose-500/10 border border-rose-500/30 px-1.5 py-0.5 rounded text-[10px] inline-flex items-center gap-1 transition-all shadow-sm"><i class="fa-solid fa-triangle-exclamation"></i> Từ này không tồn tại!</span></div>`;
                         } else {
                             suggestionsHTML += `<div class="flex items-center justify-between text-sm p-2 bg-amber-50 text-amber-800 rounded-lg shadow-sm border border-amber-100">
                                 <span>Dòng ${i + 1}: <b class="line-through opacity-70 text-slate-500">${checkW}</b> <i class="fa-solid fa-arrow-right mx-1 text-slate-400"></i> <b class="text-amber-700">${suggestion}</b></span>
                                 <button type="button" onclick="applySpellingFix(${i}, '${rawW.replace(/'/g, "\\'")}', '${suggestion.replace(/'/g, "\\'")}', this)" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg shadow-sm text-xs font-bold transition-all active:scale-95"><i class="fa-solid fa-wand-magic-sparkles mr-1 pointer-events-none"></i> Sửa</button>
                             </div>`;
+                            inlineHtml = `<div class="mt-1.5"><span class="text-rose-400 bg-rose-500/10 border border-rose-500/30 hover:bg-rose-500/20 hover:border-rose-500/50 px-1.5 py-0.5 rounded text-[10px] inline-flex items-center gap-1 cursor-pointer transition-all shadow-sm" title="Sai chính tả, bấm để tự sửa." onclick="applySpellingFix(${i}, '${rawW.replace(/'/g, "\\'")}', '${suggestion.replace(/'/g, "\\'")}', this)"><i class="fa-solid fa-wand-magic-sparkles"></i> Sửa: <b>${suggestion}</b>?</span></div>`;
+                        }
+                        
+                        if (tr && !isEditMode) {
+                            const tdWord = tr.children[1].querySelector('div') || tr.children[1];
+                            if (!tdWord.innerHTML.includes('fa-triangle-exclamation') && !tdWord.innerHTML.includes('fa-wand-magic-sparkles')) {
+                                tdWord.innerHTML += inlineHtml;
+                            }
                         }
                     }
 
                     checkCount++;
                     if (checkCount % 3 === 0) await sleep(100);
                 }
+                validLineIndex++;
             }
 
             btn.innerHTML = `<i class="fa-solid fa-check mr-1.5"></i> <span id="spellcheckBtnText">Hoàn tất</span>`;
@@ -926,17 +943,61 @@
                         btnElement.classList.add('pointer-events-none');
                     }
 
-                    // Highlight the replaced word
-                    let charCount = 0;
-                    for (let i = 0; i < lineIndex; i++) {
-                        charCount += lines[i].length + 1; // +1 cho ký tự xuống dòng \n
-                    }
-                    const wordIndexInLine = lines[lineIndex].indexOf(newWord);
-                    if (wordIndexInLine !== -1) {
-                        const startPos = charCount + wordIndexInLine;
-                        const endPos = startPos + newWord.length;
-                        textarea.focus();
-                        textarea.setSelectionRange(startPos, endPos);
+                    if (!isEditMode) {
+                        // Tính index thực tế trong mảng dữ liệu (bỏ qua dòng trống/lỗi)
+                        let itemIndex = 0;
+                        for (let i = 0; i < lineIndex; i++) {
+                            let currentLine = lines[i];
+                            if (!currentLine.trim()) continue;
+                            if (currentLine.indexOf(':') === -1) continue;
+                            itemIndex++;
+                        }
+                        
+                        const item = originalSynonymsData[itemIndex];
+                        if (item) {
+                            // Cập nhật mảng
+                            for (let w of item.words) {
+                                if (w.check === checkW) {
+                                    w.display = w.display.replace(new RegExp(`\\b${checkW}\\b`, 'i'), newWord);
+                                    w.check = newWord.replace(/\([^)]*\)/g, '').trim().toLowerCase().replace(/\s+/g, ' ');
+                                }
+                            }
+                            
+                            const syncItem = synonymsData.find(d => d.meaning === item.meaning);
+                            if (syncItem) {
+                                for (let w of syncItem.words) {
+                                    if (w.check === checkW) {
+                                        w.display = w.display.replace(new RegExp(`\\b${checkW}\\b`, 'i'), newWord);
+                                        w.check = newWord.replace(/\([^)]*\)/g, '').trim().toLowerCase().replace(/\s+/g, ' ');
+                                    }
+                                }
+                            }
+                            
+                            // Cập nhật DOM của cell
+                            const tr = document.getElementById('setupTableBody').children[itemIndex];
+                            if (tr) {
+                                const tdWord = tr.children[1].querySelector('div') || tr.children[1];
+                                const wordsStr = item.words.map(w => w.display).join(' = ');
+                                if (tdWord.childNodes.length > 0 && tdWord.childNodes[0].nodeType === 3) {
+                                    tdWord.childNodes[0].nodeValue = wordsStr;
+                                }
+                            }
+                            
+                            // Lưu ý: Không gọi renderTable() ở đây để giữ nguyên các đề xuất lỗi khác trên bảng!
+                        }
+                    } else {
+                        // Highlight the replaced word
+                        let charCount = 0;
+                        for (let i = 0; i < lineIndex; i++) {
+                            charCount += lines[i].length + 1; // +1 cho ký tự xuống dòng \n
+                        }
+                        const wordIndexInLine = lines[lineIndex].indexOf(newWord);
+                        if (wordIndexInLine !== -1) {
+                            const startPos = charCount + wordIndexInLine;
+                            const endPos = startPos + newWord.length;
+                            textarea.focus();
+                            textarea.setSelectionRange(startPos, endPos);
+                        }
                     }
                 }
             }
