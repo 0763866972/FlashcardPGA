@@ -738,8 +738,9 @@
         }
         let lastTTSCallTime = 0;
 
-        function fallbackTTS(text, lang, resolve) {
+        function fallbackTTS(text, lang, resolve = null) {
             if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
                 const msg = new SpeechSynthesisUtterance(text);
                 msg.lang = lang;
                 

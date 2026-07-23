@@ -2064,7 +2064,7 @@ function playSpeechRobust(text, lang = 'en-US', rate = 1.0, onEndCallback = null
     };
 
     window.globalAudioTTS.onerror = () => {
-        // === FALLBACK: NẾU GOOGLE TTS LỖI HOẶC BỊ CHẶN, CHUYỂN VỀ WEB SPEECH API CŨ ===
+        window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = lang;
         // Web Speech API nói nhanh hơn Google 1 chút, nên ta dùng hệ số 0.85 * rate
