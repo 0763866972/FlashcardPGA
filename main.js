@@ -2036,38 +2036,35 @@ if (!window.globalAudioTTS) {
 let lastTTSCallTime = 0;
 
 function playSpeechRobust(text, lang = 'en-US', rate = 1.0, onEndCallback = null) {
-    // === CƠ CHẾ CHỐNG SPAM GOOGLE (DEBOUNCE) ===
-    // Dùng timestamp thay vì setTimeout để đảm bảo Audio.play() nằm trong user gesture synchronously (tránh lỗi iOS/iPad)
     const now = Date.now();
-    if (now - lastTTSCallTime < 250) {
-        // Nếu gọi quá nhanh (dưới 250ms), bỏ qua để chống spam
-        return;
-    }
+    if (now - lastTTSCallTime < 250) return;
     lastTTSCallTime = now;
 
-    // Dọn dẹp hàng đợi Web Speech API cũ để tránh kẹt
-    window.speechSynthesis.cancel();
-    
-    // Dừng Audio Google TTS đang phát (nếu có)
-    window.globalAudioTTS.pause();
+    let audioTarget = window.globalAudioTTS;
+    if (typeof isChunkedPaused !== 'undefined' && (isChunkedPaused || isChunkedPlaying)) {
+        if (!window.dictAudioTTS) window.dictAudioTTS = new Audio();
+        audioTarget = window.dictAudioTTS;
+    } else {
+        window.speechSynthesis.cancel();
+        window.globalAudioTTS.pause();
+    }
 
-    // Xác định mã ngôn ngữ cho Google TTS
     const langGoogle = lang.startsWith('vi') ? 'vi' : 'en';
     const url = `https://translate.googleapis.com/translate_tts?client=gtx&ie=UTF-8&tl=${langGoogle}&q=${encodeURIComponent(text)}`;
     
-    window.globalAudioTTS.src = url;
-    // Điều chỉnh tốc độ cho Google TTS (đúng với rate user chọn: 1.0 -> 1.4)
-    window.globalAudioTTS.playbackRate = rate;
+    audioTarget.src = url;
+    audioTarget.playbackRate = rate;
 
-    window.globalAudioTTS.onended = () => {
+    audioTarget.onended = () => {
         if (onEndCallback) onEndCallback();
     };
 
-    window.globalAudioTTS.onerror = () => {
-        window.speechSynthesis.cancel();
+    audioTarget.onerror = () => {
+        if (audioTarget !== window.dictAudioTTS) {
+            window.speechSynthesis.cancel();
+        }
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = lang;
-        // Web Speech API nói nhanh hơn Google 1 chút, nên ta dùng hệ số 0.85 * rate
         utterance.rate = 0.85 * rate;
         
         if (onEndCallback) {
@@ -2077,7 +2074,6 @@ function playSpeechRobust(text, lang = 'en-US', rate = 1.0, onEndCallback = null
 
         const voices = window.speechSynthesis.getVoices();
         const targetVoices = voices.filter(v => v.lang.startsWith(lang.split('-')[0]));
-
         if (targetVoices.length > 0) {
             const preferredVoice = targetVoices.find(v => v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Microsoft Mark') || v.name.includes('Samantha'));
             utterance.voice = preferredVoice || targetVoices[0];
@@ -2089,11 +2085,154 @@ function playSpeechRobust(text, lang = 'en-US', rate = 1.0, onEndCallback = null
         window.speechSynthesis.speak(utterance);
     };
 
-    // Bắt đầu phát Google TTS (Synchronous - iOS sẽ cho phép nếu từ user click)
+    audioTarget.play().catch(e => {
+        if (e.name === 'AbortError') return;
+        if (audioTarget && audioTarget.onerror) audioTarget.onerror();
+    });
+}
+
+// ==========================================
+// ĐỌC VĂN BẢN DÀI BẰNG GOOGLE TTS (CHIA NHỎ)
+// ==========================================
+let chunkedTTSQueue = [];
+let chunkedTTSCallback = null;
+let chunkedTTSOnChunk = null;
+let chunkedTTSLang = 'en-US';
+let isChunkedPlaying = false;
+let isChunkedPaused = false;
+
+function playSpeechChunked(text, lang = 'en-US', rate = 1.0, onEndCallback = null, onChunkCallback = null) {
+    window.speechSynthesis.cancel();
+    window.globalAudioTTS.pause();
+    
+    let finalChunks = [];
+    let regex = /[^.?!,\n]+[.?!,\n]+/g;
+    let match;
+    let lastIndex = 0;
+    
+    function pushChunks(str, globalStart, arr) {
+        if (!str.trim()) return;
+        if (str.length < 150) {
+            let exactStart = str.indexOf(str.trim());
+            arr.push({ text: str.trim(), start: globalStart + exactStart, end: globalStart + exactStart + str.trim().length });
+        } else {
+            let words = str.split(/\s+/).filter(x => x);
+            let current = '';
+            let currentStart = globalStart;
+            let offsetInStr = 0;
+            
+            for (let i = 0; i < words.length; i++) {
+                let w = words[i];
+                let wIdx = str.indexOf(w, offsetInStr);
+                
+                if (current.length + w.length > 120) {
+                    if (current.trim()) {
+                        arr.push({ text: current.trim(), start: currentStart, end: globalStart + offsetInStr });
+                    }
+                    currentStart = globalStart + wIdx;
+                    current = w;
+                } else {
+                    if (!current) currentStart = globalStart + wIdx;
+                    current += (current ? ' ' : '') + w;
+                }
+                offsetInStr = wIdx + w.length;
+            }
+            if (current.trim()) {
+                arr.push({ text: current.trim(), start: currentStart, end: globalStart + offsetInStr });
+            }
+        }
+    }
+    
+    while ((match = regex.exec(text)) !== null) {
+        let chunkText = match[0];
+        let startIndex = match.index;
+        
+        if (startIndex > lastIndex) {
+            let gapText = text.substring(lastIndex, startIndex);
+            if (gapText.trim()) pushChunks(gapText, lastIndex, finalChunks);
+        }
+        
+        pushChunks(chunkText, startIndex, finalChunks);
+        lastIndex = regex.lastIndex;
+    }
+    
+    if (lastIndex < text.length) {
+        let remaining = text.substring(lastIndex);
+        if (remaining.trim()) pushChunks(remaining, lastIndex, finalChunks);
+    }
+
+    if (finalChunks.length === 0) {
+        if (onEndCallback) onEndCallback();
+        return;
+    }
+
+    chunkedTTSQueue = finalChunks;
+    chunkedTTSCallback = onEndCallback;
+    chunkedTTSOnChunk = onChunkCallback;
+    chunkedTTSLang = lang;
+    isChunkedPlaying = true;
+    isChunkedPaused = false;
+
+    playNextChunk();
+}
+
+function playNextChunk() {
+    if (chunkedTTSQueue.length === 0 || !isChunkedPlaying) {
+        isChunkedPlaying = false;
+        if (chunkedTTSCallback) chunkedTTSCallback();
+        return;
+    }
+
+    if (isChunkedPaused) {
+        return; // Đang tạm dừng, không chuyển bài
+    }
+
+    const chunkObj = chunkedTTSQueue.shift();
+    const text = chunkObj.text;
+    
+    if (chunkedTTSOnChunk) {
+        chunkedTTSOnChunk(text, chunkObj.start, chunkObj.end);
+    }
+    const langGoogle = chunkedTTSLang.startsWith('vi') ? 'vi' : 'en';
+    const url = `https://translate.googleapis.com/translate_tts?client=gtx&ie=UTF-8&tl=${langGoogle}&q=${encodeURIComponent(text)}`;
+    
+    window.globalAudioTTS.src = url;
+    window.globalAudioTTS.playbackRate = 1.0;
+    
+    window.globalAudioTTS.onended = () => {
+        playNextChunk();
+    };
+
+    window.globalAudioTTS.onerror = () => {
+        // Nếu lỗi mạng, bỏ qua câu này và đọc câu tiếp
+        playNextChunk();
+    };
+
     window.globalAudioTTS.play().catch(e => {
         if (e.name === 'AbortError') return;
-        if (window.globalAudioTTS && window.globalAudioTTS.onerror) window.globalAudioTTS.onerror();
+        playNextChunk();
     });
+}
+
+function pauseChunkedTTS() {
+    isChunkedPaused = true;
+    window.globalAudioTTS.pause();
+}
+
+function resumeChunkedTTS() {
+    isChunkedPaused = false;
+    window.globalAudioTTS.play().catch(e => {
+        // Nếu không resume được do lỗi (VD audio chưa load), thử playNextChunk()
+        if (e.name !== 'AbortError') playNextChunk();
+    });
+}
+
+function stopChunkedTTS() {
+    isChunkedPlaying = false;
+    isChunkedPaused = false;
+    chunkedTTSQueue = [];
+    window.globalAudioTTS.pause();
+    window.speechSynthesis.cancel();
 }
 
 function isVietnameseText(text) {
@@ -3712,15 +3851,15 @@ function renderKeyInputs() {
     for (let i = 0; i < count; i++) {
         const val = existingVals[i] || '';
         container.innerHTML += `
-                    <div class="relative shrink-0 w-full group bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus-within:ring-2 focus-within:ring-brand-500/30 focus-within:border-brand-500 transition-all duration-300 shadow-sm overflow-hidden">
+                    <div class="relative shrink-0 w-full group bg-slate-50 border border-slate-200 rounded-xl focus-within:ring-2 focus-within:ring-brand-500/30 focus-within:border-brand-500 transition-all duration-300 shadow-sm overflow-hidden">
                         <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 group-focus-within:text-brand-500 transition-colors z-10 pointer-events-none">
                             <i class="fa-solid fa-key text-xs"></i>
                         </span>
                         <input type="password" id="apiKeyInput_${i}" value="${val}" placeholder="Key ${i + 1}..."
-                            class="w-full bg-transparent border-none text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 text-sm font-medium focus:ring-0 block pl-10 pr-10 py-3 outline-none"
+                            class="w-full bg-transparent border-none text-slate-700 placeholder-slate-400 text-sm font-medium focus:ring-0 block pl-10 pr-10 py-3 outline-none"
                             style="background: transparent !important; color: inherit !important; box-shadow: none !important;">
                         <button onclick="toggleApiKeyVisibility(${i})"
-                            class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors z-10">
+                            class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-600 transition-colors z-10">
                             <i id="apiKeyToggleIcon_${i}" class="fa-solid fa-eye text-sm"></i>
                         </button>
                     </div>
