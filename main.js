@@ -2193,8 +2193,16 @@ function playNextChunk() {
     if (chunkedTTSOnChunk) {
         chunkedTTSOnChunk(text, chunkObj.start, chunkObj.end);
     }
+    
+    // Loại bỏ tiền tố người nói (M:, W:, Man:, Woman:...) để không đọc lên
+    let textToRead = text.replace(/^(?:[MW]|Man|Woman|Speaker\s*\d+)\s*:/i, '').trim();
+    if (!textToRead) {
+        setTimeout(playNextChunk, 100);
+        return;
+    }
+
     const langGoogle = chunkedTTSLang.startsWith('vi') ? 'vi' : 'en';
-    const url = `https://translate.googleapis.com/translate_tts?client=gtx&ie=UTF-8&tl=${langGoogle}&q=${encodeURIComponent(text)}`;
+    const url = `https://translate.googleapis.com/translate_tts?client=gtx&ie=UTF-8&tl=${langGoogle}&q=${encodeURIComponent(textToRead)}`;
     
     window.globalAudioTTS.src = url;
     window.globalAudioTTS.playbackRate = 1.0;
