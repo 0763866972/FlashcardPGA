@@ -1183,7 +1183,7 @@ Nếu một nhóm không có từ nào, hãy trả về mảng rỗng [].`;
                         }
                     } else {
                         const span = document.createElement('span');
-                        span.innerText = token;
+                        span.textContent = token;
                         span.className = 'transition-colors duration-200';
                         span.setAttribute('data-start', start);
                         span.setAttribute('data-end', end);
@@ -1191,7 +1191,7 @@ Nếu một nhóm không có từ nào, hãy trả về mảng rỗng [].`;
                     }
                 } else if (/^[\w'-]+$/.test(token)) {
                     const span = document.createElement('span');
-                    span.innerText = token;
+                    span.textContent = token;
                     span.className = 'cursor-pointer hover:bg-brand-100 hover:text-brand-600 rounded transition-colors duration-200';
                     span.setAttribute('data-start', start);
                     span.setAttribute('data-end', end);
@@ -1220,7 +1220,7 @@ Nếu một nhóm không có từ nào, hãy trả về mảng rỗng [].`;
                     container.appendChild(span);
                 } else {
                     const span = document.createElement('span');
-                    span.innerText = token;
+                    span.textContent = token;
                     span.className = 'transition-colors duration-200';
                     span.setAttribute('data-start', start);
                     span.setAttribute('data-end', end);
@@ -1314,6 +1314,7 @@ Nếu một nhóm không có từ nào, hãy trả về mảng rỗng [].`;
                     let s = parseInt(span.getAttribute('data-start'));
                     let e = parseInt(span.getAttribute('data-end'));
                     if (Math.max(s, start) < Math.min(e, end)) {
+                        span.classList.remove('rounded');
                         span.classList.add('bg-yellow-300', 'text-slate-900');
                         highlightedSpans.push(span);
                     }
@@ -1331,7 +1332,12 @@ Nếu một nhóm không có từ nào, hãy trả về mảng rỗng [].`;
         
         function clearHighlights() {
             const spans = document.querySelectorAll('#dictContent .bg-yellow-300');
-            spans.forEach(span => span.classList.remove('bg-yellow-300', 'text-slate-900', 'rounded-l-md', 'rounded-r-md'));
+            spans.forEach(span => {
+                span.classList.remove('bg-yellow-300', 'text-slate-900', 'rounded-l-md', 'rounded-r-md');
+                if (span.classList.contains('cursor-pointer')) {
+                    span.classList.add('rounded');
+                }
+            });
         }
 
         function pausePgaText() {
