@@ -142,6 +142,12 @@
                 </p>
             </div>
             <div class="flex items-center gap-3">
+                <a href="index.html" class="hidden sm:flex px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50 shadow-sm transition whitespace-nowrap items-center gap-2 active:scale-95">
+                    <i class="fa-solid fa-house"></i> <span>Trang chủ</span>
+                </a>
+                <a href="index.html" class="flex sm:hidden w-9 h-9 bg-white border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 shadow-sm transition justify-center items-center active:scale-95" title="Trang chủ">
+                    <i class="fa-solid fa-house"></i>
+                </a>
                 <select id="aiModelSelect" onchange="saveModelPref()" class="border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-500 bg-white shadow-sm font-semibold text-slate-700 cursor-pointer">
                     <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash Lite</option>
                     <option value="openai/gpt-oss-120b">GPT-OSS 120B (Groq)</option>
@@ -190,7 +196,7 @@
                         <i class="fa-solid fa-wand-magic-sparkles"></i> <span id="aiDictBtnText">Dịch toàn bộ bằng AI</span>
                     </button>
                     <button onclick="toggleDictMode()" id="toggleDictBtn" class="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition-all flex items-center gap-2 border border-indigo-100 active:scale-95">
-                        <i class="fa-solid fa-book-open"></i> <span id="toggleDictText">Bật chế độ Tra từ</span>
+                        <i class="fa-solid fa-book-open"></i> <span id="toggleDictText">Bật chế độ Đọc</span>
                     </button>
                 </div>
             </div>
@@ -204,8 +210,8 @@
                 <i class="fa-solid fa-wand-magic-sparkles"></i> <span id="scanBtnText">Phân Tích Dữ Liệu</span>
                 <div id="scanSpinner" class="spinner hidden"></div>
             </button>
-            <button onclick="readPgaText()" id="readPgaBtn" class="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-6 py-3 rounded-xl font-bold shadow-sm transition-all flex items-center gap-2 border border-indigo-100 active:scale-95">
-                <i class="fa-solid fa-volume-high"></i> <span>Đọc đoạn bôi đen / Toàn bộ</span>
+            <button onclick="readPgaText()" id="readPgaBtn" class="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-6 py-3 rounded-xl font-bold shadow-sm transition-all hidden items-center gap-2 border border-indigo-100 active:scale-95">
+                <i class="fa-solid fa-volume-high"></i> <span>Đọc</span>
             </button>
             <button onclick="pausePgaText()" id="pausePgaBtn" class="bg-amber-50 text-amber-600 hover:bg-amber-100 px-6 py-3 rounded-xl font-bold shadow-sm transition-all flex items-center gap-2 border border-amber-100 active:scale-95 hidden">
                 <i class="fa-solid fa-pause"></i> <span>Tạm dừng</span>
@@ -1122,9 +1128,14 @@ Nếu một nhóm không có từ nào, hãy trả về mảng rỗng [].`;
                 isDictMode = false;
                 textarea.classList.remove('hidden');
                 dictContent.classList.add('hidden');
-                btnText.innerText = 'Bật chế độ Tra từ';
+                btnText.innerText = 'Bật chế độ Đọc';
                 document.getElementById('aiDictBtn').classList.add('hidden');
                 document.getElementById('aiDictBtn').classList.remove('flex');
+                
+                // Tắt luôn việc đọc
+                if (typeof stopPgaText === 'function') stopPgaText();
+                document.getElementById('readPgaBtn').classList.add('hidden');
+                document.getElementById('readPgaBtn').classList.remove('flex');
             } else {
                 // Bật
                 const rawText = textarea.value.trim();
@@ -1133,9 +1144,12 @@ Nếu một nhóm không có từ nào, hãy trả về mảng rỗng [].`;
                 isDictMode = true;
                 textarea.classList.add('hidden');
                 dictContent.classList.remove('hidden');
-                btnText.innerText = 'Tắt chế độ Tra từ';
+                btnText.innerText = 'Tắt chế độ Đọc';
                 document.getElementById('aiDictBtn').classList.remove('hidden');
                 document.getElementById('aiDictBtn').classList.add('flex');
+                
+                document.getElementById('readPgaBtn').classList.remove('hidden');
+                document.getElementById('readPgaBtn').classList.add('flex');
                 
                 renderDictContent(rawText);
             }

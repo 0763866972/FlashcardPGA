@@ -74,7 +74,6 @@
             <button onclick="toggleStarFilter()" id="starFilterBtn" class="hidden px-4 py-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200 shadow-sm transition items-center">
                 <i class="fa-regular fa-star mr-1.5" id="starFilterIcon"></i> <span id="starFilterText">Học tất cả</span>
             </button>
-            <a href="speakpga.html" class="px-4 py-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 shadow-sm transition whitespace-nowrap"><i class="fa-solid fa-microphone-lines mr-1"></i> Luyện Nói</a>
             <a href="index.html" class="px-4 py-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 shadow-sm transition whitespace-nowrap"><i class="fa-solid fa-house mr-1"></i> Trang chủ</a>
         </div>
     </div>
@@ -1047,12 +1046,10 @@
             const btn = document.getElementById('autoReadBtn');
             const icon = document.getElementById('autoReadIcon');
             if (isAutoReadWord) {
-                btn.classList.remove('bg-white', 'text-slate-600', 'border-slate-200');
-                btn.classList.add('bg-brand-500', 'text-white', 'border-brand-500');
+                btn.className = "flex-1 md:flex-none flex items-center justify-center px-4 py-2.5 bg-brand-500 text-white font-bold rounded-lg border border-brand-500 hover:bg-brand-700 transition shadow-sm active:scale-95 min-w-[140px]";
                 icon.classList.add('animate-pulse');
             } else {
-                btn.classList.remove('bg-brand-500', 'text-white', 'border-brand-500');
-                btn.classList.add('bg-white', 'text-slate-600', 'border-slate-200');
+                btn.className = "flex-1 md:flex-none flex items-center justify-center px-4 py-2.5 bg-white text-slate-600 font-bold rounded-lg border border-slate-200 hover:bg-slate-50 transition shadow-sm active:scale-95 min-w-[140px]";
                 icon.classList.remove('animate-pulse');
             }
         }
@@ -1088,15 +1085,13 @@
             const icon = document.getElementById('autoPlayIcon');
             
             if (isAutoPlaying) {
-                btn.classList.remove('bg-white', 'text-slate-600', 'border-slate-200');
-                btn.classList.add('bg-rose-50', 'text-rose-600', 'border-rose-200', 'animate-pulse');
-                icon.className = "fa-solid fa-stop mr-2";
+                btn.className = "flex-1 md:flex-none flex items-center justify-center px-4 py-2.5 bg-rose-50 text-rose-600 font-bold rounded-lg border border-rose-200 hover:bg-rose-100 transition shadow-sm active:scale-95 min-w-[140px]";
+                icon.className = "fa-solid fa-stop mr-2 animate-pulse";
                 requestWakeLock();
                 if (window.silentBackgroundAudio) window.silentBackgroundAudio.play().catch(()=>{});
                 runAutoPlayCycle();
             } else {
-                btn.classList.remove('bg-rose-50', 'text-rose-600', 'border-rose-200', 'animate-pulse');
-                btn.classList.add('bg-white', 'text-slate-600', 'border-slate-200');
+                btn.className = "flex-1 md:flex-none flex items-center justify-center px-4 py-2.5 bg-white text-slate-600 font-bold rounded-lg border border-slate-200 hover:bg-slate-50 transition shadow-sm active:scale-95 min-w-[140px]";
                 icon.className = "fa-solid fa-headphones mr-2";
                 if (window.silentBackgroundAudio) window.silentBackgroundAudio.pause();
                 if (autoPlayInterval) clearTimeout(autoPlayInterval);
@@ -1532,12 +1527,10 @@
             const readBtn = document.getElementById('autoReadBtn');
             const readIcon = document.getElementById('autoReadIcon');
             if (isAutoReadWord) {
-                readBtn.classList.remove('bg-white', 'text-slate-600', 'border-slate-200');
-                readBtn.classList.add('bg-brand-500', 'text-white', 'border-brand-500');
+                readBtn.className = "flex-1 md:flex-none flex items-center justify-center px-4 py-2.5 bg-brand-500 text-white font-bold rounded-lg border border-brand-500 hover:bg-brand-700 transition shadow-sm active:scale-95 min-w-[140px]";
                 readIcon.classList.add('animate-pulse');
             } else {
-                readBtn.classList.remove('bg-brand-500', 'text-white', 'border-brand-500');
-                readBtn.classList.add('bg-white', 'text-slate-600', 'border-slate-200');
+                readBtn.className = "flex-1 md:flex-none flex items-center justify-center px-4 py-2.5 bg-white text-slate-600 font-bold rounded-lg border border-slate-200 hover:bg-slate-50 transition shadow-sm active:scale-95 min-w-[140px]";
                 readIcon.classList.remove('animate-pulse');
             }
             
