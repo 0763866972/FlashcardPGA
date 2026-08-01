@@ -157,6 +157,7 @@
                 <button onclick="toggleAutoPlay()" id="autoPlayBtn" class="flex-1 sm:flex-none flex items-center justify-center px-4 py-2.5 bg-white text-slate-600 font-bold rounded-lg border border-slate-200 hover:bg-slate-50 transition shadow-sm active:scale-95 min-w-[140px]">
                     <i class="fa-solid fa-headphones mr-2" id="autoPlayIcon"></i> <span class="whitespace-nowrap">Rảnh tai</span>
                 </button>
+                <input type="text" id="autoPlaySequenceInput" placeholder="Thứ tự (vd: 1-5, 8)" class="flex-1 sm:flex-none w-32 bg-white border border-slate-200 text-slate-700 hover:border-brand-400 focus:border-brand-500 hover:text-brand-600 px-4 py-2.5 rounded-lg transition-all text-sm font-semibold outline-none shadow-sm min-w-[140px] text-center" title="Nhập thứ tự các câu muốn đọc (ví dụ: 1-5, 8)">
             </div>
         </div>
 
@@ -231,6 +232,7 @@
         let synonymsData = [];
         let originalSynonymsData = [];
         let starredLines = JSON.parse(localStorage.getItem('tudongnghia_starred') || "[]");
+        let highlightedWords = JSON.parse(localStorage.getItem('tudongnghia_highlighted') || "[]");
         let isStarFilter = false;
         let currentIndex = 0;
         let isTypeMode = localStorage.getItem('tudongnghia_isTypeMode') === 'true';
@@ -297,7 +299,7 @@
                 let words = wordsRaw.map(w => {
                     let checkW = w.replace(/\([^)]*\)/g, '').trim().toLowerCase();
                     checkW = checkW.replace(/\s+/g, ' ');
-                    return { display: w, check: checkW, revealed: false };
+                    return { display: w, check: checkW, revealed: false, selectedForRead: highlightedWords.includes(checkW) };
                 });
                 
                 originalSynonymsData.push({
@@ -1095,7 +1097,54 @@
             localStorage.setItem('tudongnghia_autoPlayMode', autoPlayMode);
         }
 
+        function parseSequence(str, maxVal) {
+            str = str.replace(/\s+/g, '');
+            if (!str) return null;
+            const parts = str.split(',');
+            const seq = [];
+            for (const part of parts) {
+                if (!part) continue;
+                if (part.includes('-')) {
+                    const [startStr, endStr] = part.split('-');
+                    const start = parseInt(startStr);
+                    const end = parseInt(endStr);
+                    if (isNaN(start) || isNaN(end) || start < 1 || end < 1 || start > end || end > maxVal) {
+                        return false;
+                    }
+                    for (let i = start; i <= end; i++) {
+                        seq.push(i - 1);
+                    }
+                } else {
+                    const num = parseInt(part);
+                    if (isNaN(num) || num < 1 || num > maxVal) {
+                        return false;
+                    }
+                    seq.push(num - 1);
+                }
+            }
+            return seq.length > 0 ? seq : null;
+        }
+
         function toggleAutoPlay() {
+            if (!isAutoPlaying) {
+                const seqInput = document.getElementById('autoPlaySequenceInput');
+                if (seqInput) {
+                    const seqStr = seqInput.value;
+                    const parsed = parseSequence(seqStr, synonymsData.length);
+                    if (parsed === false) {
+                        alert(`Thứ tự nhập không hợp lệ! Vui lòng chỉ nhập các số từ 1 đến ${synonymsData.length} (Ví dụ: 1-5, 8)`);
+                        return;
+                    }
+                    if (parsed !== null) {
+                        window.globalAutoPlaySequence = parsed;
+                        window.globalAutoPlaySequenceIndex = 0;
+                        currentIndex = parsed[0];
+                    } else {
+                        window.globalAutoPlaySequence = null;
+                    }
+                }
+            }
+
             isAutoPlaying = !isAutoPlaying;
             const btn = document.getElementById('autoPlayBtn');
             const icon = document.getElementById('autoPlayIcon');
@@ -1125,6 +1174,10 @@
             current.words.forEach(w => w.revealed = true);
             renderCard();
             
+            // Lọc ra các từ màu vàng, nếu không có từ màu vàng nào thì lấy tất cả
+            const yellowWords = current.words.filter(w => w.selectedForRead);
+            const wordsToRead = yellowWords.length > 0 ? yellowWords : current.words;
+            
             // Thay dấu • thành dấu phẩy để đọc ngắt quãng tự nhiên hơn
             const viText = current.meaning.replace(/•/g, ',');
 
@@ -1133,14 +1186,14 @@
                 await playTTSAsync(viText, 'vi-VN');
                 await sleep(800); // Nghỉ 0.8s trước khi đọc tiếng Anh
                 
-                for (const w of current.words) {
+                for (const w of wordsToRead) {
                     if (!isAutoPlaying) return;
                     await playTTSAsync(w.check, 'en-US');
                     await sleep(600); // Nghỉ giữa các từ tiếng Anh
                 }
             } else {
                 // KIỂU 2: Đọc từng từ tiếng Anh rồi đến tiếng Việt của từ đó
-                for (const w of current.words) {
+                for (const w of wordsToRead) {
                     if (!isAutoPlaying) return;
                     await playTTSAsync(w.check, 'en-US');
                     await sleep(400); // Nghỉ một chút trước khi đọc nghĩa
@@ -1156,10 +1209,18 @@
             await sleep(1000); 
             
             if (isAutoPlaying) {
-                if (currentIndex < synonymsData.length - 1) {
-                    currentIndex++;
+                if (window.globalAutoPlaySequence) {
+                    window.globalAutoPlaySequenceIndex++;
+                    if (window.globalAutoPlaySequenceIndex >= window.globalAutoPlaySequence.length) {
+                        window.globalAutoPlaySequenceIndex = 0;
+                    }
+                    currentIndex = window.globalAutoPlaySequence[window.globalAutoPlaySequenceIndex];
                 } else {
-                    currentIndex = 0;
+                    if (currentIndex < synonymsData.length - 1) {
+                        currentIndex++;
+                    } else {
+                        currentIndex = 0;
+                    }
                 }
                 applyGlobalRevealState(); // Áp dụng lại trạng thái
                 renderCard();
@@ -1230,6 +1291,18 @@
             return "";
         }
 
+        function toggleWordHighlight(wordObj) {
+            wordObj.selectedForRead = !wordObj.selectedForRead;
+            if (wordObj.selectedForRead) {
+                if (!highlightedWords.includes(wordObj.check)) {
+                    highlightedWords.push(wordObj.check);
+                }
+            } else {
+                highlightedWords = highlightedWords.filter(w => w !== wordObj.check);
+            }
+            localStorage.setItem('tudongnghia_highlighted', JSON.stringify(highlightedWords));
+        }
+
         function renderCard() {
             hideDeleteCardConfirm();
             if (synonymsData.length === 0) return;
@@ -1269,17 +1342,29 @@
                     if (wordObj.revealed) {
                         const box = document.createElement('div');
                         if (wordObj.isFailed) {
-                            box.className = "h-[54px] px-8 bg-rose-50 text-rose-600 font-bold text-xl rounded-full flex items-center justify-center border-2 border-rose-400 shadow-[0_4px_12px_rgba(244,63,94,0.15)] min-w-[120px] transition-all cursor-pointer hover:bg-rose-100 tracking-wide";
+                            if (wordObj.selectedForRead) {
+                                box.className = "h-[54px] px-8 bg-amber-50 text-amber-700 font-bold text-xl rounded-full flex items-center justify-center border-2 border-amber-400 shadow-[0_4px_12px_rgba(251,191,36,0.15)] min-w-[120px] transition-all cursor-pointer hover:bg-amber-100 tracking-wide";
+                            } else {
+                                box.className = "h-[54px] px-8 bg-rose-50 text-rose-600 font-bold text-xl rounded-full flex items-center justify-center border-2 border-rose-400 shadow-[0_4px_12px_rgba(244,63,94,0.15)] min-w-[120px] transition-all cursor-pointer hover:bg-rose-100 tracking-wide";
+                            }
                             if (wordObj.lastTyped !== undefined) {
                                 box.innerHTML = generateDiffHtml(wordObj.lastTyped, wordObj.display);
                             } else {
                                 box.innerText = wordObj.display;
                             }
                         } else {
-                            box.className = "h-[54px] px-8 bg-emerald-50 text-emerald-600 font-bold text-xl rounded-full flex items-center justify-center border-2 border-emerald-400 shadow-[0_4px_12px_rgba(52,211,153,0.15)] min-w-[120px] transition-all cursor-pointer hover:bg-emerald-100";
+                            if (wordObj.selectedForRead) {
+                                box.className = "h-[54px] px-8 bg-amber-50 text-amber-700 font-bold text-xl rounded-full flex items-center justify-center border-2 border-amber-400 shadow-[0_4px_12px_rgba(251,191,36,0.15)] min-w-[120px] transition-all cursor-pointer hover:bg-amber-100";
+                            } else {
+                                box.className = "h-[54px] px-8 bg-emerald-50 text-emerald-600 font-bold text-xl rounded-full flex items-center justify-center border-2 border-emerald-400 shadow-[0_4px_12px_rgba(52,211,153,0.15)] min-w-[120px] transition-all cursor-pointer hover:bg-emerald-100";
+                            }
                             box.innerText = wordObj.display;
                         }
-                        box.title = "Chuột phải để nghe phát âm";
+                        box.title = "Nhấp đúp chuột để đánh dấu từ / Chuột phải để nghe phát âm";
+                        box.ondblclick = () => {
+                            toggleWordHighlight(wordObj);
+                            renderCard();
+                        };
                         box.oncontextmenu = (e) => {
                             e.preventDefault();
                             playTTS(wordObj.check);
@@ -1433,12 +1518,28 @@
                 } else {
                     if (wordObj.revealed) {
                         const box = document.createElement('div');
-                        box.className = "h-[54px] px-8 bg-brand-50 text-brand-600 font-bold text-xl rounded-full flex items-center justify-center border-2 border-brand-400 shadow-[0_4px_12px_rgba(99,102,241,0.15)] min-w-[120px] cursor-pointer hover:bg-brand-100 transition-all";
+                        if (wordObj.selectedForRead) {
+                            box.className = "h-[54px] px-8 bg-amber-50 text-amber-700 font-bold text-xl rounded-full flex items-center justify-center border-2 border-amber-400 shadow-[0_4px_12px_rgba(251,191,36,0.15)] min-w-[120px] cursor-pointer hover:bg-amber-100 transition-all";
+                        } else {
+                            box.className = "h-[54px] px-8 bg-brand-50 text-brand-600 font-bold text-xl rounded-full flex items-center justify-center border-2 border-brand-400 shadow-[0_4px_12px_rgba(99,102,241,0.15)] min-w-[120px] cursor-pointer hover:bg-brand-100 transition-all";
+                        }
                         box.innerText = wordObj.display;
-                        box.title = "Chuột trái để ẩn / Chuột phải để nghe";
+                        box.title = "Chuột trái để ẩn / Nhấp đúp để đánh dấu từ / Chuột phải để nghe";
                         box.onclick = () => {
-                            wordObj.revealed = false;
-                            renderCard();
+                            if (window.__wordClickTimer && window.__lastClickedWordIdx === idx) {
+                                clearTimeout(window.__wordClickTimer);
+                                window.__wordClickTimer = null;
+                                toggleWordHighlight(wordObj);
+                                renderCard();
+                            } else {
+                                if (window.__wordClickTimer) clearTimeout(window.__wordClickTimer);
+                                window.__lastClickedWordIdx = idx;
+                                window.__wordClickTimer = setTimeout(() => {
+                                    window.__wordClickTimer = null;
+                                    wordObj.revealed = false;
+                                    renderCard();
+                                }, 250);
+                            }
                         };
                         box.oncontextmenu = (e) => {
                             e.preventDefault();
@@ -1449,12 +1550,27 @@
                         const hiddenBox = document.createElement('div');
                         hiddenBox.className = "h-[54px] px-8 bg-slate-50 border-2 border-slate-200 rounded-full text-slate-400 font-bold text-xl select-none cursor-pointer hover:bg-slate-100 hover:text-slate-600 transition-all flex items-center justify-center min-w-[120px] tracking-widest";
                         hiddenBox.innerText = getHintText(wordObj.check, idx);
+                        hiddenBox.title = "Chuột trái để hiện / Nhấp đúp để đánh dấu từ";
                         
                         hiddenBox.onclick = () => {
-                            wordObj.revealed = true;
-                            wordObj.isFailed = false;
-                            if (isAutoReadWord) playTTS(wordObj.check);
-                            renderCard();
+                            if (window.__wordClickTimer && window.__lastClickedWordIdx === idx) {
+                                clearTimeout(window.__wordClickTimer);
+                                window.__wordClickTimer = null;
+                                wordObj.selectedForRead = !wordObj.selectedForRead;
+                                wordObj.revealed = true;
+                                wordObj.isFailed = false;
+                                renderCard();
+                            } else {
+                                if (window.__wordClickTimer) clearTimeout(window.__wordClickTimer);
+                                window.__lastClickedWordIdx = idx;
+                                window.__wordClickTimer = setTimeout(() => {
+                                    window.__wordClickTimer = null;
+                                    wordObj.revealed = true;
+                                    wordObj.isFailed = false;
+                                    if (isAutoReadWord) playTTS(wordObj.check);
+                                    renderCard();
+                                }, 250);
+                            }
                         };
                         container.appendChild(hiddenBox);
                     }
