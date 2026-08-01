@@ -988,9 +988,22 @@
                     
                     if (btnElement) {
                         btnElement.innerHTML = '<i class="fa-solid fa-check"></i> Đã sửa';
-                        btnElement.classList.replace('bg-amber-500', 'bg-emerald-500');
-                        btnElement.classList.replace('hover:bg-amber-600', 'hover:bg-emerald-600');
-                        btnElement.classList.add('pointer-events-none');
+                        if (btnElement.tagName === 'BUTTON') {
+                            btnElement.classList.replace('bg-amber-500', 'bg-emerald-500');
+                            btnElement.classList.replace('hover:bg-amber-600', 'hover:bg-emerald-600');
+                            btnElement.classList.add('pointer-events-none');
+                        } else {
+                            btnElement.className = 'text-emerald-500 bg-emerald-500/10 border border-emerald-500/30 px-1.5 py-0.5 rounded text-[10px] inline-flex items-center gap-1 transition-all shadow-sm pointer-events-none mt-1.5';
+                            setTimeout(() => {
+                                if (btnElement && btnElement.parentNode) {
+                                    if (btnElement.parentNode.tagName === 'DIV' && btnElement.parentNode.classList.contains('mt-1.5')) {
+                                        btnElement.parentNode.remove();
+                                    } else {
+                                        btnElement.remove();
+                                    }
+                                }
+                            }, 1500);
+                        }
                     }
 
                     if (!isEditMode) {
