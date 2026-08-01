@@ -131,24 +131,33 @@
     <!-- Màn hình Học -->
     <div id="flashcardScreen" class="w-full max-w-3xl hidden flex flex-col gap-6">
         
-        <!-- Controls -->
-        <div class="bg-white p-3 sm:p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-center gap-3">
-            <button onclick="toggleMode()" id="modeBtn" class="flex-1 md:flex-none flex items-center justify-center px-4 py-2.5 bg-indigo-50 text-indigo-700 font-bold rounded-lg border border-indigo-200 hover:bg-indigo-100 transition min-w-[140px]">
-                <i class="fa-solid fa-eye-slash mr-2" id="modeIcon"></i> <span id="modeText" class="whitespace-nowrap">Lật thẻ (Click)</span>
-            </button>
-            <select id="hintLevel" onchange="changeHint()" class="flex-1 md:flex-none px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 outline-none cursor-pointer hover:border-slate-300 transition min-w-[140px]">
-                <option value="0">Không gợi ý</option>
-                <option value="1">Gợi ý 1 chữ đầu</option>
-                <option value="2">Gợi ý 2 chữ đầu</option>
-                <option value="3">Từ đầu tiên + 2 chữ</option>
-            </select>
+        <div class="w-full max-w-5xl mx-auto flex flex-col xl:flex-row justify-start items-center gap-4 xl:gap-8">
+            <!-- Nhóm Học tập -->
+            <div class="flex w-full xl:w-auto flex-wrap sm:flex-nowrap items-center justify-start gap-3">
+                <button onclick="toggleMode()" id="modeBtn" class="flex-1 sm:flex-none flex items-center justify-center px-4 py-2.5 bg-indigo-50 text-indigo-700 font-bold rounded-lg border border-indigo-200 hover:bg-indigo-100 transition shadow-sm active:scale-95 min-w-[140px]">
+                    <i class="fa-solid fa-hand-pointer mr-2" id="modeIcon"></i> <span id="modeText" class="whitespace-nowrap">Lật thẻ (Click)</span>
+                </button>
+                <select id="hintLevel" onchange="changeHintLevel()" class="flex-1 sm:flex-none bg-white border border-slate-200 text-slate-700 hover:border-brand-400 focus:border-brand-500 hover:text-brand-600 px-4 py-2.5 rounded-lg transition-all text-sm font-semibold outline-none shadow-sm cursor-pointer min-w-[140px] text-center">
+                    <option value="0">Không gợi ý</option>
+                    <option value="1">Gợi ý 1 chữ đầu</option>
+                    <option value="2">Gợi ý 2 chữ đầu</option>
+                    <option value="3">Từ đầu tiên + 2 chữ</option>
+                </select>
+            </div>
 
-            <button onclick="toggleAutoRead()" id="autoReadBtn" class="flex-1 md:flex-none flex items-center justify-center px-4 py-2.5 bg-white text-slate-600 font-bold rounded-lg border border-slate-200 hover:bg-slate-50 transition shadow-sm active:scale-95 min-w-[140px]">
-                <i class="fa-solid fa-volume-high mr-2" id="autoReadIcon"></i> <span class="whitespace-nowrap">Tự động đọc</span>
-            </button>
-            <button onclick="toggleAutoPlay()" id="autoPlayBtn" class="flex-1 md:flex-none flex items-center justify-center px-4 py-2.5 bg-white text-slate-600 font-bold rounded-lg border border-slate-200 hover:bg-slate-50 transition shadow-sm active:scale-95 min-w-[140px]">
-                <i class="fa-solid fa-headphones mr-2" id="autoPlayIcon"></i> <span class="whitespace-nowrap">Rảnh tai</span>
-            </button>
+            <!-- Nhóm Âm thanh -->
+            <div class="flex w-full xl:w-auto flex-wrap sm:flex-nowrap items-center justify-start gap-3">
+                <button onclick="toggleAutoRead()" id="autoReadBtn" class="flex-1 sm:flex-none flex items-center justify-center px-4 py-2.5 bg-white text-slate-600 font-bold rounded-lg border border-slate-200 hover:bg-slate-50 transition shadow-sm active:scale-95 min-w-[140px]">
+                    <i class="fa-solid fa-volume-high mr-2" id="autoReadIcon"></i> <span class="whitespace-nowrap">Tự động đọc</span>
+                </button>
+                <select id="autoPlayModeSelect" onchange="changeAutoPlayMode()" class="flex-1 sm:flex-none bg-white border border-slate-200 text-slate-700 hover:border-brand-400 focus:border-brand-500 hover:text-brand-600 px-4 py-2.5 rounded-lg transition-all text-sm font-semibold outline-none shadow-sm cursor-pointer min-w-[140px] text-center">
+                    <option value="1">Đọc: Việt ➔ Anh</option>
+                    <option value="2">Đọc: Anh ➔ Việt</option>
+                </select>
+                <button onclick="toggleAutoPlay()" id="autoPlayBtn" class="flex-1 sm:flex-none flex items-center justify-center px-4 py-2.5 bg-white text-slate-600 font-bold rounded-lg border border-slate-200 hover:bg-slate-50 transition shadow-sm active:scale-95 min-w-[140px]">
+                    <i class="fa-solid fa-headphones mr-2" id="autoPlayIcon"></i> <span class="whitespace-nowrap">Rảnh tai</span>
+                </button>
+            </div>
         </div>
 
         <!-- Study Board -->
@@ -227,8 +236,10 @@
         let isTypeMode = localStorage.getItem('tudongnghia_isTypeMode') === 'true';
         let hintLevel = parseInt(localStorage.getItem('tudongnghia_hintLevel') || '0'); // 0: None, 1: 1 char, 2: 2 chars, 3: First word full + 2 chars
         let isGlobalRevealed = false;
-        let isAutoPlaying = false;
+        let isFlashcardFirstLoad = true;
         let isAutoReadWord = localStorage.getItem('tudongnghia_isAutoReadWord') === 'true';
+        let autoPlayMode = parseInt(localStorage.getItem('tudongnghia_autoPlayMode') || '1', 10);
+        let isAutoPlaying = false;
         let autoPlayInterval = null;
         
         // Cố gắng tải danh sách giọng nói trước (Chrome bug fix)
@@ -1079,6 +1090,11 @@
             }
         });
 
+        function changeAutoPlayMode() {
+            autoPlayMode = parseInt(document.getElementById('autoPlayModeSelect').value, 10);
+            localStorage.setItem('tudongnghia_autoPlayMode', autoPlayMode);
+        }
+
         function toggleAutoPlay() {
             isAutoPlaying = !isAutoPlaying;
             const btn = document.getElementById('autoPlayBtn');
@@ -1109,18 +1125,30 @@
             current.words.forEach(w => w.revealed = true);
             renderCard();
             
-            // 1. Đọc tiếng Việt trước ("giọng chị Google")
-            if (!isAutoPlaying) return;
             // Thay dấu • thành dấu phẩy để đọc ngắt quãng tự nhiên hơn
             const viText = current.meaning.replace(/•/g, ',');
-            await playTTSAsync(viText, 'vi-VN');
-            await sleep(800); // Nghỉ 0.8s trước khi đọc tiếng Anh
-            
-            // 2. Đọc lần lượt từng từ tiếng Anh
-            for (const w of current.words) {
-                if (!isAutoPlaying) return;
-                await playTTSAsync(w.check, 'en-US');
-                await sleep(600); // Nghỉ giữa các từ tiếng Anh
+
+            if (autoPlayMode === 1) {
+                // KIỂU 1: Đọc tiếng Việt trước, sau đó đọc toàn bộ tiếng Anh
+                await playTTSAsync(viText, 'vi-VN');
+                await sleep(800); // Nghỉ 0.8s trước khi đọc tiếng Anh
+                
+                for (const w of current.words) {
+                    if (!isAutoPlaying) return;
+                    await playTTSAsync(w.check, 'en-US');
+                    await sleep(600); // Nghỉ giữa các từ tiếng Anh
+                }
+            } else {
+                // KIỂU 2: Đọc từng từ tiếng Anh rồi đến tiếng Việt của từ đó
+                for (const w of current.words) {
+                    if (!isAutoPlaying) return;
+                    await playTTSAsync(w.check, 'en-US');
+                    await sleep(400); // Nghỉ một chút trước khi đọc nghĩa
+                    
+                    if (!isAutoPlaying) return;
+                    await playTTSAsync(viText, 'vi-VN');
+                    await sleep(600); // Nghỉ trước khi qua từ tiếng Anh tiếp theo
+                }
             }
             
             if (!isAutoPlaying) return;
@@ -1523,6 +1551,7 @@
             }
             
             document.getElementById('hintLevel').value = hintLevel;
+            document.getElementById('autoPlayModeSelect').value = autoPlayMode;
             
             const readBtn = document.getElementById('autoReadBtn');
             const readIcon = document.getElementById('autoReadIcon');
