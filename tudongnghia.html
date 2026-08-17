@@ -242,6 +242,7 @@
         let isAutoReadWord = localStorage.getItem('tudongnghia_isAutoReadWord') === 'true';
         let autoPlayMode = parseInt(localStorage.getItem('tudongnghia_autoPlayMode') || '1', 10);
         let isAutoPlaying = false;
+        let isAutoPlayLoopingCurrent = false;
         let autoPlayInterval = null;
         
         // Cố gắng tải danh sách giọng nói trước (Chrome bug fix)
@@ -1159,18 +1160,22 @@
             }
 
             isAutoPlaying = !isAutoPlaying;
+            isAutoPlayLoopingCurrent = false;
             const btn = document.getElementById('autoPlayBtn');
             const icon = document.getElementById('autoPlayIcon');
+            const textSpan = btn.querySelector('span');
             
             if (isAutoPlaying) {
                 btn.className = "flex-1 md:flex-none flex items-center justify-center px-4 py-2.5 bg-rose-50 text-rose-600 font-bold rounded-lg border border-rose-200 hover:bg-rose-100 transition shadow-sm active:scale-95 min-w-[140px]";
                 icon.className = "fa-solid fa-stop mr-2 animate-pulse";
+                if (textSpan) textSpan.innerText = "Rảnh tai";
                 requestWakeLock();
                 if (window.silentBackgroundAudio) window.silentBackgroundAudio.play().catch(()=>{});
                 runAutoPlayCycle();
             } else {
                 btn.className = "flex-1 md:flex-none flex items-center justify-center px-4 py-2.5 bg-white text-slate-600 font-bold rounded-lg border border-slate-200 hover:bg-slate-50 transition shadow-sm active:scale-95 min-w-[140px]";
                 icon.className = "fa-solid fa-headphones mr-2";
+                if (textSpan) textSpan.innerText = "Rảnh tai";
                 if (window.silentBackgroundAudio) window.silentBackgroundAudio.pause();
                 if (autoPlayInterval) clearTimeout(autoPlayInterval);
                 window.speechSynthesis.cancel();
@@ -1222,17 +1227,19 @@
             await sleep(1000); 
             
             if (isAutoPlaying) {
-                if (window.globalAutoPlaySequence) {
-                    window.globalAutoPlaySequenceIndex++;
-                    if (window.globalAutoPlaySequenceIndex >= window.globalAutoPlaySequence.length) {
-                        window.globalAutoPlaySequenceIndex = 0;
-                    }
-                    currentIndex = window.globalAutoPlaySequence[window.globalAutoPlaySequenceIndex];
-                } else {
-                    if (currentIndex < synonymsData.length - 1) {
-                        currentIndex++;
+                if (!isAutoPlayLoopingCurrent) {
+                    if (window.globalAutoPlaySequence) {
+                        window.globalAutoPlaySequenceIndex++;
+                        if (window.globalAutoPlaySequenceIndex >= window.globalAutoPlaySequence.length) {
+                            window.globalAutoPlaySequenceIndex = 0;
+                        }
+                        currentIndex = window.globalAutoPlaySequence[window.globalAutoPlaySequenceIndex];
                     } else {
-                        currentIndex = 0;
+                        if (currentIndex < synonymsData.length - 1) {
+                            currentIndex++;
+                        } else {
+                            currentIndex = 0;
+                        }
                     }
                 }
                 applyGlobalRevealState(); // Áp dụng lại trạng thái
@@ -1606,6 +1613,26 @@
             const setupScreen = document.getElementById('setupScreen');
             if (!setupScreen.classList.contains('hidden')) return;
             
+            if (e.code === 'Space' || e.key === ' ') {
+                if (isAutoPlaying && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+                    e.preventDefault();
+                    isAutoPlayLoopingCurrent = !isAutoPlayLoopingCurrent;
+                    
+                    const btn = document.getElementById('autoPlayBtn');
+                    const icon = document.getElementById('autoPlayIcon');
+                    const textSpan = btn.querySelector('span');
+                    
+                    if (isAutoPlayLoopingCurrent) {
+                        icon.className = "fa-solid fa-repeat mr-2 animate-spin-slow";
+                        if (textSpan) textSpan.innerText = "Đang lặp";
+                    } else {
+                        icon.className = "fa-solid fa-stop mr-2 animate-pulse";
+                        if (textSpan) textSpan.innerText = "Rảnh tai";
+                    }
+                    return;
+                }
+            }
+
             if (e.key === 'Enter') {
                 if (synonymsData.length > 0 && synonymsData[currentIndex]) {
                     const current = synonymsData[currentIndex];
