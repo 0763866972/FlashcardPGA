@@ -1034,6 +1034,7 @@ function revealExampleVi(event) {
 }
 
 let isFcSlideshow = false;
+let isFcSlideshowLoopingCurrent = false;
 let autoPlaySequenceTimeout = null;
 let currentAutoPlayId = 0;
 window.currentViAudio = null;
@@ -1196,13 +1197,16 @@ document.addEventListener('visibilitychange', () => {
 
 function toggleSlideshow() {
     isFcSlideshow = !isFcSlideshow;
+    isFcSlideshowLoopingCurrent = false;
     const btn = document.getElementById('fcSlideshowBtn');
     const icon = document.getElementById('fcSlideshowIcon');
     const speedControl = document.getElementById('fcSpeedControl');
+    const textSpan = btn.querySelector('span');
 
     if (isFcSlideshow) {
         btn.className = 'bg-amber-100 text-amber-600 hover:bg-amber-200 px-4 py-2 rounded-xl transition-all text-sm font-bold flex items-center gap-2';
         icon.className = 'fa-solid fa-pause';
+        if (textSpan) textSpan.innerText = "Học rảnh tay";
         if (speedControl) speedControl.classList.remove('hidden');
         if (autoPlaySequenceTimeout) clearTimeout(autoPlaySequenceTimeout);
         requestWakeLock();
@@ -1210,6 +1214,7 @@ function toggleSlideshow() {
     } else {
         btn.className = 'bg-slate-100 text-slate-500 hover:bg-amber-50 hover:text-amber-500 px-4 py-2 rounded-xl transition-all text-sm font-bold flex items-center gap-2';
         icon.className = 'fa-solid fa-play';
+        if (textSpan) textSpan.innerText = "Học rảnh tay";
         if (speedControl) speedControl.classList.add('hidden');
         if (autoPlaySequenceTimeout) clearTimeout(autoPlaySequenceTimeout);
         stopAllAudio(); // Dừng phát âm
@@ -2714,10 +2719,14 @@ function jumpToFlashcardInline(val) {
 
 function nextFlashcard() {
     stopAllAudio();
-    if (flashcardIndex < currentFlashcards.length - 1) {
-        flashcardIndex++;
+    if (isFcSlideshow && isFcSlideshowLoopingCurrent) {
+        // Do nothing with flashcardIndex to loop current
     } else {
-        flashcardIndex = 0; // Vòng lại từ đầu
+        if (flashcardIndex < currentFlashcards.length - 1) {
+            flashcardIndex++;
+        } else {
+            flashcardIndex = 0; // Vòng lại từ đầu
+        }
     }
     if (isFlipped) {
         flipFlashcard();
@@ -2766,10 +2775,23 @@ document.addEventListener('keydown', function (event) {
 
         if (event.code === 'Space') {
             event.preventDefault();
-            if (isFlipped) {
-                speakMeaning(null);
+            if (isFcSlideshow) {
+                isFcSlideshowLoopingCurrent = !isFcSlideshowLoopingCurrent;
+                const icon = document.getElementById('fcSlideshowIcon');
+                const textSpan = document.getElementById('fcSlideshowBtn').querySelector('span');
+                if (isFcSlideshowLoopingCurrent) {
+                    icon.className = "fa-solid fa-repeat animate-spin-slow";
+                    if (textSpan) textSpan.innerText = "Đang lặp";
+                } else {
+                    icon.className = "fa-solid fa-pause";
+                    if (textSpan) textSpan.innerText = "Học rảnh tay";
+                }
             } else {
-                speakWord(null);
+                if (isFlipped) {
+                    speakMeaning(null);
+                } else {
+                    speakWord(null);
+                }
             }
         } else if (event.key === 'Shift') {
             if (!event.repeat) {
