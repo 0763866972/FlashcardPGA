@@ -1035,6 +1035,8 @@ function revealExampleVi(event) {
 
 let isFcSlideshow = false;
 let isFcSlideshowLoopingCurrent = false;
+let fcGlobalAutoPlaySequence = null;
+let fcGlobalAutoPlaySequenceIndex = 0;
 let autoPlaySequenceTimeout = null;
 let currentAutoPlayId = 0;
 window.currentViAudio = null;
@@ -1204,13 +1206,58 @@ function toggleSlideshow() {
     const textSpan = btn.querySelector('span');
 
     if (isFcSlideshow) {
+        const seqInput = document.getElementById('fcAutoPlaySequenceInput');
+        if (seqInput && seqInput.value.trim() !== '') {
+            const rawVal = seqInput.value.trim();
+            const parts = rawVal.split(',').map(p => p.trim()).filter(p => p !== '');
+            let parsed = [];
+            let maxVal = currentFlashcards.length;
+            for (let part of parts) {
+                if (part.includes('-')) {
+                    const [start, end] = part.split('-').map(p => parseInt(p));
+                    if (!isNaN(start) && !isNaN(end) && start <= end && start >= 1 && end <= maxVal) {
+                        for (let i = start; i <= end; i++) parsed.push(i - 1);
+                    } else {
+                        alert(`Dãy số "${part}" không hợp lệ. Vui lòng nhập từ 1 đến ${maxVal}.`);
+                        isFcSlideshow = false;
+                        return;
+                    }
+                } else {
+                    const num = parseInt(part);
+                    if (!isNaN(num) && num >= 1 && num <= maxVal) {
+                        parsed.push(num - 1);
+                    } else {
+                        alert(`Số "${part}" không hợp lệ. Vui lòng nhập từ 1 đến ${maxVal}.`);
+                        isFcSlideshow = false;
+                        return;
+                    }
+                }
+            }
+            if (parsed.length > 0) {
+                fcGlobalAutoPlaySequence = parsed;
+                fcGlobalAutoPlaySequenceIndex = 0;
+                flashcardIndex = parsed[0];
+            } else {
+                fcGlobalAutoPlaySequence = null;
+            }
+        } else {
+            fcGlobalAutoPlaySequence = null;
+        }
+
         btn.className = 'bg-amber-100 text-amber-600 hover:bg-amber-200 px-4 py-2 rounded-xl transition-all text-sm font-bold flex items-center gap-2';
         icon.className = 'fa-solid fa-pause';
         if (textSpan) textSpan.innerText = "Học rảnh tay";
         if (speedControl) speedControl.classList.remove('hidden');
         if (autoPlaySequenceTimeout) clearTimeout(autoPlaySequenceTimeout);
+        
+        const flashcardEl = document.getElementById('flashcard');
+        flashcardEl.classList.remove('rotate-y-180');
+        isFlipped = false;
+        document.getElementById('fcIndexInput').value = flashcardIndex + 1;
+        renderFlashcard();
+        
         requestWakeLock();
-        runAutoPlaySequence();
+        // Không gọi trực tiếp runAutoPlaySequence() vì renderFlashcard đã gọi nó
     } else {
         btn.className = 'bg-slate-100 text-slate-500 hover:bg-amber-50 hover:text-amber-500 px-4 py-2 rounded-xl transition-all text-sm font-bold flex items-center gap-2';
         icon.className = 'fa-solid fa-play';
@@ -2722,10 +2769,18 @@ function nextFlashcard() {
     if (isFcSlideshow && isFcSlideshowLoopingCurrent) {
         // Do nothing with flashcardIndex to loop current
     } else {
-        if (flashcardIndex < currentFlashcards.length - 1) {
-            flashcardIndex++;
+        if (isFcSlideshow && fcGlobalAutoPlaySequence) {
+            fcGlobalAutoPlaySequenceIndex++;
+            if (fcGlobalAutoPlaySequenceIndex >= fcGlobalAutoPlaySequence.length) {
+                fcGlobalAutoPlaySequenceIndex = 0;
+            }
+            flashcardIndex = fcGlobalAutoPlaySequence[fcGlobalAutoPlaySequenceIndex];
         } else {
-            flashcardIndex = 0; // Vòng lại từ đầu
+            if (flashcardIndex < currentFlashcards.length - 1) {
+                flashcardIndex++;
+            } else {
+                flashcardIndex = 0; // Vòng lại từ đầu
+            }
         }
     }
     if (isFlipped) {
