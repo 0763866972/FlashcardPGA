@@ -2355,12 +2355,7 @@ function checkAndShowGoogleTranslation(card, el) {
 function formatPhonetic(phonetic) {
     if (!phonetic) return '';
     // Vowels (Nguyên âm) - including length mark ː and nasal ̃
-    // Consonants (Phụ âm) - including ɡ, ɹ, ɫ, tie bar \u0361
-    return phonetic.replace(/([iɪeɛæaɑɒɔoʊuʌəɜyøœɶɨʉɯɤː\u0303]+)|([pbtdkgɡfvθðszʃʒhmnŋlrjwçxɣʁʔɾɹɫ\u0361]+)/g, (match, v, c) => {
-        if (v) return `<span class="text-rose-400">${v}</span>`;
-        if (c) return `<span class="text-sky-400">${c}</span>`;
-        return match;
-    });
+    return phonetic.replace(/([iɪeɛæaɑɒɔoʊuʌəɜyøœɶɨʉɯɤː\u0303]+)/g, '<span class="text-yellow-400">$1</span>');
 }
 
 async function fetchPhonetic(card) {
