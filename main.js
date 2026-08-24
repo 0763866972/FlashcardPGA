@@ -1163,6 +1163,9 @@ function runAutoPlaySequence() {
             };
             
             if (card && card.meaning) {
+                // Tự động lật sang mặt định nghĩa khi đọc tiếng Việt
+                if (!isFlipped) flipFlashcard();
+                
                 // Đọc nghĩa Tiếng Việt của từ vựng bằng Google TTS
                 playGoogleTTS(card.meaning, 'vi', 'vi-VN', handleExampleSequence);
             } else {
@@ -1884,6 +1887,7 @@ Ví dụ CHUẨN trong structures: struct: "[be eligible for] + {noun}", vi: "[�
       "id": <SỐ ID BẠN NHẬN ĐƯỢC>,
       "word": "từ vựng ở trên", 
       "pos": "n/v/adj/adv/prep...",
+      "p": "phiên âm IPA (ví dụ: /ˈæp.əl/)",
       "structures": [
         { "struct": "[cấu trúc] {tiếng anh}", "vi": "[nghĩa] {tiếng việt}", "example": "Câu ví dụ [có] {ngoặc}", "example_vi": "Dịch nghĩa [có] {ngoặc}" }
       ],
@@ -2055,10 +2059,12 @@ ${jsonStructure}`;
 
                         const targetWord = parsedVocabList.find(w => w.word.toLowerCase() === wTarget.word.toLowerCase() && w.meaning === wTarget.meaning);
                         if (targetWord) {
+                            if (ex.p) targetWord.phonetic = ex.p;
                             targetWord.aiExample = ex;
                             targetWord.aiExample.level = aiDifficultyLevel;
                         }
 
+                        if (ex.p) wTarget.phonetic = ex.p;
                         wTarget.aiExample = ex;
                         wTarget.aiExample.level = aiDifficultyLevel;
                         aiCache[newCacheKey] = ex;
@@ -2346,20 +2352,30 @@ function checkAndShowGoogleTranslation(card, el) {
         el.classList.remove('hidden');
     }
 }
+function formatPhonetic(phonetic) {
+    if (!phonetic) return '';
+    // Vowels (Nguyên âm) - including length mark ː and nasal ̃
+    // Consonants (Phụ âm) - including ɡ, ɹ, ɫ, tie bar \u0361
+    return phonetic.replace(/([iɪeɛæaɑɒɔoʊuʌəɜyøœɶɨʉɯɤː\u0303]+)|([pbtdkgɡfvθðszʃʒhmnŋlrjwçxɣʁʔɾɹɫ\u0361]+)/g, (match, v, c) => {
+        if (v) return `<span class="text-rose-400">${v}</span>`;
+        if (c) return `<span class="text-sky-400">${c}</span>`;
+        return match;
+    });
+}
 
 async function fetchPhonetic(card) {
     const el = document.getElementById('fcPhonetic');
     if (card.phonetic !== undefined) {
-        el.innerText = card.phonetic || '';
+        el.innerHTML = formatPhonetic(card.phonetic) || '';
         return;
     }
 
-    el.innerText = '...';
+    el.innerHTML = '...';
     const word = card.word.toLowerCase().trim();
 
     if (word.includes(' ')) {
         card.phonetic = '';
-        el.innerText = '';
+        el.innerHTML = '';
         return;
     }
 
@@ -2378,10 +2394,10 @@ async function fetchPhonetic(card) {
         }
 
         card.phonetic = phonetic;
-        el.innerText = phonetic || '';
+        el.innerHTML = formatPhonetic(phonetic) || '';
     } catch (e) {
         card.phonetic = '';
-        el.innerText = '';
+        el.innerHTML = '';
     }
 }
 
@@ -2712,10 +2728,10 @@ function renderFlashcard() {
     }
 
     const fcElement = document.getElementById('flashcard');
-    if (isFlipped) {
+    if (fcElement) {
         fcElement.classList.remove('rotate-y-180');
-        isFlipped = false;
     }
+    isFlipped = false;
 
     if (isFcSlideshow) {
         if (autoPlaySequenceTimeout) clearTimeout(autoPlaySequenceTimeout);

@@ -181,7 +181,10 @@
                         <i id="cardRevealIcon" class="fa-solid fa-eye-slash text-lg"></i>
                     </button>
                 </div>
-                <div class="text-xs font-bold text-brand-400 tracking-widest uppercase mb-2" id="progressText">1/1</div>
+                <div class="text-xs font-bold text-brand-400 tracking-widest uppercase mb-2 flex items-center justify-center gap-1 group" title="Nhập số để chuyển câu">
+                    <input type="number" id="progressInput" class="w-10 bg-transparent text-right font-bold text-brand-400 outline-none appearance-none cursor-text group-hover:text-brand-500 transition-colors p-0 m-0 border-none focus:ring-0" min="1" onchange="jumpToCardInline(this.value)" onclick="this.select()">
+                    <span>/ <span id="progressTotal">1</span></span>
+                </div>
                 <h2 id="meaningDisplay" class="text-3xl md:text-4xl font-extrabold bg-gradient-to-br from-rose-500 to-orange-400 bg-clip-text text-transparent text-center leading-tight drop-shadow-sm pb-1">Loading...</h2>
             </div>
             
@@ -709,6 +712,19 @@
             } else {
                 currentIndex = synonymsData.length - 1;
             }
+            applyGlobalRevealState();
+            renderCard();
+        }
+
+        function jumpToCardInline(val) {
+            if (!synonymsData || synonymsData.length === 0) return;
+            let num = parseInt(val);
+            if (isNaN(num)) num = 1;
+            if (num < 1) num = 1;
+            if (num > synonymsData.length) num = synonymsData.length;
+            
+            currentIndex = num - 1;
+            document.getElementById('progressInput').value = num;
             applyGlobalRevealState();
             renderCard();
         }
@@ -1333,7 +1349,8 @@
                 displayMeaning += ` <span class="text-slate-400 text-lg md:text-2xl font-semibold ml-2 inline-block" style="-webkit-text-fill-color: #94a3b8;">${current.annotation}</span>`;
             }
             document.getElementById('meaningDisplay').innerHTML = displayMeaning;
-            document.getElementById('progressText').innerText = `${currentIndex + 1}/${synonymsData.length}`;
+            document.getElementById('progressInput').value = currentIndex + 1;
+            document.getElementById('progressTotal').innerText = synonymsData.length;
             
             const topEyeIcon = document.getElementById('cardRevealIcon');
             if (topEyeIcon) {
