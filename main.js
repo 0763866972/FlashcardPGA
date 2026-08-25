@@ -172,6 +172,30 @@ if (!localStorage.getItem('toeic_ai_cache_cleared_bugfix_1')) {
 }
 
 /**
+ * Helper: Xóa tag màu [c:color]...[/c] để lấy raw text.
+ */
+function stripColorTags(str) {
+    if (!str) return str;
+    return str.replace(/\[c:[^\]]+\](.*?)\[\/c\]/g, '$1');
+}
+
+/**
+ * Helper: Chuyển [c:color]text[/c] thành HTML <span style="color: color">text</span>
+ */
+function renderColorTags(str) {
+    if (!str) return str;
+    return str.replace(/\[c:([^\]]+)\](.*?)\[\/c\]/g, '<span style="color: $1;">$2</span>');
+}
+
+/**
+ * Helper: Escape HTML to prevent XSS
+ */
+function escapeHTML(str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+/**
  * getRealVocabKey - Chuyển đổi key localStorage thành key thực tế theo thư mục đang active.
  * @param {string} key - Key gốc (VD: 'toeic_vocab_list')
  * @returns {string} - Key thực (VD: 'toeic_vocab_list_nhom1' nếu đang ở nhóm nhom1)
@@ -532,22 +556,85 @@ window.onload = function () {
         }
     });
 
-    // 12. Xử lý paste: Đợi 50ms để nội dung paste xuất hiện, rồi parse + render bảng
-    vocabInput.addEventListener('paste', function () {
-        try { currentFillList = []; currentQuizList = []; currentFlashcards = []; } catch (e) { }
+    // 12. Xử lý paste: Hỗ trợ copy/paste từ Excel giữ nguyên màu chữ
+    vocabInput.addEventListener('paste', function (e) {
+        try { currentFillList = []; currentQuizList = []; currentFlashcards = []; } catch (err) { }
         const saveToggle = document.getElementById('saveSessionToggle');
         if (saveToggle) saveToggle.checked = false;
 
-        setTimeout(() => {
-            const isStarredMode = document.getElementById('onlyStarredToggle') && !document.getElementById('onlyStarredToggle').checked;
-            if (isStarredMode) {
-                parseStarredVocabInput();
-                parseVocab(true);
-            } else {
-                localStorage.setItem('toeic_vocab_list', this.value);
-                parseVocab(true); // Force render bảng sau paste
+        const htmlData = e.clipboardData ? e.clipboardData.getData('text/html') : null;
+        let hasRichText = false;
+
+        if (htmlData && htmlData.includes('<table')) {
+            e.preventDefault();
+            const temp = document.createElement('div');
+            temp.innerHTML = htmlData;
+            
+            let resultText = '';
+            const rows = temp.querySelectorAll('tr');
+            if (rows.length > 0) {
+                rows.forEach(row => {
+                    const cells = row.querySelectorAll('td, th');
+                    let rowText = [];
+                    cells.forEach(cell => {
+                        let cellResult = '';
+                        function processNode(node) {
+                            if (node.nodeType === Node.TEXT_NODE) {
+                                cellResult += node.textContent;
+                            } else if (node.nodeType === Node.ELEMENT_NODE) {
+                                let hasColor = false;
+                                const color = node.style.color || node.getAttribute('color');
+                                // Bỏ qua màu đen hoặc mặc định
+                                if (color && color !== 'windowtext' && color !== '#000000' && color !== 'black' && color !== 'rgb(0, 0, 0)') {
+                                    hasColor = true;
+                                    cellResult += `[c:${color}]`;
+                                }
+                                node.childNodes.forEach(processNode);
+                                if (hasColor) {
+                                    cellResult += `[/c]`;
+                                }
+                            }
+                        }
+                        cell.childNodes.forEach(processNode);
+                        rowText.push(cellResult.trim().replace(/\s+/g, ' '));
+                    });
+                    if (rowText.join('').trim() !== '') {
+                        resultText += rowText.join(' - ') + '\n';
+                    }
+                });
+                
+                if (resultText) {
+                    hasRichText = true;
+                    const start = this.selectionStart;
+                    const end = this.selectionEnd;
+                    const val = this.value;
+                    this.value = val.substring(0, start) + resultText + val.substring(end);
+                    this.selectionStart = this.selectionEnd = start + resultText.length;
+                    
+                    const isStarredMode = document.getElementById('onlyStarredToggle') && !document.getElementById('onlyStarredToggle').checked;
+                    if (isStarredMode) {
+                        parseStarredVocabInput();
+                    } else {
+                        localStorage.setItem('toeic_vocab_list', this.value);
+                    }
+                    parseVocab(true); // Force render bảng sau paste
+                }
             }
-        }, 50);
+        }
+
+        // Fallback về paste bình thường nếu không có table hoặc parse thất bại
+        if (!hasRichText) {
+            setTimeout(() => {
+                const isStarredMode = document.getElementById('onlyStarredToggle') && !document.getElementById('onlyStarredToggle').checked;
+                if (isStarredMode) {
+                    parseStarredVocabInput();
+                    parseVocab(true);
+                } else {
+                    localStorage.setItem('toeic_vocab_list', this.value);
+                    parseVocab(true); // Force render bảng sau paste
+                }
+            }, 50);
+        }
     });
 
     // 13. Khi blur textarea → render bảng xem trước
@@ -2439,18 +2526,21 @@ function renderFlashcard() {
         }
     }
 
+    const displayWord = card.wordRich ? renderColorTags(escapeHTML(card.wordRich)) : escapeHTML(card.word);
+    
     const wordTextEl = document.getElementById('fcWordText');
     const posContainer = document.getElementById('fcPosContainer');
     if (wordTextEl && posContainer) {
-        wordTextEl.innerText = card.word;
+        wordTextEl.innerHTML = displayWord;
         posContainer.innerHTML = formatPOS(card.pos);
     } else {
-        document.getElementById('fcWord').innerHTML = `${card.word} ${formatPOS(card.pos)}`;
+        document.getElementById('fcWord').innerHTML = `${displayWord} ${formatPOS(card.pos)}`;
     }
 
     fetchPhonetic(card);
+    const displayMeaning = card.meaningRich ? renderColorTags(escapeHTML(card.meaningRich)) : escapeHTML(card.meaning);
     const meaningEl = document.getElementById('fcMeaning');
-    meaningEl.innerText = card.meaning;
+    meaningEl.innerHTML = displayMeaning;
 
     // Tự động thu nhỏ chữ nếu nghĩa quá dài
     if (card.meaning.length > 50) {
@@ -3095,12 +3185,21 @@ function parseVocab(forceRender = false, noRender = false) {
             }
 
             if (parts.length >= 2) {
-                const word = parts[0].trim();
+                const wordRaw = parts[0].trim();
                 // Join back just in case \t produced multiple parts
-                const meaning = parts.slice(1).join(' ').trim();
-                if (word && meaning) {
+                const meaningRaw = parts.slice(1).join(' ').trim();
+                
+                const wordPlain = stripColorTags(wordRaw);
+                const meaningPlain = stripColorTags(meaningRaw);
+
+                if (wordPlain && meaningPlain) {
+                    const word = wordPlain;
+                    const meaning = meaningPlain;
                     const pos = guessPartOfSpeech(word, meaning);
                     let newItem = { word, meaning, pos };
+                    
+                    if (wordRaw !== wordPlain) newItem.wordRich = wordRaw;
+                    if (meaningRaw !== meaningPlain) newItem.meaningRich = meaningRaw;
 
                     const oldItem = oldList.find(o => o.word === word && o.meaning === meaning) || (typeof currentFlashcards !== 'undefined' ? currentFlashcards.find(fc => fc.word === word && fc.meaning === meaning) : null);
                     let aiCache = {};
@@ -3199,6 +3298,9 @@ function parseVocab(forceRender = false, noRender = false) {
                 const starIcon = isStarred ? '<i class="fa-solid fa-star text-yellow-400 drop-shadow-[0_0_3px_rgba(250,204,21,0.6)] scale-110 transition-all duration-300"></i>' : '<i class="fa-regular fa-star text-slate-500 hover:text-yellow-400 hover:scale-110 transition-all duration-300"></i>';
 
                 const hasAi = !!item.aiExample;
+                const displayWord = item.wordRich ? renderColorTags(item.wordRich) : item.word;
+                const displayMeaning = item.meaningRich ? renderColorTags(item.meaningRich) : item.meaning;
+
                 const tr = document.createElement('tr');
                 // Tăng hiệu ứng hover và padding
                 tr.className = "hover:bg-slate-100 dark:hover:bg-slate-800/70 transition-colors group/row relative";
@@ -3207,7 +3309,7 @@ function parseVocab(forceRender = false, noRender = false) {
                                 <!-- Hover accent line -->
                                 <div class="absolute inset-y-0 left-0 w-1 bg-brand-500 opacity-0 group-hover/row:opacity-100 transition-opacity"></div>
                                 <div class="flex items-start justify-between gap-2">
-                                    <div class="font-bold text-brand-600 dark:text-brand-300 outline-none flex-1 focus:text-brand-500 dark:focus:text-brand-400 transition-colors whitespace-nowrap cursor-text" contenteditable="true" onblur="saveInlineEdit(${editId}, 0, this.innerText)">${item.word}</div>
+                                    <div class="font-bold text-brand-600 dark:text-brand-300 outline-none flex-1 focus:text-brand-500 dark:focus:text-brand-400 transition-colors whitespace-nowrap cursor-text" contenteditable="true" onblur="saveInlineEdit(${editId}, 0, this.innerText)">${displayWord}</div>
                                     <div class="flex gap-2 shrink-0 transition-opacity">
                                         <button onclick="deleteWordFromTable(${editId}, event)" class="text-slate-400 hover:text-rose-500 transition-colors" title="Xóa từ này"><i class="fa-solid fa-trash-can text-xs"></i></button>
                                         <button onclick="toggleStarFromTable('${item.word.replace(/'/g, "\\'")}', event, this)" class="transition-colors" title="Đánh dấu từ này">${starIcon}</button>
@@ -3215,7 +3317,7 @@ function parseVocab(forceRender = false, noRender = false) {
                                 </div>
                             </td>
                             <td class="py-3 px-2 align-top text-slate-600 dark:text-slate-300 min-w-[150px]">
-                                <div class="w-full h-full outline-none focus:text-slate-800 dark:focus:text-slate-100 transition-colors break-words cursor-text" contenteditable="true" onblur="saveInlineEdit(${editId}, 1, this.innerText)">${item.meaning}</div>
+                                <div class="w-full h-full outline-none focus:text-slate-800 dark:focus:text-slate-100 transition-colors break-words cursor-text" contenteditable="true" onblur="saveInlineEdit(${editId}, 1, this.innerText)">${displayMeaning}</div>
                             </td>
                         `;
                 tbody.appendChild(tr);
