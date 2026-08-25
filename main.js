@@ -567,41 +567,61 @@ window.onload = function () {
 
         if (htmlData && htmlData.includes('<table')) {
             e.preventDefault();
-            const temp = document.createElement('div');
-            temp.innerHTML = htmlData;
+            const iframe = document.createElement('iframe');
+            iframe.style.position = 'absolute';
+            iframe.style.width = '0';
+            iframe.style.height = '0';
+            iframe.style.visibility = 'hidden';
+            iframe.style.border = 'none';
+            document.body.appendChild(iframe);
+            const doc = iframe.contentDocument || iframe.contentWindow.document;
+            doc.open();
+            doc.write(htmlData);
+            doc.close();
             
             let resultText = '';
-            const rows = temp.querySelectorAll('tr');
+            const rows = doc.querySelectorAll('tr');
             if (rows.length > 0) {
                 rows.forEach(row => {
                     const cells = row.querySelectorAll('td, th');
                     let rowText = [];
                     cells.forEach(cell => {
                         let cellResult = '';
-                        function processNode(node) {
+                        function processNode(node, parentColor) {
                             if (node.nodeType === Node.TEXT_NODE) {
                                 cellResult += node.textContent;
                             } else if (node.nodeType === Node.ELEMENT_NODE) {
                                 let hasColor = false;
-                                const color = node.style.color || node.getAttribute('color');
-                                // Bỏ qua màu đen hoặc mặc định
-                                if (color && color !== 'windowtext' && color !== '#000000' && color !== 'black' && color !== 'rgb(0, 0, 0)') {
+                                let color = '';
+                                if (iframe.contentWindow) {
+                                    color = iframe.contentWindow.getComputedStyle(node).color;
+                                } else {
+                                    color = node.style.color || node.getAttribute('color');
+                                }
+                                
+                                // Chuẩn hóa màu về dạng string cơ bản để so sánh
+                                const normalizedColor = color ? color.replace(/\s+/g, '').toLowerCase() : '';
+                                const normalizedParent = parentColor ? parentColor.replace(/\s+/g, '').toLowerCase() : '';
+
+                                if (normalizedColor && normalizedColor !== normalizedParent && normalizedColor !== 'windowtext' && normalizedColor !== '#000000' && normalizedColor !== 'black' && normalizedColor !== 'rgb(0,0,0)' && normalizedColor !== 'rgba(0,0,0,0)') {
                                     hasColor = true;
                                     cellResult += `[c:${color}]`;
                                 }
-                                node.childNodes.forEach(processNode);
+                                node.childNodes.forEach(child => processNode(child, color || parentColor));
                                 if (hasColor) {
                                     cellResult += `[/c]`;
                                 }
                             }
                         }
-                        cell.childNodes.forEach(processNode);
+                        processNode(cell, 'rgb(0, 0, 0)');
                         rowText.push(cellResult.trim().replace(/\s+/g, ' '));
                     });
                     if (rowText.join('').trim() !== '') {
                         resultText += rowText.join(' - ') + '\n';
                     }
                 });
+                
+                document.body.removeChild(iframe);
                 
                 if (resultText) {
                     hasRichText = true;
