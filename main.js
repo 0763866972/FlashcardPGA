@@ -238,6 +238,13 @@ function renderGroupSelect() {
     if (!Array.isArray(vocabGroups) || vocabGroups.length === 0) {
         vocabGroups = [{ id: 'default', name: 'Mặc định' }];
         saveGroups();
+    } else {
+        // Lọc bỏ các group bị lỗi (không có id hoặc name)
+        vocabGroups = vocabGroups.filter(g => g && g.id && g.name && g.name.trim() !== '');
+        if (vocabGroups.length === 0) {
+            vocabGroups = [{ id: 'default', name: 'Mặc định' }];
+        }
+        saveGroups();
     }
 
     // Nếu active id không tồn tại trong danh sách, đưa về default
@@ -838,13 +845,29 @@ function revealFcWord(event) {
         if (event) event.stopPropagation();
         document.getElementById('fcWord').classList.remove('blur-md', 'opacity-40', 'select-none', 'cursor-pointer');
         const phoneticEl = document.getElementById('fcPhonetic');
-        if (phoneticEl) phoneticEl.classList.remove('blur-md', 'opacity-40', 'select-none', 'cursor-pointer');
+        if (phoneticEl) {
+            phoneticEl.classList.remove('hidden', 'blur-md', 'opacity-40', 'select-none', 'cursor-pointer');
+        }
         const meaningHint = document.getElementById('fcListenMeaningHint');
         if (meaningHint) {
             meaningHint.classList.add('hidden'); // Ẩn nghĩa đi khi đã reveal
             meaningHint.classList.remove('blur-[6px]', 'opacity-40');
         }
     }
+}
+
+function isFlexibleMatch(userText, targetWord) {
+    if (userText === targetWord) return true;
+    if (targetWord.includes('/')) {
+        const targetParts = targetWord.split('/').map(s => s.trim()).filter(s => s);
+        const userParts = userText.split('/').map(s => s.trim()).filter(s => s);
+        if (targetParts.length > 0 && targetParts.length === userParts.length) {
+            const sortedTarget = [...targetParts].sort().join('/');
+            const sortedUser = [...userParts].sort().join('/');
+            if (sortedTarget === sortedUser) return true;
+        }
+    }
+    return false;
 }
 
 function checkFcSpell(event) {
@@ -861,13 +884,15 @@ function checkFcSpell(event) {
         inputEl.classList.add('focus:border-brand-500', 'text-white');
     }
 
-    if (userText === targetWord) {
+    if (isFlexibleMatch(userText, targetWord)) {
         const wasAlreadyCorrect = inputEl.classList.contains('border-emerald-500');
 
         inputEl.className = "w-full bg-emerald-900/30 border-2 border-emerald-500 rounded-xl px-4 py-3 text-center text-xl text-emerald-400 outline-none font-bold transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)] relative z-10";
         document.getElementById('fcWord').classList.remove('blur-md', 'opacity-40', 'select-none', 'cursor-pointer');
         const phoneticEl = document.getElementById('fcPhonetic');
-        if (phoneticEl) phoneticEl.classList.remove('blur-md', 'opacity-40', 'select-none', 'cursor-pointer');
+        if (phoneticEl) {
+            phoneticEl.classList.remove('hidden', 'blur-md', 'opacity-40', 'select-none', 'cursor-pointer');
+        }
 
         // Tự động hiện rõ nghĩa tiếng Việt
         const meaningHint = document.getElementById('fcListenMeaningHint');
@@ -936,7 +961,7 @@ function handleFcSpellKeydown(event) {
 
         if (userText === '') {
             nextFlashcard();
-        } else if (userText !== targetWord) {
+        } else if (!isFlexibleMatch(userText, targetWord)) {
             if (feedbackEl && !feedbackEl.classList.contains('hidden')) {
                 // Nếu đang báo lỗi mà vẫn bấm Enter -> Chấp nhận sai và qua câu
                 nextFlashcard();

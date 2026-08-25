@@ -170,9 +170,14 @@ body {
         html.light-mode select,
         html.light-mode input,
         html.light-mode textarea {
-            background: #f1f5f9 !important;
+            background-color: #f1f5f9 !important;
             color: #1e293b !important;
             border-color: #cbd5e1 !important;
+        }
+        
+        html.light-mode select option {
+            background-color: #ffffff;
+            color: #1e293b;
         }
 
         /* API key input */
