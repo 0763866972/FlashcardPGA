@@ -2484,10 +2484,74 @@ function checkAndShowGoogleTranslation(card, el) {
         el.classList.remove('hidden');
     }
 }
+// Bản đồ chuyển đổi ký tự IPA sang cách viết tiếng Anh để Google TTS đọc chuẩn nhất
+const ipaToTextMap = {
+    // Vowels (Nguyên âm)
+    'i': 'ee', 'ɪ': 'ih', 'e': 'eh', 'ɛ': 'eh', 'æ': 'a',
+    'a': 'ah', 'ɑ': 'ah', 'ɒ': 'o', 'ɔ': 'aw', 'o': 'oh',
+    'ʊ': 'uh', 'u': 'oo', 'ʌ': 'uh', 'ə': 'uh', 'ɜ': 'ur',
+    // Diphthongs (Nguyên âm đôi)
+    'aɪ': 'eye', 'eɪ': 'ay', 'ɔɪ': 'oy', 'aʊ': 'ow', 'oʊ': 'oh',
+    'əʊ': 'oh', 'ɪə': 'eer', 'eə': 'air', 'ʊə': 'oor',
+    // Consonants (Phụ âm)
+    'p': 'p', 'b': 'b', 't': 't', 'd': 'd', 'k': 'k', 'ɡ': 'g', 'g': 'g',
+    'f': 'f', 'v': 'v', 'θ': 'th', 'ð': 'the', 's': 's', 'z': 'z',
+    'ʃ': 'sh', 'ʒ': 'zh', 'h': 'h',
+    'm': 'm', 'n': 'n', 'ŋ': 'ng',
+    'l': 'l', 'r': 'r', 'j': 'y', 'w': 'w',
+    // Affricates (Phụ âm kép)
+    'tʃ': 'ch', 'dʒ': 'j'
+};
+
+window.speakPhoneme = function(p, ev) {
+    if (ev) ev.stopPropagation();
+    const cleanP = p.replace(/[ː\u0303]/g, '');
+    const textToSpeak = (typeof ipaToTextMap !== 'undefined' && ipaToTextMap[cleanP]) ? ipaToTextMap[cleanP] : cleanP;
+    speakText(textToSpeak, 'en-US');
+};
+
 function formatPhonetic(phonetic) {
     if (!phonetic) return '';
-    // Vowels (Nguyên âm) - including length mark ː and nasal ̃
-    return phonetic.replace(/([iɪeɛæaɑɒɔoʊuʌəɜyøœɶɨʉɯɤː\u0303]+)/g, '<span class="text-yellow-400">$1</span>');
+    let result = '';
+    let i = 0;
+    const ipaDigraphsLocal = ['aɪ', 'eɪ', 'ɔɪ', 'aʊ', 'oʊ', 'əʊ', 'ɪə', 'eə', 'ʊə', 'tʃ', 'dʒ'];
+    while (i < phonetic.length) {
+        let matched = false;
+        if (i < phonetic.length - 1) {
+            const twoChars = phonetic.substring(i, i + 2);
+            if (ipaDigraphsLocal.includes(twoChars)) {
+                let p = twoChars;
+                i += 2;
+                while (i < phonetic.length && (phonetic[i] === 'ː' || phonetic[i] === '\u0303')) {
+                    p += phonetic[i];
+                    i++;
+                }
+                const isVowel = /^[iɪeɛæaɑɒɔoʊuʌəɜyøœɶɨʉɯɤː\u0303]+$/.test(p);
+                const safeP = p.replace(/'/g, "\\'");
+                result += `<span class="ipa-item ${isVowel ? 'vowel' : ''}" onclick="speakPhoneme('${safeP}', event)">${p}</span>`;
+                matched = true;
+                continue;
+            }
+        }
+        if (!matched) {
+            const char = phonetic[i];
+            if (char.match(/[a-zæɑɒɔəɜɪʊʌɡʃʒθðŋ]/i) || (typeof ipaToTextMap !== 'undefined' && ipaToTextMap[char])) {
+                let p = char;
+                i++;
+                while (i < phonetic.length && (phonetic[i] === 'ː' || phonetic[i] === '\u0303')) {
+                    p += phonetic[i];
+                    i++;
+                }
+                const isVowel = /^[iɪeɛæaɑɒɔoʊuʌəɜyøœɶɨʉɯɤː\u0303]+$/.test(p);
+                const safeP = p.replace(/'/g, "\\'");
+                result += `<span class="ipa-item ${isVowel ? 'vowel' : ''}" onclick="speakPhoneme('${safeP}', event)">${p}</span>`;
+            } else {
+                result += char;
+                i++;
+            }
+        }
+    }
+    return result;
 }
 
 async function fetchPhonetic(card) {

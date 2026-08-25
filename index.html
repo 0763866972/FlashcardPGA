@@ -49,6 +49,44 @@
             }
         }
     </script>
+    <style>
+        /* macOS Dock style IPA Popup */
+        
+        .ipa-item { font-size: inherit; display: inline-block;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 0 2px;
+            transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1), margin 0.2s, color 0.2s;
+            transform-origin: bottom center;
+            color: #64748b; /* slate-500 */
+            position: relative;
+        }
+        .dark .ipa-item {
+            color: #94a3b8; /* slate-400 */
+        }
+        .ipa-item.vowel {
+            color: #facc15; /* yellow-400 */
+        }
+        /* Dock scaling effect using modern :has selector */
+        .ipa-item:hover {
+            transform: scale(1.6);
+            margin: 0 10px !important;
+            color: #3b82f6; /* brand-500 when hovered for consonants */
+        }
+        .ipa-item.vowel:hover {
+            color: #eab308; /* darker yellow when hovered */
+        }
+        .ipa-item:has(+ .ipa-item:hover) {
+            transform: scale(1.3);
+            margin: 0 5px !important;
+        }
+        .ipa-item:hover + .ipa-item {
+            transform: scale(1.3);
+            margin: 0 5px !important;
+        }
+        
+
+    </style>
 </head>
 
 <body class="h-full flex flex-col overflow-hidden">
@@ -1207,6 +1245,9 @@
             class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl border-b border-r border-slate-200/60 dark:border-slate-700 rotate-45 rounded-sm">
         </div>
     </div>
+    
+    <!-- IPA Popup macOS Dock -->
+
 </body>
 
 <!-- 
