@@ -1,3 +1,9 @@
+
+function getContextCacheSuffix() {
+    let ctx = localStorage.getItem('toeic_ai_context') || '';
+    if (!ctx.trim()) return '';
+    return '_ctx' + Array.from(ctx).reduce((s, c) => Math.imul(31, s) + c.charCodeAt(0) | 0, 0);
+}
 /***********************************************************************************************
          * TO: CLAUDE (OR ANY AI ASSISTANT IN THE FUTURE)
          * =============================================================================================
@@ -1238,7 +1244,7 @@ function runAutoPlaySequence() {
     const langGoogle = isVietnameseText(text) ? 'vi' : 'en';
     const langWeb = isVietnameseText(text) ? 'vi-VN' : 'en-US';
 
-    playGoogleTTS(text, langGoogle, langWeb, () => {
+    const startSequence = () => {
         if (!isFcSlideshow || seqId !== currentAutoPlayId) return;
         
         // Nghỉ 1 chút xíu rồi đọc tiếng Việt
@@ -1264,7 +1270,7 @@ function runAutoPlaySequence() {
                         // Đọc ví dụ tiếng Anh bằng Google TTS
                         playGoogleTTS(enText, 'en', 'en-US', () => {
                             const hasViExample = aiExVi && aiExVi.innerText.trim() !== '';
-                            if (fcExampleReadMode === 'en_vi' && hasViExample) {
+                            if ((fcExampleReadMode === 'en_vi' || fcExampleReadMode === 'en_vi_no_meaning' || fcExampleReadMode === 'back_en_vi') && hasViExample) {
                                 // Đọc ví dụ tiếng Việt bằng Google TTS
                                 autoPlaySequenceTimeout = setTimeout(() => {
                                     if (!isFcSlideshow || seqId !== currentAutoPlayId) return;
@@ -1294,17 +1300,24 @@ function runAutoPlaySequence() {
                 }
             };
             
-            if (card && card.meaning) {
+            if (card && card.meaning && !fcExampleReadMode.includes('_no_meaning') && !fcExampleReadMode.startsWith('back_')) {
                 // Tự động lật sang mặt định nghĩa khi đọc tiếng Việt
                 if (!isFlipped) flipFlashcard();
                 
                 // Đọc nghĩa Tiếng Việt của từ vựng bằng Google TTS
                 playGoogleTTS(card.meaning, 'vi', 'vi-VN', handleExampleSequence);
             } else {
+                if (!isFlipped && fcExampleReadMode !== 'none') flipFlashcard();
                 handleExampleSequence();
             }
         }, 500 / fcPlaybackSpeed); // 0.5 giây nghỉ điều chỉnh theo tốc độ
-    });
+    };
+
+    if (fcExampleReadMode.startsWith('back_')) {
+        startSequence();
+    } else {
+        playGoogleTTS(text, langGoogle, langWeb, startSequence);
+    }
 }
 
 let wakeLock = null;
@@ -1456,7 +1469,7 @@ function getStarredWords() {
         list.forEach(item => {
             if (item.word) {
                 // Thử các biến thể cache key: mới → cũ → legacy
-                const newCacheKey = `${item.word.toLowerCase()}_${(item.meaning || '').toLowerCase().replace(/\s+/g, '')}_${aiDifficultyLevel}`;
+                const newCacheKey = `${item.word.toLowerCase()}_${(item.meaning || '').toLowerCase().replace(/\s+/g, '')}_${aiDifficultyLevel}` + getContextCacheSuffix();
                 const oldCacheKey = `${item.word.toLowerCase()}_${aiDifficultyLevel}`;
                 let cacheEntry = aiCache[newCacheKey] || aiCache[oldCacheKey];
                 
@@ -1759,7 +1772,7 @@ async function startFlashcardMode() {
 
         // Lấy dữ liệu từ Cache nạp vào RAM trước khi kiểm tra
         sourceList.forEach(w => {
-            const newCacheKey = `${w.word.toLowerCase()}_${w.meaning.toLowerCase().replace(/\s+/g, '')}_fc_${fcAiLength}`;
+            const newCacheKey = `${w.word.toLowerCase()}_${w.meaning.toLowerCase().replace(/\s+/g, '')}_fc_${fcAiLength}` + getContextCacheSuffix();
             const fallbackCacheKey = `${w.word.toLowerCase()}_${w.meaning.toLowerCase().replace(/\s+/g, '')}_medium`;
             const oldCacheKey = `${w.word.toLowerCase()}_medium`;
 
@@ -1933,6 +1946,229 @@ async function startFlashcardMode() {
 //   + Các cụm từ đồng nghĩa / trái nghĩa (synonyms).
 //   + Các từ cùng gốc (word family) và các từ dễ nhầm lẫn (homophones).
 // =====================================================================
+async function generatePhoneticForWord(event) {
+    if (event) event.stopPropagation();
+    
+    if (typeof currentFlashcards === 'undefined' || currentFlashcards.length === 0) return;
+    const card = currentFlashcards[flashcardIndex];
+    if (!card) return;
+
+    const btn = document.getElementById('fcGenPhoneticBtn');
+    if (!btn) return;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-brand-400"></i> Đang tạo...`;
+    
+    try {
+        const sysPrompt = `Bạn là chuyên gia ngôn ngữ học. Hãy cung cấp phiên âm quốc tế (IPA) chuẩn Anh-Mỹ (American English) cho từ/cụm từ được yêu cầu.
+YÊU CẦU QUAN TRỌNG:
+1. CHỈ trả về CHUỖI PHIÊN ÂM, KHÔNG giải thích, KHÔNG bọc trong thẻ HTML, KHÔNG thêm dấu ngoặc / / ở hai đầu.
+Ví dụ nếu từ là "hello", chỉ trả về chính xác: həˈloʊ
+Ví dụ nếu cụm từ là "a striped shirt", chỉ trả về chính xác: ə straɪpt ʃɜrt`;
+
+        const userPrompt = `"${card.word}"`;
+
+        const response = await callGeminiAPIText(sysPrompt, userPrompt);
+        let result = response.trim();
+        // Remove markdown code blocks if any
+        result = result.replace(/^```[a-z]*\n?/i, '').replace(/\n?```$/i, '').trim();
+        // Remove slashes if AI accidentally added them
+        result = result.replace(/^\/+|\/+$/g, '').trim();
+
+        // Update card
+        card.phonetic = `/${result}/`;
+        
+        // Save to parsedVocabList
+        if (typeof parsedVocabList !== 'undefined') {
+            const targetWord = parsedVocabList.find(w => w.word.toLowerCase() === card.word.toLowerCase() && w.meaning === card.meaning);
+            if (targetWord) {
+                targetWord.phonetic = card.phonetic;
+            }
+        }
+        
+        // Save to toeic_custom_phonetics
+        let customPhonetics = {};
+        try {
+            customPhonetics = JSON.parse(localStorage.getItem('toeic_custom_phonetics') || '{}');
+        } catch(e) {}
+        customPhonetics[card.word.toLowerCase()] = card.phonetic;
+        localStorage.setItem('toeic_custom_phonetics', JSON.stringify(customPhonetics));
+        
+        // Save to starred_vocab
+        let starred = getStarredWords();
+        let sWord = starred.find(w => w.word.toLowerCase() === card.word.toLowerCase());
+        if (sWord) {
+            sWord.phonetic = card.phonetic;
+            localStorage.setItem('toeic_starred_words', JSON.stringify(starred));
+        }
+
+        renderFlashcard();
+    } catch (e) {
+        console.error("Generate phonetic error:", e);
+        if (typeof showToast === 'function') showToast("Lỗi khi tạo phiên âm", "error");
+    } finally {
+        btn.innerHTML = originalText;
+    }
+}
+
+async function generateExampleForWord(event) {
+    if (event) event.stopPropagation();
+    
+    if (typeof currentFlashcards === 'undefined' || currentFlashcards.length === 0) return;
+    const card = currentFlashcards[flashcardIndex];
+    if (!card) return;
+
+    const btn = document.getElementById('fcGenExampleBtn');
+    if (!btn) return;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-brand-400"></i> Đang tạo...`;
+    btn.classList.add('pointer-events-none', 'opacity-50');
+    
+    try {
+        let aiDifficultyLevel = document.getElementById('aiDifficultySelect') ? document.getElementById('aiDifficultySelect').value : 'fc_short';
+        const targetMode = typeof isDictationMode !== 'undefined' && isDictationMode ? 'dictation' : 'flashcard';
+        
+        let styleInstruction = "Tạo 2 CÂU VÍ DỤ. Câu 1 (Flashcard): NGẮN (10-15 từ). Câu 2 (Dictation): NGẮN (8-13 từ). Câu 1 và 2 PHẢI KHÁC HOÀN TOÀN NHAU VỀ NGỮ CẢNH VÀ TỪ VỰNG.";
+        let outputFields = `"en": "câu 1 (Flashcard) (bọc [...] quanh TỪ VỰNG ĐANG HỌC)", \n      "vi": "câu dịch 1 TỰ NHIÊN (bọc [...] quanh ĐÚNG phần dịch của từ vựng, DỊCH THEO NGỮ CẢNH, KHÔNG ÉP DÙNG TỪ ĐIỂN NẾU SƯỢNG)", \n      "en_dictation": "câu 2 (Dictation, khác câu 1) (bọc [...] quanh TỪ VỰNG ĐANG HỌC)", \n      "vi_dictation": "câu dịch 2 TỰ NHIÊN (bọc [...] quanh ĐÚNG phần dịch của từ vựng, DỊCH THEO NGỮ CẢNH, KHÔNG ÉP DÙNG TỪ ĐIỂN NẾU SƯỢNG)"`;
+
+        if (aiDifficultyLevel === 'fc_long') {
+            styleInstruction = "Tạo 2 CÂU VÍ DỤ. Câu 1 (Flashcard): DÀI VÀ KHÓ (15-25 từ). Câu 2 (Dictation): DÀI VÀ KHÓ (15-25 từ). Câu 1 và 2 PHẢI KHÁC HOÀN TOÀN NHAU VỀ NGỮ CẢNH VÀ TỪ VỰNG.";
+        } else if (aiDifficultyLevel === 'medium') {
+            styleInstruction = "Tạo 2 CÂU VÍ DỤ. Câu 1 (Flashcard): NGẮN (10-15 từ). Câu 2 (Dictation): TRUNG BÌNH (15-20 từ). Câu 1 và 2 PHẢI KHÁC HOÀN TOÀN NHAU VỀ NGỮ CẢNH VÀ TỪ VỰNG.";
+        } else if (aiDifficultyLevel === 'hard') {
+            styleInstruction = "Câu 1 (Flashcard): Tạo 1 CÂU VÍ DỤ NGẮN (10-15 từ) rõ nghĩa ngữ cảnh. Câu 2 (Dictation): Định nghĩa tiếng Anh mô tả từ, BẮT BUỘC đặt từ gốc NẰM TÁCH BIỆT Ở CUỐI CÂU sau dấu hai chấm (vd: 'A round fruit: apple').";
+            outputFields = `"en": "câu ví dụ 1 (Flashcard)", \n      "vi": "câu dịch 1", \n      "en_dictation": "câu định nghĩa 2 (Dictation)", \n      "vi_dictation": "câu dịch 2"`;
+        }
+
+        styleInstruction += " (LƯU Ý: Giới hạn số lượng từ chỉ áp dụng cho câu Tiếng Anh. Câu dịch Tiếng Việt KHÔNG BỊ GIỚI HẠN độ dài, phải dịch trọn vẹn và thoát ý nhất có thể!).";
+
+        let fcAiContext = localStorage.getItem('toeic_ai_context') || '';
+        const chatInput = document.getElementById('chatInput');
+        if (chatInput && chatInput.value.trim() !== '') {
+            fcAiContext = chatInput.value.trim();
+        }
+        
+        if (fcAiContext.trim() !== '') {
+            styleInstruction += ` \n\nYÊU CẦU ĐẶC BIỆT / NGỮ CẢNH TỪ NGƯỜI DÙNG: "${fcAiContext}".\n\nBạn BẮT BUỘC phải tuân thủ NGHIÊM NGẶT yêu cầu này khi tạo câu ví dụ (ưu tiên dùng các cấu trúc, từ vựng, mẫu câu mà người dùng yêu cầu). Được phép bỏ qua giới hạn số từ nếu yêu cầu của người dùng đòi hỏi câu dài hơn.`;
+        }
+
+        let wantSyn = document.getElementById('aiSynToggle') ? document.getElementById('aiSynToggle').checked : true;
+        let wantFam = document.getElementById('aiFamToggle') ? document.getElementById('aiFamToggle').checked : true;
+        let wantHom = document.getElementById('aiHomToggle') ? document.getElementById('aiHomToggle').checked : true;
+
+        if (targetMode === 'dictation') {
+            wantSyn = false; wantFam = false; wantHom = false;
+        }
+
+        let taskInstructions = `1. Phân tích loại từ (pos). Viết 1 câu cho từ theo chuẩn: ${styleInstruction}
+2. Cấu trúc ngữ pháp (structures): NẾU TỪ CÓ giới từ đi kèm (vd: under + construction) HOẶC là danh từ ghép phổ biến (vd: lecture hall), hãy đưa vào đây.
+- NẾU LÀ CẤU TRÚC GIỚI TỪ/ĐỘNG TỪ: Dấu '+' CHỈ ĐƯỢC DÙNG trước các biến số (như noun, V-ing). CẤM dùng dấu '+' trước giới từ. Bọc ngoặc vuông [...] quanh TỪ KHÓA CHÍNH + GIỚI TỪ, và ngoặc nhọn {...} quanh BIẾN SỐ.
+- NẾU LÀ DANH TỪ GHÉP: CẤM DÙNG dấu '+' hay ngoặc nhọn {...}. HÃY BỌC NGOẶC VUÔNG [...] CHO TOÀN BỘ CỤM (vd: [lecture hall]). Phải thêm "(danh từ ghép)" ở cuối phần nghĩa và DỊCH THẬT TỰ NHIÊN. Mảng rỗng \`[]\` nếu không có gì đặc biệt.
+- QUY TẮC NGOẶC NÀY CHỈ ÁP DỤNG BÊN TRONG mảng 'structures'. Câu ví dụ trong structures PHẢI KHÁC HOÀN TOÀN với câu ví dụ chính!
+- VỚI trường 'en', 'vi', 'en_dictation', 'vi_dictation': BẮT BUỘC bọc ngoặc vuông [...] quanh từ vựng gốc (ở câu Anh) và phần dịch tương ứng (ở câu Việt). QUAN TRỌNG: CẤM TUYỆT ĐỐI việc nhét "Nghĩa" từ điển vào câu dịch nếu nó làm câu văn vô nghĩa! HÃY BỎ QUA NGHĨA GỐC VÀ DỊCH THẬT TỰ NHIÊN THEO ĐÚNG NGỮ CẢNH.`;
+
+        if (wantSyn) taskInstructions += `\n3. TÌM TỪ ĐỒNG NGHĨA VÀ TRÁI NGHĨA: BẮT BUỘC PHẢI TÌM ÍT NHẤT 3 TỪ ĐỒNG NGHĨA VÀ 3 TỪ TRÁI NGHĨA (nếu từ điển có). Phân loại rõ bằng cách thêm "[Đồng nghĩa]" hoặc "[Trái nghĩa]" ở đầu phần nghĩa tiếng Việt. BẮT BUỘC PHẢI TRẢ VỀ TRONG KEY 'synonyms_antonyms'.`;
+        if (wantFam) taskInstructions += `\n4. KHAI THÁC TỐI ĐA TỪ CÙNG GỐC (Word Family): Hãy tìm VÀ LIỆT KÊ TOÀN BỘ tất cả các biến thể của từ. BẮT BUỘC PHẢI TÌM TRẠNG TỪ (Adverb - đuôi ly) NẾU CÓ THỂ, cùng với danh từ, động từ, tính từ... BẮT BUỘC PHẢI TRẢ VỀ TRONG KEY 'family'.`;
+        if (wantHom) taskInstructions += `\n5. TÌM 3-4 TỪ DỄ NHẦM LẪN (Confusing Words / Homophones). YÊU CẦU TỐI THƯỢNG: CÁC TỪ NÀY PHẢI LÀ TỪ VỰNG TIẾNG ANH CHUẨN CÓ THẬT TRONG TỪ ĐIỂN. HÃY tìm các từ có CÁCH VIẾT hoặc PHÁT ÂM gần giống với từ gốc NHƯNG NGHĨA KHÁC HOÀN TOÀN. BẮT BUỘC PHẢI TRẢ VỀ TRONG KEY 'homophones'.`;
+
+        let jsonStructure = `{
+      "word": "từ vựng ở trên", 
+      "pos": "n/v/adj/adv/prep...",
+      "p": "phiên âm IPA",
+      "structures": [
+        { "struct": "[cấu trúc] {tiếng anh}", "vi": "[nghĩa] {tiếng việt}", "example": "Câu ví dụ [có] {ngoặc}", "example_vi": "Dịch nghĩa [có] {ngoặc}" }
+      ],
+      ${outputFields}`;
+
+        if (wantSyn) {
+            jsonStructure += `,
+      "synonyms_antonyms": [
+        { "word": "từ tiếng anh", "vi": "[Đồng nghĩa/Trái nghĩa] nghĩa tiếng việt" }
+      ]`;
+        }
+        if (wantFam) {
+            jsonStructure += `,
+      "family": [
+        { "word": "từ cùng gốc 1", "type": "n/v/adj/adv", "vi": "nghĩa tiếng việt", "isSpecial": false, "isDifferentMeaning": false }
+      ]`;
+        }
+        if (wantHom) {
+            jsonStructure += `,
+      "homophones": [
+        { "word": "từ đồng âm/nhầm lẫn", "vi": "nghĩa tiếng việt khác hoàn toàn" }
+      ]`;
+        }
+        jsonStructure += `\n}`;
+
+        let systemPrompt = `Bạn là chuyên gia ngôn ngữ học. BẮT BUỘC trả về định dạng JSON hợp lệ, không có markdown, không giải thích.
+Bạn sẽ nhận được 1 từ vựng và nghĩa tiếng Việt. 
+Nhiệm vụ: 
+${taskInstructions}
+
+LƯU Ý CỰC KỲ QUAN TRỌNG: TUYỆT ĐỐI KHÔNG ĐƯỢC BỎ QUÊN HOẶC LƯỢC BỎ CÁC TRƯỜNG NHƯ 'synonyms_antonyms', 'family', 'homophones' TRONG KẾT QUẢ TRẢ VỀ NẾU CÓ YÊU CẦU!
+
+Cấu trúc JSON bắt buộc:
+${jsonStructure}`;
+
+        const userPrompt = `Từ vựng: "${card.word}"\nNghĩa: "${card.meaning}"`;
+
+        const responseText = await callGeminiAPIText(systemPrompt, userPrompt);
+        let cleanJson = responseText.replace(/```json/gi, '').replace(/```html/gi, '').replace(/```/g, '').trim();
+        const firstBrace = cleanJson.indexOf('{');
+        const lastBrace = cleanJson.lastIndexOf('}');
+        cleanJson = cleanJson.substring(firstBrace, lastBrace + 1);
+        const ex = JSON.parse(cleanJson);
+
+        card.aiExample = ex;
+        card.aiExample.level = aiDifficultyLevel;
+
+        if (ex.p) {
+            card.phonetic = ex.p;
+            let customPhonetics = {};
+            try { customPhonetics = JSON.parse(localStorage.getItem('toeic_custom_phonetics') || '{}'); } catch(e) {}
+            customPhonetics[card.word.toLowerCase()] = ex.p;
+            localStorage.setItem('toeic_custom_phonetics', JSON.stringify(customPhonetics));
+        }
+
+        // Cache update
+        let aiCache = {};
+        try { aiCache = JSON.parse(localStorage.getItem('toeic_ai_cache') || "{}"); } catch (e) { }
+        const baseKey = `${card.word.toLowerCase()}_${card.meaning.toLowerCase().replace(/\s+/g, '')}`;
+        const ctxSuffix = typeof getContextCacheSuffix === 'function' ? getContextCacheSuffix() : '';
+        aiCache[`${baseKey}_${aiDifficultyLevel}${ctxSuffix}`] = ex;
+        localStorage.setItem('toeic_ai_cache', JSON.stringify(aiCache));
+
+        // Update parsedVocabList if it's there
+        if (typeof parsedVocabList !== 'undefined') {
+            const targetWord = parsedVocabList.find(w => w.word.toLowerCase() === card.word.toLowerCase() && w.meaning === card.meaning);
+            if (targetWord) {
+                targetWord.aiExample = ex;
+                if (ex.p) targetWord.phonetic = ex.p;
+            }
+        }
+        
+        // Save to starred_words if it's starred
+        if (typeof getStarredWords === 'function') {
+            let starred = getStarredWords();
+            let sWord = starred.find(w => w.word.toLowerCase() === card.word.toLowerCase());
+            if (sWord) {
+                sWord.aiExample = ex;
+                if (ex.p) sWord.phonetic = ex.p;
+                localStorage.setItem('toeic_starred_words', JSON.stringify(starred));
+            }
+        }
+
+        if (typeof showToast === 'function') showToast("Đã tạo ví dụ AI thành công!", "success");
+        renderFlashcard();
+    } catch (e) {
+        console.error("Generate example error:", e);
+        if (typeof showToast === 'function') showToast("Lỗi khi tạo ví dụ: " + e.message, "error");
+    } finally {
+        btn.innerHTML = originalText;
+        btn.classList.remove('pointer-events-none', 'opacity-50');
+    }
+}
+
+
 async function generateBulkExamples(wordsArray, assignedKey, onlyExample = false, targetMode = 'both') {
     const selectedModel = document.getElementById('aiModelSelect').value;
     const isGroq = !selectedModel.includes('gemini');
@@ -1991,6 +2227,11 @@ async function generateBulkExamples(wordsArray, assignedKey, onlyExample = false
             }
         }
         styleInstruction += " (LƯU Ý: Giới hạn số lượng từ chỉ áp dụng cho câu Tiếng Anh. Câu dịch Tiếng Việt KHÔNG BỊ GIỚI HẠN độ dài, phải dịch trọn vẹn và thoát ý nhất có thể!).";
+
+        let fcAiContext = localStorage.getItem('toeic_ai_context') || '';
+        if (fcAiContext.trim() !== '') {
+            styleInstruction += ` YÊU CẦU ĐẶC BIỆT / NGỮ CẢNH TỪ NGƯỜI DÙNG: "${fcAiContext}".\n\nBạn BẮT BUỘC phải tuân thủ NGHIÊM NGẶT yêu cầu này khi tạo câu ví dụ (ưu tiên dùng các cấu trúc, từ vựng, mẫu câu mà người dùng yêu cầu). Được phép bỏ qua giới hạn số từ nếu yêu cầu của người dùng đòi hỏi câu dài hơn.`;
+        }
 
         let wantSyn = document.getElementById('aiSynToggle') ? document.getElementById('aiSynToggle').checked : true;
         let wantFam = document.getElementById('aiFamToggle') ? document.getElementById('aiFamToggle').checked : true;
@@ -2133,7 +2374,7 @@ ${jsonStructure}`;
                             difficultySuffix = `fc_${fcAiLength}`;
                         }
 
-                        const newCacheKey = `${wTarget.word.toLowerCase()}_${wTarget.meaning.toLowerCase().replace(/\s+/g, '')}_${difficultySuffix}`;
+                        const newCacheKey = `${wTarget.word.toLowerCase()}_${wTarget.meaning.toLowerCase().replace(/\s+/g, '')}_${difficultySuffix}` + getContextCacheSuffix();
                         const oldCacheKey = `${wTarget.word.toLowerCase()}_${difficultySuffix}`;
 
                         const fbNewKey = `${wTarget.word.toLowerCase()}_${wTarget.meaning.toLowerCase().replace(/\s+/g, '')}_medium`;
@@ -2195,10 +2436,30 @@ ${jsonStructure}`;
                             targetWord.aiExample = ex;
                             targetWord.aiExample.level = aiDifficultyLevel;
                         }
-
-                        if (ex.p) wTarget.phonetic = ex.p;
+                        if (ex.p) {
+                            wTarget.phonetic = ex.p;
+                            // Lưu vào bộ nhớ tạm thời cho phiên âm tự tạo
+                            let customPhonetics = {};
+                            try { customPhonetics = JSON.parse(localStorage.getItem('toeic_custom_phonetics') || '{}'); } catch(e) {}
+                            customPhonetics[wTarget.word.toLowerCase()] = ex.p;
+                            localStorage.setItem('toeic_custom_phonetics', JSON.stringify(customPhonetics));
+                        }
                         wTarget.aiExample = ex;
                         wTarget.aiExample.level = aiDifficultyLevel;
+
+                        // Xóa TOÀN BỘ cache cũ của TỪ VÀ NGHĨA này để đảm bảo không bao giờ bị load lại ví dụ cũ
+                        const basePrefix = `${wTarget.word.toLowerCase()}_${wTarget.meaning.toLowerCase().replace(/\s+/g, '')}`;
+                        const exactLegacyKey = wTarget.word.toLowerCase();
+                        Object.keys(aiCache).forEach(k => {
+                            if (k.startsWith(basePrefix) || k === exactLegacyKey || k.startsWith(exactLegacyKey + '_fc_') || k.startsWith(exactLegacyKey + '_easy') || k.startsWith(exactLegacyKey + '_medium') || k.startsWith(exactLegacyKey + '_hard')) {
+                                // Chỉ xóa nếu nó thực sự là key của từ này (đề phòng xóa nhầm từ khác có chung prefix)
+                                // Cách an toàn nhất: nếu k có chứa basePrefix, xóa!
+                                if (k.startsWith(basePrefix) || !k.includes('_')) {
+                                    delete aiCache[k];
+                                }
+                            }
+                        });
+
                         aiCache[newCacheKey] = ex;
                     });
                     localStorage.setItem('toeic_ai_cache', JSON.stringify(aiCache));
@@ -2790,8 +3051,33 @@ function formatPhonetic(phonetic) {
 
 async function fetchPhonetic(card) {
     const el = document.getElementById('fcPhonetic');
-    if (card.phonetic !== undefined) {
-        el.innerHTML = formatPhonetic(card.phonetic) || '';
+    
+    // Nếu có phiên âm trong thẻ
+    if (card.phonetic && card.phonetic !== '') {
+        el.innerHTML = formatPhonetic(card.phonetic);
+        return;
+    }
+
+    // Đọc trực tiếp từ cache custom_phonetics để tránh trường hợp parseVocab bỏ sót
+    try {
+        let customPhonetics = JSON.parse(localStorage.getItem('toeic_custom_phonetics') || '{}');
+        const wordKey = (card.word || '').toLowerCase().trim();
+        if (customPhonetics[wordKey]) {
+            card.phonetic = customPhonetics[wordKey];
+            el.innerHTML = formatPhonetic(card.phonetic);
+            
+            if (typeof parsedVocabList !== 'undefined') {
+                const targetWord = parsedVocabList.find(w => w.word.toLowerCase() === wordKey && w.meaning === card.meaning);
+                if (targetWord) targetWord.phonetic = card.phonetic;
+            }
+            return;
+        }
+    } catch(e) {}
+
+
+    // Nếu là chuỗi rỗng (trước đó đã fetch lỗi hoặc từ có khoảng trắng)
+    if (card.phonetic === '') {
+        el.innerHTML = '';
         return;
     }
 
@@ -2818,11 +3104,132 @@ async function fetchPhonetic(card) {
             }
         }
 
-        card.phonetic = phonetic;
-        el.innerHTML = formatPhonetic(phonetic) || '';
+        if (phonetic) {
+            card.phonetic = phonetic;
+            el.innerHTML = formatPhonetic(phonetic);
+
+            // Save to parsedVocabList
+            if (typeof parsedVocabList !== 'undefined') {
+                const targetWord = parsedVocabList.find(w => w.word.toLowerCase() === card.word.toLowerCase() && w.meaning === card.meaning);
+                if (targetWord) {
+                    targetWord.phonetic = card.phonetic;
+                }
+            }
+            
+            // Save to toeic_custom_phonetics
+            let customPhonetics = {};
+            try {
+                customPhonetics = JSON.parse(localStorage.getItem('toeic_custom_phonetics') || '{}');
+            } catch(e) {}
+            customPhonetics[card.word.toLowerCase()] = card.phonetic;
+            localStorage.setItem('toeic_custom_phonetics', JSON.stringify(customPhonetics));
+
+        } else {
+            throw new Error("No phonetic string in response");
+        }
     } catch (e) {
         card.phonetic = '';
         el.innerHTML = '';
+    }
+}
+
+// === HIGHLIGHT ON-DEMAND ===
+function getColorClass(k) {
+    switch(k) {
+        case 'y': return 'bg-yellow-400 text-black';
+        case 'b': return 'bg-blue-400 text-black';
+        case 'g': return 'bg-green-400 text-black';
+        case 'r': return 'bg-red-400 text-black';
+        case 'p': return 'bg-purple-400 text-white';
+        default: return '';
+    }
+}
+
+function saveHighlightsToCache(card) {
+    const targetWord = parsedVocabList.find(w => w.word.toLowerCase() === card.word.toLowerCase() && w.meaning === card.meaning);
+    if (targetWord && targetWord.aiExample) {
+        targetWord.aiExample.highlights = card.aiExample.highlights;
+    }
+    
+    let aiCache = {};
+    try { aiCache = JSON.parse(localStorage.getItem('toeic_ai_cache') || "{}"); } catch (e) {}
+    
+    const basePrefix = `${card.word.toLowerCase()}_${card.meaning.toLowerCase().replace(/\s+/g, '')}`;
+    const oldPrefix = `${card.word.toLowerCase()}_`;
+    const exactOldKey = card.word.toLowerCase();
+    
+    let updated = false;
+    for (let k in aiCache) {
+        if ((k.startsWith(basePrefix) || k.startsWith(oldPrefix) || k === exactOldKey) && aiCache[k].en === card.aiExample.en) {
+            aiCache[k].highlights = card.aiExample.highlights;
+            updated = true;
+        }
+    }
+    if (updated) {
+        localStorage.setItem('toeic_ai_cache', JSON.stringify(aiCache));
+    }
+}
+
+let fcHighlightHistory = [];
+
+async function handleAIHighlight(selectedEn, colorKey) {
+    if (currentFlashcards.length === 0) return;
+    const card = currentFlashcards[flashcardIndex];
+    if (!card || !card.aiExample) return;
+
+    if (!card.aiExample.highlights) card.aiExample.highlights = [];
+
+    // Lưu trạng thái trước khi thay đổi để có thể undo (Ctrl+Z)
+    fcHighlightHistory.push({
+        index: flashcardIndex,
+        highlights: JSON.parse(JSON.stringify(card.aiExample.highlights))
+    });
+
+    if (colorKey === 'x' || colorKey === 'delete' || colorKey === 'backspace') {
+        const selLower = selectedEn.toLowerCase().trim();
+        card.aiExample.highlights = card.aiExample.highlights.filter(hl => {
+            const hlLower = hl.en.toLowerCase().trim();
+            // Delete if they overlap or match
+            return !(hlLower.includes(selLower) || selLower.includes(hlLower));
+        });
+        saveHighlightsToCache(card);
+        renderFlashcard();
+        return;
+    }
+
+    const existing = card.aiExample.highlights.find(hl => hl.en === selectedEn);
+    if (existing) {
+        existing.color = colorKey;
+        if (existing.vi !== "..." && existing.vi !== "Lỗi AI") {
+            saveHighlightsToCache(card);
+            renderFlashcard();
+            return;
+        }
+    }
+
+    let newHl = existing;
+    if (!newHl) {
+        newHl = { en: selectedEn, vi: "...", color: colorKey };
+        card.aiExample.highlights.push(newHl);
+    } else {
+        newHl.vi = "...";
+    }
+    renderFlashcard();
+
+    const prompt = `The English sentence is: "${card.aiExample.en}". The Vietnamese translation is: "${card.aiExample.vi}". The user highlighted: "${selectedEn}". What is the exact translation of the highlighted part in the Vietnamese sentence? Return ONLY the exact substring from the Vietnamese sentence, nothing else.`;
+    const sysPrompt = "You are a precise translator. Provide only the exact matching substring from the given Vietnamese translation, without quotes, explanations, or any extra text.";
+    
+    try {
+        const result = await callGeminiAPIText(sysPrompt, prompt);
+        if (result) {
+            newHl.vi = result.trim().replace(/^["']|["']$/g, '');
+            saveHighlightsToCache(card);
+            renderFlashcard();
+        }
+    } catch (e) {
+        console.error("AI Highlight Error", e);
+        newHl.vi = "Lỗi AI";
+        renderFlashcard();
     }
 }
 
@@ -2939,7 +3346,29 @@ function renderFlashcard() {
             const targetRoots = card.word.toLowerCase().split(/\s+/).map(getBaseRoot);
             const exactWords = card.word.toLowerCase().split(/\s+/);
 
+            let currentStrIdx = 0;
             const html = words.map(part => {
+                let partBgColor = null;
+                
+                // Custom User Highlights (tô màu on-demand)
+                if (card.aiExample.highlights) {
+                    card.aiExample.highlights.forEach(hl => {
+                        if (hl.en && hl.color) {
+                            let matchIdx = sentence.toLowerCase().indexOf(hl.en.toLowerCase());
+                            while (matchIdx !== -1) {
+                                if (currentStrIdx >= matchIdx && currentStrIdx < matchIdx + hl.en.length) {
+                                    if (/^[\w'-]+$/.test(part)) { // Chỉ tô màu chữ, không tô khoảng trắng/dấu câu
+                                        partBgColor = getColorClass(hl.color);
+                                    }
+                                    break;
+                                }
+                                matchIdx = sentence.toLowerCase().indexOf(hl.en.toLowerCase(), matchIdx + 1);
+                            }
+                        }
+                    });
+                }
+
+                let extraClass = "";
                 if (/^[\w'-]+$/.test(part)) {
                     const pLower = part.toLowerCase();
                     let isTarget = exactWords.includes(pLower);
@@ -2950,17 +3379,37 @@ function renderFlashcard() {
                     if (!isTarget && aiHighlightedWords.length > 0) {
                         isTarget = aiHighlightedWords.includes(pLower);
                     }
-                    const extraClass = isTarget ? "text-orange-400 font-bold" : "";
-                    return `<span class="${extraClass} hover:bg-slate-500/20 rounded px-0.5 cursor-pointer transition-colors inline-block" onclick="handleWordClick(event, '${part.replace(/'/g, "\\'")}')" oncontextmenu="handleWordRightClick(event, '${part.replace(/'/g, "\\'")}')">${part}</span>`;
+                    if (isTarget) extraClass = "text-orange-400 font-bold ";
+                    
+                    if (partBgColor) {
+                        extraClass += ` ${partBgColor}`;
+                    }
+
+                    currentStrIdx += part.length;
+                    return `<span class="${extraClass.trim()} hover:bg-slate-500/20 rounded px-0.5 cursor-pointer transition-colors inline-block" onclick="handleWordClick(event, '${part.replace(/'/g, "\\'")}')" oncontextmenu="handleWordRightClick(event, '${part.replace(/'/g, "\\'")}')">${part}</span>`;
+                } else {
+                    currentStrIdx += part.length;
+                    return part.replace(/</g, "&lt;").replace(/>/g, "&gt;");
                 }
-                return part.replace(/</g, "&lt;").replace(/>/g, "&gt;");
             }).join('');
 
             enEl.innerHTML = html;
 
             // Highlight nghĩa tiếng Việt (bỏ ngoặc vuông, xoá ngoặc nhọn, xoá chấm câu)
             const viText = card.aiExample.vi.replace(/[\{\}"]/g, '').replace(/[\.\?!]$/, '').trim();
-            const viHtml = viText.replace(/\[(.*?)\]/g, '<span class="font-bold text-orange-400">$1</span>');
+            let viHtml = viText.replace(/\[(.*?)\]/g, '<span class="font-bold text-orange-400">$1</span>');
+            
+            if (card.aiExample.highlights) {
+                card.aiExample.highlights.forEach(hl => {
+                    if (hl.vi && hl.vi !== "..." && hl.color) {
+                        const colorClass = getColorClass(hl.color);
+                        viHtml = viHtml.replace(hl.vi, `<span class="${colorClass} px-1 rounded">${hl.vi}</span>`);
+                    } else if (hl.vi === "..." && hl.color) {
+                        // Show a loading indicator in Vietnamese section if AI is generating
+                        viHtml += ` <span class="text-xs text-slate-400 italic">(Đang dịch cụm từ...)</span>`;
+                    }
+                });
+            }
             document.getElementById('fcExVi').innerHTML = viHtml;
             aiExContainer.classList.remove('hidden');
 
@@ -3157,9 +3606,14 @@ function renderFlashcard() {
 
     const fcElement = document.getElementById('flashcard');
     if (fcElement) {
-        fcElement.classList.remove('rotate-y-180');
+        if (fcExampleReadMode.startsWith('back_')) {
+            fcElement.classList.add('rotate-y-180');
+            isFlipped = true;
+        }
+        // Removing the 'else' block here so that renderFlashcard() doesn't forcefully reset
+        // the flip state when re-rendering the same card (e.g., when highlighting text).
+        // Navigation functions like nextFlashcard() already handle flipping back to front manually.
     }
-    isFlipped = false;
 
     if (isFcSlideshow) {
         if (autoPlaySequenceTimeout) clearTimeout(autoPlaySequenceTimeout);
@@ -3195,17 +3649,15 @@ function jumpToFlashcardInline(val) {
 
     flashcardIndex = num - 1;
 
-    // Re-render
-    const flashcardEl = document.getElementById('flashcard');
-    flashcardEl.classList.remove('rotate-y-180');
-    isFlipped = false;
-
     // Khôi phục UI input
     document.getElementById('fcIndexInput').value = num;
 
-    setTimeout(() => {
+    if (isFlipped && !fcExampleReadMode.startsWith('back_')) {
+        flipFlashcard();
+        setTimeout(renderFlashcard, 250);
+    } else {
         renderFlashcard();
-    }, 150);
+    }
 }
 
 function nextFlashcard() {
@@ -3227,7 +3679,7 @@ function nextFlashcard() {
             }
         }
     }
-    if (isFlipped) {
+    if (isFlipped && !fcExampleReadMode.startsWith('back_')) {
         flipFlashcard();
         setTimeout(renderFlashcard, 250);
     } else {
@@ -3242,7 +3694,7 @@ function prevFlashcard() {
     } else {
         flashcardIndex = currentFlashcards.length - 1; // Vòng lại từ cuối
     }
-    if (isFlipped) {
+    if (isFlipped && !fcExampleReadMode.startsWith('back_')) {
         flipFlashcard();
         setTimeout(renderFlashcard, 250);
     } else {
@@ -3257,7 +3709,7 @@ function shuffleFlashcards() {
         [currentFlashcards[i], currentFlashcards[j]] = [currentFlashcards[j], currentFlashcards[i]];
     }
     flashcardIndex = 0;
-    if (isFlipped) {
+    if (isFlipped && !fcExampleReadMode.startsWith('back_')) {
         flipFlashcard();
         setTimeout(renderFlashcard, 250);
     } else {
@@ -3272,18 +3724,76 @@ document.addEventListener('keydown', function (event) {
         // Không chặn phím nếu đang gõ chữ ở đâu đó
         if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName) || document.activeElement.isContentEditable) return;
 
+        // Undo (Ctrl+Z) cho thao tác tô màu
+        if (event.ctrlKey && event.key.toLowerCase() === 'z') {
+            const card = currentFlashcards[flashcardIndex];
+            if (card && card.aiExample && typeof fcHighlightHistory !== 'undefined' && fcHighlightHistory.length > 0) {
+                const lastState = fcHighlightHistory[fcHighlightHistory.length - 1];
+                if (lastState.index === flashcardIndex) {
+                    event.preventDefault();
+                    fcHighlightHistory.pop(); // Lấy ra trạng thái cũ nhất
+                    card.aiExample.highlights = lastState.highlights;
+                    saveHighlightsToCache(card);
+                    renderFlashcard();
+                    return;
+                }
+            }
+        }
+
+        // Xử lý Highlight AI on-demand
+        if (['y', 'b', 'g', 'r', 'p', 'x', 'delete', 'backspace'].includes(event.key.toLowerCase())) {
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0 && !selection.isCollapsed) {
+                const enContainer = document.getElementById('fcExEn');
+                // Allow highlighting if selection is within the English AI example
+                if (enContainer && enContainer.contains(selection.anchorNode)) {
+                    const selectedEn = selection.toString().trim();
+                    if (selectedEn) {
+                        event.preventDefault(); // Ngăn trình duyệt làm các thao tác mặc định
+                        handleAIHighlight(selectedEn, event.key.toLowerCase());
+                        window.getSelection().removeAllRanges(); // Xóa bôi đen sau khi áp dụng
+                        return;
+                    }
+                }
+            }
+        }
+
         if (event.code === 'Space') {
             event.preventDefault();
             if (isFcSlideshow) {
                 isFcSlideshowLoopingCurrent = !isFcSlideshowLoopingCurrent;
                 const icon = document.getElementById('fcSlideshowIcon');
                 const textSpan = document.getElementById('fcSlideshowBtn').querySelector('span');
+                
+                // Hàm phát tiếng beep
+                if (!window.playBeep) {
+                    window.playBeep = function(times) {
+                        try {
+                            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                            for (let i = 0; i < times; i++) {
+                                const osc = ctx.createOscillator();
+                                const gain = ctx.createGain();
+                                osc.connect(gain);
+                                gain.connect(ctx.destination);
+                                osc.type = 'sine';
+                                osc.frequency.value = 800;
+                                gain.gain.setValueAtTime(0.2, ctx.currentTime + i * 0.2);
+                                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.2 + 0.1);
+                                osc.start(ctx.currentTime + i * 0.2);
+                                osc.stop(ctx.currentTime + i * 0.2 + 0.1);
+                            }
+                        } catch (e) {}
+                    };
+                }
+
                 if (isFcSlideshowLoopingCurrent) {
                     icon.className = "fa-solid fa-repeat animate-spin-slow";
                     if (textSpan) textSpan.innerText = "Đang lặp";
+                    if (window.playBeep) window.playBeep(1);
                 } else {
                     icon.className = "fa-solid fa-pause";
                     if (textSpan) textSpan.innerText = "Học rảnh tay";
+                    if (window.playBeep) window.playBeep(2);
                 }
             } else {
                 if (isFlipped) {
@@ -3448,11 +3958,18 @@ function parseStarredVocabInput() {
                 const pos = guessPartOfSpeech(word, meaning);
                 let newItem = { word, meaning, pos };
 
+                let customPhonetics = {};
+                try { customPhonetics = JSON.parse(localStorage.getItem('toeic_custom_phonetics') || '{}'); } catch(e) {}
+
                 const oldItem = oldStarred.find(o => o.word === word);
                 if (oldItem) {
                     if (oldItem.aiExample) newItem.aiExample = oldItem.aiExample;
                     if (oldItem.phonetic !== undefined) newItem.phonetic = oldItem.phonetic;
                     if (oldItem.googleTranslation !== undefined) newItem.googleTranslation = oldItem.googleTranslation;
+                }
+                
+                if (customPhonetics[word.toLowerCase()]) {
+                    newItem.phonetic = customPhonetics[word.toLowerCase()];
                 }
 
                 newStarred.push(newItem);
@@ -3528,18 +4045,32 @@ function parseVocab(forceRender = false, noRender = false) {
                         if (oldItem.phonetic !== undefined) newItem.phonetic = oldItem.phonetic;
                         if (oldItem.googleTranslation !== undefined) newItem.googleTranslation = oldItem.googleTranslation;
                     }
+                    
+                    let customPhonetics = {};
+                    try { customPhonetics = JSON.parse(localStorage.getItem('toeic_custom_phonetics') || '{}'); } catch(e) {}
+                    if (customPhonetics[word.toLowerCase()]) {
+                        newItem.phonetic = customPhonetics[word.toLowerCase()];
+                    }
                     const baseKey = `${word.toLowerCase()}_${meaning.toLowerCase().replace(/\s+/g, '')}`;
                     const baseOldKey = word.toLowerCase();
+                    const ctxSuffix = typeof getContextCacheSuffix === 'function' ? getContextCacheSuffix() : '';
 
-                    // 1. Tìm cache chính xác theo độ khó hiện tại
-                    let cacheEntry = aiCache[`${baseKey}_${aiDifficultyLevel}`] || aiCache[`${baseOldKey}_${aiDifficultyLevel}`];
+                    // 1. Tìm cache chính xác theo độ khó hiện tại (Ưu tiên có context)
+                    let cacheEntry = aiCache[`${baseKey}_${aiDifficultyLevel}${ctxSuffix}`] || aiCache[`${baseOldKey}_${aiDifficultyLevel}${ctxSuffix}`];
+                    if (!cacheEntry && ctxSuffix) {
+                        cacheEntry = aiCache[`${baseKey}_${aiDifficultyLevel}`] || aiCache[`${baseOldKey}_${aiDifficultyLevel}`];
+                    }
 
                     // 2. Nếu không có, tìm fallback ở các chế độ khác
                     if (!cacheEntry) {
                         const fallbackSuffixes = ['_fc_short', '_fc_long', '_medium', '_hard', '_easy', ''];
                         for (let suffix of fallbackSuffixes) {
-                            if (aiCache[`${baseKey}${suffix}`]) { cacheEntry = aiCache[`${baseKey}${suffix}`]; break; }
-                            if (aiCache[`${baseOldKey}${suffix}`]) { cacheEntry = aiCache[`${baseOldKey}${suffix}`]; break; }
+                            if (aiCache[`${baseKey}${suffix}${ctxSuffix}`]) { cacheEntry = aiCache[`${baseKey}${suffix}${ctxSuffix}`]; break; }
+                            if (aiCache[`${baseOldKey}${suffix}${ctxSuffix}`]) { cacheEntry = aiCache[`${baseOldKey}${suffix}${ctxSuffix}`]; break; }
+                            if (ctxSuffix) {
+                                if (aiCache[`${baseKey}${suffix}`]) { cacheEntry = aiCache[`${baseKey}${suffix}`]; break; }
+                                if (aiCache[`${baseOldKey}${suffix}`]) { cacheEntry = aiCache[`${baseOldKey}${suffix}`]; break; }
+                            }
                         }
                     }
 
@@ -5042,7 +5573,7 @@ async function callGeminiAPI(systemPrompt, userPrompt, currentApiKey) {
             max_tokens: 6000
         };
     } else {
-        apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${currentApiKey}`;
+        apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${currentApiKey}`;
         payload = {
             contents: [{ parts: [{ text: userPrompt }] }],
             systemInstruction: {
@@ -5432,7 +5963,7 @@ async function callGeminiAPIText(systemPrompt, userPrompt, overrideModel = null,
             payload = { model: selectedModel, messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }] };
             if (!selectedModel.includes('compound')) payload.max_tokens = 3000;
         } else {
-            apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${currentKey}`;
+            apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${currentKey}`;
             payload = { contents: [{ parts: [{ text: userPrompt }] }], systemInstruction: { parts: [{ text: systemPrompt }] } };
         }
 
@@ -5960,7 +6491,7 @@ function startQuizMode() {
     try { aiCache = JSON.parse(localStorage.getItem('toeic_ai_cache') || "{}"); } catch (e) { }
     currentQuizList.forEach(w => {
         if (!w.aiExample) {
-            const newCacheKey = `${w.word.toLowerCase()}_${w.meaning.toLowerCase().replace(/\s+/g, '')}_${aiDifficultyLevel}`;
+            const newCacheKey = `${w.word.toLowerCase()}_${w.meaning.toLowerCase().replace(/\s+/g, '')}_${aiDifficultyLevel}` + getContextCacheSuffix();
             const oldCacheKey = `${w.word.toLowerCase()}_${aiDifficultyLevel}`;
             let cacheEntry = aiCache[newCacheKey] || aiCache[oldCacheKey];
             if (!cacheEntry) {
@@ -7258,3 +7789,72 @@ function prevFillQuestion() {
         loadFillQuestion();
     }
 }
+window.handleAiToggle = function(checkbox) {
+    if (checkbox.checked) {
+        let currentCtx = localStorage.getItem('toeic_ai_context') || '';
+        const modal = document.getElementById('aiContextModal');
+        const input = document.getElementById('aiContextInput');
+        if (modal && input) {
+            input.value = currentCtx;
+            
+            // Lấy vị trí nút flashcard để đặt modal bên cạnh
+            const btnRect = document.getElementById('flashcardBtn').getBoundingClientRect();
+            
+            modal.classList.remove('hidden'); // Hiện trước để lấy chiều cao
+            const modalHeight = modal.offsetHeight || 300; // Chiều cao ước tính nếu chưa lấy được
+            
+            let topPos = btnRect.top - 20;
+            // Đảm bảo không bị lẹm xuống đáy màn hình
+            if (topPos + modalHeight > window.innerHeight - 20) {
+                topPos = window.innerHeight - modalHeight - 20;
+            }
+            // Đảm bảo không bị lẹm lên nóc màn hình
+            if (topPos < 20) topPos = 20;
+            
+            modal.style.top = topPos + 'px';
+            modal.style.left = (btnRect.right + 15) + 'px';
+            
+            input.focus();
+        } else {
+            // Fallback just in case
+            let result = window.prompt('Nhập ngữ cảnh để AI tạo ví dụ:', currentCtx);
+            if (result !== null) {
+                localStorage.setItem('toeic_ai_context', result.trim());
+            } else {
+                checkbox.checked = false;
+            }
+        }
+    }
+};
+
+window.closeAiContextModal = function(save) {
+    const modal = document.getElementById('aiContextModal');
+    const input = document.getElementById('aiContextInput');
+    const checkbox = document.getElementById('aiExampleToggle');
+    if (modal && input && checkbox) {
+        if (save) {
+            const ctx = input.value.trim();
+            localStorage.setItem('toeic_ai_context', ctx);
+            if (ctx) {
+                if (typeof showNotice === 'function') showNotice('Đã áp dụng ngữ cảnh AI!');
+            } else {
+                if (typeof showNotice === 'function') showNotice('Đã xóa ngữ cảnh, AI tạo tự do');
+            }
+        } else {
+            checkbox.checked = false;
+        }
+        modal.classList.add('hidden');
+    }
+};
+
+// Đóng modal khi click ra ngoài bảng
+document.addEventListener('mousedown', function(event) {
+    const modal = document.getElementById('aiContextModal');
+    if (modal && !modal.classList.contains('hidden')) {
+        // Kiểm tra xem click có nằm ngoài modal và không phải là nút toggle AI không
+        if (!modal.contains(event.target) && !event.target.closest('label') && !event.target.closest('.btn-wrapper')) {
+            // Tự động lưu ngữ cảnh và đóng
+            window.closeAiContextModal(true);
+        }
+    }
+});
