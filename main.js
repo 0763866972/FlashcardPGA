@@ -3396,7 +3396,12 @@ function renderFlashcard() {
                 }
             }).join('');
 
-            enEl.innerHTML = html;
+            let enHtml = html;
+            // Highlight and line-break for Q&A format
+            enHtml = enHtml.replace(/(<span[^>]*>Q<\/span>:)/g, '<strong class="text-brand-600 dark:text-brand-400 font-black">$1</strong>');
+            enHtml = enHtml.replace(/(<span[^>]*>A<\/span>:)/g, '<br><strong class="text-amber-600 dark:text-amber-400 font-black">$1</strong>');
+            
+            enEl.innerHTML = enHtml;
 
             // Highlight nghĩa tiếng Việt (bỏ ngoặc vuông, xoá ngoặc nhọn, xoá chấm câu)
             const viText = card.aiExample.vi.replace(/[\{\}"]/g, '').replace(/[\.\?!]$/, '').trim();
@@ -3413,6 +3418,10 @@ function renderFlashcard() {
                     }
                 });
             }
+            // Highlight and line-break for Q&A format in Vietnamese
+            viHtml = viHtml.replace(/\b(Q:)/g, '<strong class="text-brand-600 dark:text-brand-400 font-black">$1</strong>');
+            viHtml = viHtml.replace(/\b(A:)/g, '<br><strong class="text-amber-600 dark:text-amber-400 font-black">$1</strong>');
+
             document.getElementById('fcExVi').innerHTML = viHtml;
             aiExContainer.classList.remove('hidden');
 
@@ -7507,7 +7516,7 @@ function showFillAiDetails() {
     if (elHomophones) elHomophones.classList.add('hidden');
     if (elDetails) elDetails.classList.add('hidden');
 
-    if (ex.family && ex.family.length > 0) {
+    if (ex.family && ex.family.length > 0 && localStorage.getItem('toeic_ai_fam_toggle') !== 'false') {
         const famHtml = ex.family.map(f => `<tr class="cursor-pointer hover:bg-slate-800/30 transition-colors group" 
                     onclick="speakText('${f.word.replace(/'/g, "\\'")}', 'en-US')" 
                     oncontextmenu="handleExtraRightClick(event, '${f.word.replace(/'/g, "\\'")}')" title="Chuột trái: Đọc từ | Chuột phải: Tra từ">
@@ -7520,7 +7529,7 @@ function showFillAiDetails() {
         showAi = true;
     }
 
-    if (ex.synonyms && ex.synonyms.length > 0) {
+    if (ex.synonyms && ex.synonyms.length > 0 && localStorage.getItem('toeic_ai_syn_toggle') !== 'false') {
         const synHtml = ex.synonyms.map(c => {
             let textVi = c.vi || '';
             if (/\[Đồng nghĩa\]/i.test(textVi)) {
@@ -7544,7 +7553,7 @@ function showFillAiDetails() {
         showAi = true;
     }
 
-    if (ex.homophones && ex.homophones.length > 0) {
+    if (ex.homophones && ex.homophones.length > 0 && localStorage.getItem('toeic_ai_hom_toggle') !== 'false') {
         const homHtml = ex.homophones.map(h => `<tr class="cursor-pointer hover:bg-slate-800/30 transition-colors group" 
                     onclick="speakText('${h.word.replace(/'/g, "\\'")}', 'en-US')" 
                     oncontextmenu="handleExtraRightClick(event, '${h.word.replace(/'/g, "\\'")}')" title="Chuột trái: Đọc từ | Chuột phải: Tra từ">
@@ -7792,6 +7801,25 @@ function prevFillQuestion() {
         loadFillQuestion();
     }
 }
+window.handleAiOptionToggle = function(checkbox, trackId, thumbId) {
+    const track = document.getElementById(trackId);
+    const thumb = document.getElementById(thumbId);
+    if (!track || !thumb) return;
+    
+    // Save to localStorage immediately
+    if (checkbox.id === 'aiFamToggle') localStorage.setItem('toeic_ai_fam_toggle', checkbox.checked);
+    if (checkbox.id === 'aiSynToggle') localStorage.setItem('toeic_ai_syn_toggle', checkbox.checked);
+    if (checkbox.id === 'aiHomToggle') localStorage.setItem('toeic_ai_hom_toggle', checkbox.checked);
+    
+    if (checkbox.checked) {
+        track.className = 'w-9 h-5 rounded-full transition-colors duration-300 shadow-inner p-[2px] bg-emerald-500 flex items-center';
+        thumb.className = 'bg-white rounded-full h-4 w-4 transition-all duration-300 transform translate-x-4 shadow-sm';
+    } else {
+        track.className = 'w-9 h-5 rounded-full transition-colors duration-300 shadow-inner p-[2px] bg-slate-400 flex items-center';
+        thumb.className = 'bg-white rounded-full h-4 w-4 transition-all duration-300 transform translate-x-0 shadow-sm';
+    }
+};
+
 window.handleAiToggle = function(checkbox) {
     if (checkbox.checked) {
         let currentCtx = localStorage.getItem('toeic_ai_context') || '';
@@ -7799,6 +7827,22 @@ window.handleAiToggle = function(checkbox) {
         const input = document.getElementById('aiContextInput');
         if (modal && input) {
             input.value = currentCtx;
+            
+            const aiFamToggle = document.getElementById('aiFamToggle');
+            const aiSynToggle = document.getElementById('aiSynToggle');
+            const aiHomToggle = document.getElementById('aiHomToggle');
+            if (aiFamToggle) {
+                aiFamToggle.checked = localStorage.getItem('toeic_ai_fam_toggle') !== 'false';
+                window.handleAiOptionToggle(aiFamToggle, 'trackFam', 'thumbFam');
+            }
+            if (aiSynToggle) {
+                aiSynToggle.checked = localStorage.getItem('toeic_ai_syn_toggle') !== 'false';
+                window.handleAiOptionToggle(aiSynToggle, 'trackSyn', 'thumbSyn');
+            }
+            if (aiHomToggle) {
+                aiHomToggle.checked = localStorage.getItem('toeic_ai_hom_toggle') !== 'false';
+                window.handleAiOptionToggle(aiHomToggle, 'trackHom', 'thumbHom');
+            }
             
             // Lấy vị trí nút flashcard để đặt modal bên cạnh
             const btnRect = document.getElementById('flashcardBtn').getBoundingClientRect();
@@ -7838,10 +7882,18 @@ window.closeAiContextModal = function(save) {
         if (save) {
             const ctx = input.value.trim();
             localStorage.setItem('toeic_ai_context', ctx);
+            
+            const aiFamToggle = document.getElementById('aiFamToggle');
+            const aiSynToggle = document.getElementById('aiSynToggle');
+            const aiHomToggle = document.getElementById('aiHomToggle');
+            if (aiFamToggle) localStorage.setItem('toeic_ai_fam_toggle', aiFamToggle.checked);
+            if (aiSynToggle) localStorage.setItem('toeic_ai_syn_toggle', aiSynToggle.checked);
+            if (aiHomToggle) localStorage.setItem('toeic_ai_hom_toggle', aiHomToggle.checked);
+
             if (ctx) {
                 if (typeof showNotice === 'function') showNotice('Đã áp dụng ngữ cảnh AI!');
             } else {
-                if (typeof showNotice === 'function') showNotice('Đã xóa ngữ cảnh, AI tạo tự do');
+                if (typeof showNotice === 'function') showNotice('Đã lưu tùy chọn, AI tạo tự do');
             }
         } else {
             checkbox.checked = false;
