@@ -1547,12 +1547,15 @@ function toggleFcStar(event) {
 
 function updateFcStarIcon(isStarred) {
     const icon = document.getElementById('fcStarIcon');
-    if (icon) {
-        if (isStarred) {
-            icon.className = "fa-solid fa-star text-yellow-400 drop-shadow-sm scale-110 transition-transform";
-        } else {
-            icon.className = "fa-regular fa-star text-slate-500 hover:text-yellow-400 transition-colors";
-        }
+    const iconBack = document.getElementById('fcStarIconBack');
+    
+    if (isStarred) {
+        const starClass = "fa-solid fa-star text-yellow-400 drop-shadow-sm scale-110 transition-transform";
+        if (icon) icon.className = starClass;
+        if (iconBack) iconBack.className = starClass;
+    } else {
+        if (icon) icon.className = "fa-regular fa-star text-slate-500 hover:text-yellow-400 transition-colors";
+        if (iconBack) iconBack.className = "fa-regular fa-star text-brand-300/70 hover:text-yellow-400 transition-colors";
     }
 }
 

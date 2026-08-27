@@ -881,11 +881,18 @@
                                 <span
                                     class="absolute top-6 left-6 text-[#2f75b5] text-sm font-bold uppercase tracking-widest"><i
                                         class="fa-solid fa-spell-check"></i> Định Nghĩa</span>
-                                <button onclick="speakMeaning(event)"
-                                    class="absolute top-6 right-6 text-brand-300/70 hover:text-white text-2xl transition-colors p-2"
-                                    title="Đọc nghĩa (Tiếng Việt)">
-                                    <i class="fa-solid fa-volume-high"></i>
-                                </button>
+                                <div class="absolute top-6 right-6 flex items-center gap-2 z-10" onclick="event.stopPropagation()">
+                                    <button onclick="toggleFcStar(event)"
+                                        class="text-brand-300/70 hover:text-amber-400 text-2xl transition-colors p-2"
+                                        title="Đánh dấu từ này">
+                                        <i id="fcStarIconBack" class="fa-regular fa-star"></i>
+                                    </button>
+                                    <button onclick="speakMeaning(event)"
+                                        class="text-brand-300/70 hover:text-white text-2xl transition-colors p-2"
+                                        title="Đọc nghĩa (Tiếng Việt)">
+                                        <i class="fa-solid fa-volume-high"></i>
+                                    </button>
+                                </div>
                                 <h2 id="fcMeaning"
                                     class="text-4xl font-bold text-white text-center break-words w-full leading-relaxed">
                                     MEANING</h2>
