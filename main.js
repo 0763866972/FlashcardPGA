@@ -1,6 +1,7 @@
 
 function getContextCacheSuffix() {
-    let ctx = localStorage.getItem('toeic_ai_context') || '';
+    let groupId = typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default';
+    let ctx = localStorage.getItem('toeic_ai_context_' + groupId) || localStorage.getItem('toeic_ai_context') || '';
     if (!ctx.trim()) return '';
     return '_ctx' + Array.from(ctx).reduce((s, c) => Math.imul(31, s) + c.charCodeAt(0) | 0, 0);
 }
@@ -1769,12 +1770,11 @@ async function startFlashcardMode() {
     }
 
     const aiExampleToggle = document.getElementById('aiExampleToggle');
-    if (aiExampleToggle && aiExampleToggle.checked) {
-        let aiCache = {};
-        try { aiCache = JSON.parse(localStorage.getItem('toeic_ai_cache') || "{}"); } catch (e) { }
+    let aiCache = {};
+    try { aiCache = JSON.parse(localStorage.getItem('toeic_ai_cache') || "{}"); } catch (e) { }
 
-        // Lấy dữ liệu từ Cache nạp vào RAM trước khi kiểm tra
-        sourceList.forEach(w => {
+    // Lấy dữ liệu từ Cache nạp vào RAM trước khi kiểm tra
+    sourceList.forEach(w => {
             const newCacheKey = `${w.word.toLowerCase()}_${w.meaning.toLowerCase().replace(/\s+/g, '')}_fc_${fcAiLength}` + getContextCacheSuffix();
             const fallbackCacheKey = `${w.word.toLowerCase()}_${w.meaning.toLowerCase().replace(/\s+/g, '')}_medium`;
             const oldCacheKey = `${w.word.toLowerCase()}_medium`;
@@ -1846,6 +1846,7 @@ async function startFlashcardMode() {
             }
         });
 
+    if (aiExampleToggle && aiExampleToggle.checked) {
         let wordsNeedingEverything = [];
         let wordsNeedingOnlyExample = [];
 
@@ -2044,7 +2045,7 @@ async function generateExampleForWord(event) {
 
         styleInstruction += " (LƯU Ý: Giới hạn số lượng từ chỉ áp dụng cho câu Tiếng Anh. Câu dịch Tiếng Việt KHÔNG BỊ GIỚI HẠN độ dài, phải dịch trọn vẹn và thoát ý nhất có thể!).";
 
-        let fcAiContext = localStorage.getItem('toeic_ai_context') || '';
+        let fcAiContext = localStorage.getItem('toeic_ai_context_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default')) || localStorage.getItem('toeic_ai_context') || '';
         const chatInput = document.getElementById('chatInput');
         if (chatInput && chatInput.value.trim() !== '') {
             fcAiContext = chatInput.value.trim();
@@ -2231,7 +2232,7 @@ async function generateBulkExamples(wordsArray, assignedKey, onlyExample = false
         }
         styleInstruction += " (LƯU Ý: Giới hạn số lượng từ chỉ áp dụng cho câu Tiếng Anh. Câu dịch Tiếng Việt KHÔNG BỊ GIỚI HẠN độ dài, phải dịch trọn vẹn và thoát ý nhất có thể!).";
 
-        let fcAiContext = localStorage.getItem('toeic_ai_context') || '';
+        let fcAiContext = localStorage.getItem('toeic_ai_context_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default')) || localStorage.getItem('toeic_ai_context') || '';
         if (fcAiContext.trim() !== '') {
             styleInstruction += ` YÊU CẦU ĐẶC BIỆT / NGỮ CẢNH TỪ NGƯỜI DÙNG: "${fcAiContext}".\n\nBạn BẮT BUỘC phải tuân thủ NGHIÊM NGẶT yêu cầu này khi tạo câu ví dụ (ưu tiên dùng các cấu trúc, từ vựng, mẫu câu mà người dùng yêu cầu). Được phép bỏ qua giới hạn số từ nếu yêu cầu của người dùng đòi hỏi câu dài hơn.`;
         }
@@ -3171,6 +3172,11 @@ function saveHighlightsToCache(card) {
     if (updated) {
         localStorage.setItem('toeic_ai_cache', JSON.stringify(aiCache));
     }
+    
+    // [AI BUGFIX] Update the active session so highlights are remembered on refresh
+    if (typeof saveSessionForCurrentDifficulty === 'function') {
+        saveSessionForCurrentDifficulty();
+    }
 }
 
 let fcHighlightHistory = [];
@@ -3398,8 +3404,8 @@ function renderFlashcard() {
 
             let enHtml = html;
             // Highlight and line-break for Q&A format
-            enHtml = enHtml.replace(/(<span[^>]*>Q<\/span>:)/g, '<strong class="text-brand-600 dark:text-brand-400 font-black">$1</strong>');
-            enHtml = enHtml.replace(/(<span[^>]*>A<\/span>:)/g, '<br><strong class="text-amber-600 dark:text-amber-400 font-black">$1</strong>');
+            enHtml = enHtml.replace(/(<span[^>]*>(?:Q|Question)<\/span>:)/gi, '<strong class="text-brand-600 dark:text-brand-400 font-black">$1</strong>');
+            enHtml = enHtml.replace(/(<span[^>]*>(?:A|Answer)<\/span>:)/gi, '<br><strong class="text-amber-600 dark:text-amber-400 font-black">$1</strong>');
             
             enEl.innerHTML = enHtml;
 
@@ -3419,8 +3425,8 @@ function renderFlashcard() {
                 });
             }
             // Highlight and line-break for Q&A format in Vietnamese
-            viHtml = viHtml.replace(/\b(Q:)/g, '<strong class="text-brand-600 dark:text-brand-400 font-black">$1</strong>');
-            viHtml = viHtml.replace(/\b(A:)/g, '<br><strong class="text-amber-600 dark:text-amber-400 font-black">$1</strong>');
+            viHtml = viHtml.replace(/(^|\s)(Q:|H:|Hỏi:|Question:)\s*/gi, '$1<strong class="text-brand-600 dark:text-brand-400 font-black">$2</strong> ');
+            viHtml = viHtml.replace(/(^|\s)(A:|Đ:|Đáp:|Answer:)\s*/gi, '<br>$1<strong class="text-amber-600 dark:text-amber-400 font-black">$2</strong> ');
 
             document.getElementById('fcExVi').innerHTML = viHtml;
             aiExContainer.classList.remove('hidden');
@@ -7516,7 +7522,7 @@ function showFillAiDetails() {
     if (elHomophones) elHomophones.classList.add('hidden');
     if (elDetails) elDetails.classList.add('hidden');
 
-    if (ex.family && ex.family.length > 0 && localStorage.getItem('toeic_ai_fam_toggle') !== 'false') {
+    if (ex.family && ex.family.length > 0 && (localStorage.getItem('toeic_ai_fam_toggle_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default')) || localStorage.getItem('toeic_ai_fam_toggle')) !== 'false') {
         const famHtml = ex.family.map(f => `<tr class="cursor-pointer hover:bg-slate-800/30 transition-colors group" 
                     onclick="speakText('${f.word.replace(/'/g, "\\'")}', 'en-US')" 
                     oncontextmenu="handleExtraRightClick(event, '${f.word.replace(/'/g, "\\'")}')" title="Chuột trái: Đọc từ | Chuột phải: Tra từ">
@@ -7529,7 +7535,7 @@ function showFillAiDetails() {
         showAi = true;
     }
 
-    if (ex.synonyms && ex.synonyms.length > 0 && localStorage.getItem('toeic_ai_syn_toggle') !== 'false') {
+    if (ex.synonyms && ex.synonyms.length > 0 && (localStorage.getItem('toeic_ai_syn_toggle_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default')) || localStorage.getItem('toeic_ai_syn_toggle')) !== 'false') {
         const synHtml = ex.synonyms.map(c => {
             let textVi = c.vi || '';
             if (/\[Đồng nghĩa\]/i.test(textVi)) {
@@ -7553,7 +7559,7 @@ function showFillAiDetails() {
         showAi = true;
     }
 
-    if (ex.homophones && ex.homophones.length > 0 && localStorage.getItem('toeic_ai_hom_toggle') !== 'false') {
+    if (ex.homophones && ex.homophones.length > 0 && (localStorage.getItem('toeic_ai_hom_toggle_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default')) || localStorage.getItem('toeic_ai_hom_toggle')) !== 'false') {
         const homHtml = ex.homophones.map(h => `<tr class="cursor-pointer hover:bg-slate-800/30 transition-colors group" 
                     onclick="speakText('${h.word.replace(/'/g, "\\'")}', 'en-US')" 
                     oncontextmenu="handleExtraRightClick(event, '${h.word.replace(/'/g, "\\'")}')" title="Chuột trái: Đọc từ | Chuột phải: Tra từ">
@@ -7822,7 +7828,7 @@ window.handleAiOptionToggle = function(checkbox, trackId, thumbId) {
 
 window.handleAiToggle = function(checkbox) {
     if (checkbox.checked) {
-        let currentCtx = localStorage.getItem('toeic_ai_context') || '';
+        let currentCtx = localStorage.getItem('toeic_ai_context_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default')) || localStorage.getItem('toeic_ai_context') || '';
         const modal = document.getElementById('aiContextModal');
         const input = document.getElementById('aiContextInput');
         if (modal && input) {
@@ -7832,15 +7838,15 @@ window.handleAiToggle = function(checkbox) {
             const aiSynToggle = document.getElementById('aiSynToggle');
             const aiHomToggle = document.getElementById('aiHomToggle');
             if (aiFamToggle) {
-                aiFamToggle.checked = localStorage.getItem('toeic_ai_fam_toggle') !== 'false';
+                aiFamToggle.checked = (localStorage.getItem('toeic_ai_fam_toggle_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default')) || localStorage.getItem('toeic_ai_fam_toggle')) !== 'false';
                 window.handleAiOptionToggle(aiFamToggle, 'trackFam', 'thumbFam');
             }
             if (aiSynToggle) {
-                aiSynToggle.checked = localStorage.getItem('toeic_ai_syn_toggle') !== 'false';
+                aiSynToggle.checked = (localStorage.getItem('toeic_ai_syn_toggle_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default')) || localStorage.getItem('toeic_ai_syn_toggle')) !== 'false';
                 window.handleAiOptionToggle(aiSynToggle, 'trackSyn', 'thumbSyn');
             }
             if (aiHomToggle) {
-                aiHomToggle.checked = localStorage.getItem('toeic_ai_hom_toggle') !== 'false';
+                aiHomToggle.checked = (localStorage.getItem('toeic_ai_hom_toggle_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default')) || localStorage.getItem('toeic_ai_hom_toggle')) !== 'false';
                 window.handleAiOptionToggle(aiHomToggle, 'trackHom', 'thumbHom');
             }
             
@@ -7866,7 +7872,7 @@ window.handleAiToggle = function(checkbox) {
             // Fallback just in case
             let result = window.prompt('Nhập ngữ cảnh để AI tạo ví dụ:', currentCtx);
             if (result !== null) {
-                localStorage.setItem('toeic_ai_context', result.trim());
+                localStorage.setItem('toeic_ai_context_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default'), result.trim());
             } else {
                 checkbox.checked = false;
             }
@@ -7881,14 +7887,14 @@ window.closeAiContextModal = function(save) {
     if (modal && input && checkbox) {
         if (save) {
             const ctx = input.value.trim();
-            localStorage.setItem('toeic_ai_context', ctx);
+            localStorage.setItem('toeic_ai_context_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default'), ctx);
             
             const aiFamToggle = document.getElementById('aiFamToggle');
             const aiSynToggle = document.getElementById('aiSynToggle');
             const aiHomToggle = document.getElementById('aiHomToggle');
-            if (aiFamToggle) localStorage.setItem('toeic_ai_fam_toggle', aiFamToggle.checked);
-            if (aiSynToggle) localStorage.setItem('toeic_ai_syn_toggle', aiSynToggle.checked);
-            if (aiHomToggle) localStorage.setItem('toeic_ai_hom_toggle', aiHomToggle.checked);
+            if (aiFamToggle) localStorage.setItem('toeic_ai_fam_toggle_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default'), aiFamToggle.checked);
+            if (aiSynToggle) localStorage.setItem('toeic_ai_syn_toggle_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default'), aiSynToggle.checked);
+            if (aiHomToggle) localStorage.setItem('toeic_ai_hom_toggle_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default'), aiHomToggle.checked);
 
             if (ctx) {
                 if (typeof showNotice === 'function') showNotice('Đã áp dụng ngữ cảnh AI!');

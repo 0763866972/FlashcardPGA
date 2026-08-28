@@ -810,11 +810,11 @@
                     <div class="w-full flex flex-col items-center justify-center my-auto min-h-max shrink-0 py-4">
                         <!-- Flashcard UI -->
                         <div id="flashcard"
-                            class="w-full max-w-3xl h-[420px] shrink-0 relative cursor-pointer transform-style-3d transition-transform duration-500"
+                            class="w-full max-w-3xl min-h-[420px] shrink-0 grid cursor-pointer transform-style-3d transition-transform duration-500"
                             onclick="flipFlashcard()">
                             <!-- Front (Word) -->
                             <div id="fcFront"
-                                class="absolute inset-0 bg-slate-800 border-2 border-slate-700 rounded-3xl shadow-2xl flex flex-col items-center justify-center p-10 backface-hidden">
+                                class="col-start-1 row-start-1 w-full h-full bg-slate-800 border-2 border-slate-700 rounded-3xl shadow-2xl flex flex-col items-center justify-center p-10 backface-hidden">
                                 <span id="fcGenPhoneticBtn" onclick="generatePhoneticForWord(event)" title="Nhấn để AI tạo phiên âm" class="absolute top-6 left-6 text-slate-500 text-sm font-bold uppercase tracking-widest cursor-pointer hover:text-brand-400 transition-colors"><i
                                         class="fa-regular fa-lightbulb text-brand-400"></i> Thuật Ngữ</span>
                                 <div class="absolute top-6 right-6 flex items-center gap-2">
@@ -877,7 +877,7 @@
 
                             <!-- Back (Meaning) -->
                             <div id="fcBack"
-                                class="absolute inset-0 bg-gradient-to-br from-brand-900 to-indigo-900 border-2 border-brand-500/50 rounded-3xl shadow-[0_0_40px_rgba(99,102,241,0.2)] flex flex-col items-center justify-center p-10 backface-hidden rotate-y-180">
+                                class="col-start-1 row-start-1 w-full h-full bg-gradient-to-br from-brand-900 to-indigo-900 border-2 border-brand-500/50 rounded-3xl shadow-[0_0_40px_rgba(99,102,241,0.2)] flex flex-col items-center justify-center p-10 backface-hidden rotate-y-180">
                                 <span
                                     class="absolute top-6 left-6 text-[#2f75b5] text-sm font-bold uppercase tracking-widest"><i
                                         class="fa-solid fa-spell-check"></i> Định Nghĩa</span>
