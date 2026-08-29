@@ -172,12 +172,6 @@ try {
     vocabGroups = [{"id":"default","name":"Mặc định"}];
 }
 
-// Tự động xoá bộ nhớ đệm AI bị lỗi (chỉ chạy 1 lần) để fix triệt để lỗi hiển thị sai câu ví dụ
-if (!localStorage.getItem('toeic_ai_cache_cleared_bugfix_1')) {
-    localStorage.removeItem('toeic_ai_cache');
-    localStorage.setItem('toeic_ai_cache_cleared_bugfix_1', 'true');
-}
-
 /**
  * Helper: Xóa tag màu [c:color]...[/c] để lấy raw text.
  */
@@ -216,6 +210,9 @@ function getRealVocabKey(key) {
     }
     if (key === 'toeic_starred_words') {
         return activeVocabGroupId === 'default' ? 'toeic_starred_words' : `toeic_starred_words_${activeVocabGroupId}`;
+    }
+    if (key === 'toeic_ai_cache') {
+        return activeVocabGroupId === 'default' ? 'toeic_ai_cache' : `toeic_ai_cache_${activeVocabGroupId}`;
     }
     return key; // Các key khác không bị redirect
 }
@@ -2052,18 +2049,19 @@ async function generateExampleForWord(event) {
         }
         
         if (fcAiContext.trim() !== '') {
-            styleInstruction += ` \n\nYÊU CẦU ĐẶC BIỆT / NGỮ CẢNH TỪ NGƯỜI DÙNG: "${fcAiContext}".\n\nBạn BẮT BUỘC phải tuân thủ NGHIÊM NGẶT yêu cầu này khi tạo câu ví dụ (ưu tiên dùng các cấu trúc, từ vựng, mẫu câu mà người dùng yêu cầu). Được phép bỏ qua giới hạn số từ nếu yêu cầu của người dùng đòi hỏi câu dài hơn.`;
+            styleInstruction += ` \n\nYÊU CẦU ĐẶC BIỆT / NGỮ CẢNH TỪ NGƯỜI DÙNG: "${fcAiContext}".\n\nBạn BẮT BUỘC phải tuân thủ NGHIÊM NGẶT yêu cầu này khi tạo câu ví dụ (ưu tiên dùng các cấu trúc, từ vựng, mẫu câu mà người dùng yêu cầu). LƯU Ý QUAN TRỌNG VỀ ĐẠI TỪ: Nếu yêu cầu tạo đoạn hội thoại Q&A hoặc bài nói (ví dụ TOEIC Speaking), trong phần Trả lời BẮT BUỘC PHẢI XƯNG TÔI ('I', 'my', 'me', 'we'). TUYỆT ĐỐI KHÔNG DÙNG 'you' hay 'customers' để nói về trải nghiệm của bản thân. Được phép bỏ qua giới hạn số từ nếu yêu cầu của người dùng đòi hỏi câu dài hơn.`;
         }
 
         let wantSyn = document.getElementById('aiSynToggle') ? document.getElementById('aiSynToggle').checked : true;
         let wantFam = document.getElementById('aiFamToggle') ? document.getElementById('aiFamToggle').checked : true;
         let wantHom = document.getElementById('aiHomToggle') ? document.getElementById('aiHomToggle').checked : true;
+        let wantGrammar = document.getElementById('aiGrammarToggle') ? document.getElementById('aiGrammarToggle').checked : true;
 
         if (targetMode === 'dictation') {
-            wantSyn = false; wantFam = false; wantHom = false;
+            wantSyn = false; wantFam = false; wantHom = false; wantGrammar = false;
         }
 
-        let taskInstructions = `1. Phân tích loại từ (pos). Viết 1 câu cho từ theo chuẩn: ${styleInstruction}
+        let taskInstructions = `1. Phân tích loại từ (pos). Tạo CÂU hoặc ĐOẠN VĂN ví dụ (tùy theo yêu cầu người dùng) theo chuẩn: ${styleInstruction}
 2. Cấu trúc ngữ pháp (structures): NẾU TỪ CÓ giới từ đi kèm (vd: under + construction) HOẶC là danh từ ghép phổ biến (vd: lecture hall), hãy đưa vào đây.
 - NẾU LÀ CẤU TRÚC GIỚI TỪ/ĐỘNG TỪ: Dấu '+' CHỈ ĐƯỢC DÙNG trước các biến số (như noun, V-ing). CẤM dùng dấu '+' trước giới từ. Bọc ngoặc vuông [...] quanh TỪ KHÓA CHÍNH + GIỚI TỪ, và ngoặc nhọn {...} quanh BIẾN SỐ.
 - NẾU LÀ DANH TỪ GHÉP: CẤM DÙNG dấu '+' hay ngoặc nhọn {...}. HÃY BỌC NGOẶC VUÔNG [...] CHO TOÀN BỘ CỤM (vd: [lecture hall]). Phải thêm "(danh từ ghép)" ở cuối phần nghĩa và DỊCH THẬT TỰ NHIÊN. Mảng rỗng \`[]\` nếu không có gì đặc biệt.
@@ -2073,6 +2071,16 @@ async function generateExampleForWord(event) {
         if (wantSyn) taskInstructions += `\n3. TÌM TỪ ĐỒNG NGHĨA VÀ TRÁI NGHĨA: BẮT BUỘC PHẢI TÌM ÍT NHẤT 3 TỪ ĐỒNG NGHĨA VÀ 3 TỪ TRÁI NGHĨA (nếu từ điển có). Phân loại rõ bằng cách thêm "[Đồng nghĩa]" hoặc "[Trái nghĩa]" ở đầu phần nghĩa tiếng Việt. BẮT BUỘC PHẢI TRẢ VỀ TRONG KEY 'synonyms_antonyms'.`;
         if (wantFam) taskInstructions += `\n4. KHAI THÁC TỐI ĐA TỪ CÙNG GỐC (Word Family): Hãy tìm VÀ LIỆT KÊ TOÀN BỘ tất cả các biến thể của từ. BẮT BUỘC PHẢI TÌM TRẠNG TỪ (Adverb - đuôi ly) NẾU CÓ THỂ, cùng với danh từ, động từ, tính từ... BẮT BUỘC PHẢI TRẢ VỀ TRONG KEY 'family'.`;
         if (wantHom) taskInstructions += `\n5. TÌM 3-4 TỪ DỄ NHẦM LẪN (Confusing Words / Homophones). YÊU CẦU TỐI THƯỢNG: CÁC TỪ NÀY PHẢI LÀ TỪ VỰNG TIẾNG ANH CHUẨN CÓ THẬT TRONG TỪ ĐIỂN. HÃY tìm các từ có CÁCH VIẾT hoặc PHÁT ÂM gần giống với từ gốc NHƯNG NGHĨA KHÁC HOÀN TOÀN. BẮT BUỘC PHẢI TRẢ VỀ TRONG KEY 'homophones'.`;
+        if (wantGrammar) taskInstructions += `\n6. PHÂN TÍCH TƯ DUY DỊCH THUẬT & NGỮ PHÁP (Logic & Grammar Analysis): BẮT BUỘC phân tích tư duy hình thành TOÀN BỘ ĐOẠN VĂN / CÂU VÍ DỤ TIẾNG ANH CHÍNH mà bạn vừa tạo ra. TÁCH TỪNG CÂU HOẶC TỪNG Ý RA ĐỂ PHÂN TÍCH. TUYỆT ĐỐI KHÔNG ĐƯỢC BỎ SÓT BẤT KỲ CÂU NÀO TRONG ĐOẠN VĂN (NẾU ĐOẠN VĂN CÓ 5 CÂU THÌ BẮT BUỘC PHẢI CÓ 5 THẺ <li> ĐỂ PHÂN TÍCH CHO CẢ 5 CÂU ĐÓ). VỚI MỖI CÂU/Ý, BẠN PHẢI TRÌNH BÀY ĐÚNG CẤU TRÚC SAU TRONG 1 THẺ <li>:
+<div class="mb-2"><b>Ý chính muốn truyền đạt:</b> (Ghi tóm tắt nội dung/ý chính của câu này bằng tiếng Việt, KHÔNG cần dịch nguyên câu)</div>
+<div class="mb-2"><b>Câu Tiếng Anh:</b> <b class="text-indigo-500 dark:text-indigo-400">(Ghi toàn bộ câu tiếng Anh)</b></div>
+<div class="text-slate-700 dark:text-slate-300"><b>Phân tích ngữ pháp chuyên sâu:</b> Giải thích CỰC KỲ CHI TIẾT BẢN CHẤT NGỮ PHÁP của từng cụm từ (Tại sao dùng V-ing? Tại sao dùng mạo từ 'the'? Cấu trúc mệnh đề hoạt động thế nào?). KHÔNG CHỈ liệt kê từ vựng đơn thuần, mà phải GIẢI THÍCH LÝ DO sử dụng cấu trúc đó. YÊU CẦU QUAN TRỌNG: BẠN PHẢI GIỮ NGUYÊN THẺ HTML <span class="text-teal-600 font-semibold"> TRONG KẾT QUẢ ĐỂ TẠO MÀU SẮC. BẮT BUỘC TRÌNH BÀY DƯỚI DẠNG DANH SÁCH NHƯ SAU:
+<ul class="list-disc pl-5 mt-1 space-y-1">
+<li>Cụm "..." -> <span class="text-teal-600 font-semibold">Giải thích cấu trúc ngữ pháp và LÝ DO SỬ DỤNG (vd: dùng V-ing vì đóng vai trò làm chủ ngữ / dùng 'that' để mở đầu mệnh đề danh từ...)</span></li>
+<li>(Phân tích SÂU SẮC hết toàn bộ câu tiếng Anh theo cách này)</li>
+</ul>
+</div>
+YÊU CẦU MÃ HTML: Dùng danh sách bao ngoài cùng là <ul class="list-none space-y-6">. Mỗi ý là 1 <li> có class="border-b border-slate-100 dark:border-slate-800 pb-4 last:border-0" để cách điệu cho đẹp. ĐỒNG THỜI: Quay lên trường 'en' (câu tiếng Anh chính) và bọc các cụm từ quan trọng trong cặp ngoặc vuông [...] để hệ thống tự động highlight. Trả về HTML trong key 'grammar_analysis'.`;
 
         let jsonStructure = `{
       "word": "từ vựng ở trên", 
@@ -2100,6 +2108,10 @@ async function generateExampleForWord(event) {
       "homophones": [
         { "word": "từ đồng âm/nhầm lẫn", "vi": "nghĩa tiếng việt khác hoàn toàn" }
       ]`;
+        }
+        if (wantGrammar) {
+            jsonStructure += `,
+      "grammar_analysis": "Giải thích ngữ pháp (dạng HTML)"`;
         }
         jsonStructure += `\n}`;
 
@@ -2234,12 +2246,13 @@ async function generateBulkExamples(wordsArray, assignedKey, onlyExample = false
 
         let fcAiContext = localStorage.getItem('toeic_ai_context_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default')) || localStorage.getItem('toeic_ai_context') || '';
         if (fcAiContext.trim() !== '') {
-            styleInstruction += ` YÊU CẦU ĐẶC BIỆT / NGỮ CẢNH TỪ NGƯỜI DÙNG: "${fcAiContext}".\n\nBạn BẮT BUỘC phải tuân thủ NGHIÊM NGẶT yêu cầu này khi tạo câu ví dụ (ưu tiên dùng các cấu trúc, từ vựng, mẫu câu mà người dùng yêu cầu). Được phép bỏ qua giới hạn số từ nếu yêu cầu của người dùng đòi hỏi câu dài hơn.`;
+            styleInstruction += ` YÊU CẦU ĐẶC BIỆT / NGỮ CẢNH TỪ NGƯỜI DÙNG: "${fcAiContext}".\n\nBạn BẮT BUỘC phải tuân thủ NGHIÊM NGẶT yêu cầu này khi tạo câu ví dụ (ưu tiên dùng các cấu trúc, từ vựng, mẫu câu mà người dùng yêu cầu). LƯU Ý QUAN TRỌNG VỀ ĐẠI TỪ: Nếu yêu cầu tạo đoạn hội thoại Q&A hoặc bài nói (ví dụ TOEIC Speaking), trong phần Trả lời BẮT BUỘC PHẢI XƯNG TÔI ('I', 'my', 'me', 'we'). TUYỆT ĐỐI KHÔNG DÙNG 'you' hay 'customers' để nói về trải nghiệm của bản thân. Được phép bỏ qua giới hạn số từ nếu yêu cầu của người dùng đòi hỏi câu dài hơn.`;
         }
 
         let wantSyn = document.getElementById('aiSynToggle') ? document.getElementById('aiSynToggle').checked : true;
         let wantFam = document.getElementById('aiFamToggle') ? document.getElementById('aiFamToggle').checked : true;
         let wantHom = document.getElementById('aiHomToggle') ? document.getElementById('aiHomToggle').checked : true;
+        let wantGrammar = document.getElementById('aiGrammarToggle') ? document.getElementById('aiGrammarToggle').checked : true;
 
         if (onlyExample || targetMode === 'dictation') {
             wantSyn = false;
@@ -2247,7 +2260,7 @@ async function generateBulkExamples(wordsArray, assignedKey, onlyExample = false
             wantHom = false;
         }
 
-        let taskInstructions = `1. Phân tích loại từ (pos). Viết 1 câu cho mỗi từ theo chuẩn: ${styleInstruction}
+        let taskInstructions = `1. Phân tích loại từ (pos). Tạo CÂU hoặc ĐOẠN VĂN ví dụ (tùy theo yêu cầu người dùng) cho mỗi từ theo chuẩn: ${styleInstruction}
 2. Cấu trúc ngữ pháp (structures): NẾU TỪ CÓ giới từ đi kèm (vd: under + construction) HOẶC là danh từ ghép phổ biến (vd: lecture hall), hãy đưa vào đây.
 - NẾU LÀ CẤU TRÚC GIỚI TỪ/ĐỘNG TỪ: Dấu '+' CHỈ ĐƯỢC DÙNG trước các biến số (như noun, V-ing). CẤM dùng dấu '+' trước giới từ. Bọc ngoặc vuông [...] quanh TỪ KHÓA CHÍNH + GIỚI TỪ, và ngoặc nhọn {...} quanh BIẾN SỐ. (SAI: [domain] + of + {noun} -> ĐÚNG: [domain of] + {noun}).
 - NẾU LÀ DANH TỪ GHÉP: CẤM DÙNG dấu '+' hay ngoặc nhọn {...}. HÃY BỌC NGOẶC VUÔNG [...] CHO TOÀN BỘ CỤM (vd: [lecture hall]). Phải thêm "(danh từ ghép)" ở cuối phần nghĩa và DỊCH THẬT TỰ NHIÊN (vd: "[giảng đường] (danh từ ghép)"). Mảng rỗng \`[]\` nếu không có gì đặc biệt.
@@ -2257,6 +2270,16 @@ Ví dụ CHUẨN trong structures: struct: "[be eligible for] + {noun}", vi: "[�
         if (wantSyn) taskInstructions += `\n3. TÌM TỪ ĐỒNG NGHĨA VÀ TRÁI NGHĨA: BẮT BUỘC PHẢI TÌM ÍT NHẤT 3 TỪ ĐỒNG NGHĨA VÀ 3 TỪ TRÁI NGHĨA (nếu từ điển có). Phân loại rõ bằng cách thêm "[Đồng nghĩa]" hoặc "[Trái nghĩa]" ở đầu phần nghĩa tiếng Việt. BẮT BUỘC PHẢI TRẢ VỀ TRONG KEY 'synonyms_antonyms'.`;
         if (wantFam) taskInstructions += `\n4. KHAI THÁC TỐI ĐA TỪ CÙNG GỐC (Word Family): Hãy tìm VÀ LIỆT KÊ TOÀN BỘ tất cả các biến thể của từ. BẮT BUỘC PHẢI TÌM TRẠNG TỪ (Adverb - đuôi ly) NẾU CÓ THỂ, cùng với danh từ, động từ, tính từ và các từ thêm tiền/hậu tố (un-, in-, -ness...). BẮT BUỘC TÌM ÍT NHẤT 4-5 TỪ CÙNG GỐC (nếu từ điển có), TUYỆT ĐỐI KHÔNG ĐƯỢC LƯỜI BIẾNG. Đánh dấu "isSpecial": true nếu từ có dạng đuôi dễ nhầm lẫn (vd: danh từ nhưng đuôi -al, tính từ đuôi -ing/-ed). Đánh dấu "isDifferentMeaning": true nếu từ đó CÓ NGHĨA KHÁC HOÀN TOÀN so với từ gốc (vd: confidence là tự tin, nhưng confidential là tuyệt mật). BẮT BUỘC PHẢI TRẢ VỀ TRONG KEY 'family'.`;
         if (wantHom) taskInstructions += `\n5. TÌM 3-4 TỪ DỄ NHẦM LẪN (Confusing Words / Homophones). YÊU CẦU TỐI THƯỢNG: CÁC TỪ NÀY PHẢI LÀ TỪ VỰNG TIẾNG ANH CHUẨN CÓ THẬT TRONG TỪ ĐIỂN. TUYỆT ĐỐI KHÔNG ĐƯỢC CHẾ RA TỪ SAI CHÍNH TẢ (vd: cấm dùng 'eligibilty' để nhầm với 'eligibility', cấm dùng 'açess' để nhầm với 'access'). HÃY tìm các từ có CÁCH VIẾT hoặc PHÁT ÂM gần giống với từ gốc NHƯNG NGHĨA KHÁC HOÀN TOÀN (ví dụ: "access" nhầm với "accessory", "eligible" nhầm với "illegible", "affect" nhầm với "effect"). BẮT BUỘC PHẢI TRẢ VỀ TRONG KEY 'homophones'.`;
+        if (wantGrammar) taskInstructions += `\n6. PHÂN TÍCH TƯ DUY DỊCH THUẬT & NGỮ PHÁP (Logic & Grammar Analysis): BẮT BUỘC phân tích tư duy hình thành TOÀN BỘ ĐOẠN VĂN / CÂU VÍ DỤ TIẾNG ANH CHÍNH mà bạn vừa tạo ra. TÁCH TỪNG CÂU HOẶC TỪNG Ý RA ĐỂ PHÂN TÍCH. TUYỆT ĐỐI KHÔNG ĐƯỢC BỎ SÓT BẤT KỲ CÂU NÀO TRONG ĐOẠN VĂN (NẾU ĐOẠN VĂN CÓ 5 CÂU THÌ BẮT BUỘC PHẢI CÓ 5 THẺ <li> ĐỂ PHÂN TÍCH CHO CẢ 5 CÂU ĐÓ). VỚI MỖI CÂU/Ý, BẠN PHẢI TRÌNH BÀY ĐÚNG CẤU TRÚC SAU TRONG 1 THẺ <li>:
+<div class="mb-2"><b>Ý chính muốn truyền đạt:</b> (Ghi tóm tắt nội dung/ý chính của câu này bằng tiếng Việt, KHÔNG cần dịch nguyên câu)</div>
+<div class="mb-2"><b>Câu Tiếng Anh:</b> <b class="text-indigo-500 dark:text-indigo-400">(Ghi toàn bộ câu tiếng Anh)</b></div>
+<div class="text-slate-700 dark:text-slate-300"><b>Phân tích ngữ pháp chuyên sâu:</b> Giải thích CỰC KỲ CHI TIẾT BẢN CHẤT NGỮ PHÁP của từng cụm từ (Tại sao dùng V-ing? Tại sao dùng mạo từ 'the'? Cấu trúc mệnh đề hoạt động thế nào?). KHÔNG CHỈ liệt kê từ vựng đơn thuần, mà phải GIẢI THÍCH LÝ DO sử dụng cấu trúc đó. YÊU CẦU QUAN TRỌNG: BẠN PHẢI GIỮ NGUYÊN THẺ HTML <span class="text-teal-600 font-semibold"> TRONG KẾT QUẢ ĐỂ TẠO MÀU SẮC. BẮT BUỘC TRÌNH BÀY DƯỚI DẠNG DANH SÁCH NHƯ SAU:
+<ul class="list-disc pl-5 mt-1 space-y-1">
+<li>Cụm "..." -> <span class="text-teal-600 font-semibold">Giải thích cấu trúc ngữ pháp và LÝ DO SỬ DỤNG (vd: dùng V-ing vì đóng vai trò làm chủ ngữ / dùng 'that' để mở đầu mệnh đề danh từ...)</span></li>
+<li>(Phân tích SÂU SẮC hết toàn bộ câu tiếng Anh theo cách này)</li>
+</ul>
+</div>
+YÊU CẦU MÃ HTML: Dùng danh sách bao ngoài cùng là <ul class="list-none space-y-6">. Mỗi ý là 1 <li> có class="border-b border-slate-100 dark:border-slate-800 pb-4 last:border-0" để cách điệu cho đẹp. ĐỒNG THỜI: Quay lên trường 'en' (câu tiếng Anh chính) và bọc các cụm từ quan trọng trong cặp ngoặc vuông [...] để hệ thống tự động highlight. Trả về HTML trong key 'grammar_analysis'.`;
 
         let jsonStructure = `{
   "examples": [
@@ -2288,6 +2311,10 @@ Ví dụ CHUẨN trong structures: struct: "[be eligible for] + {noun}", vi: "[�
       "homophones": [
         { "word": "từ đồng âm/nhầm lẫn", "vi": "nghĩa tiếng việt khác hoàn toàn" }
       ]`;
+        }
+        if (wantGrammar) {
+            jsonStructure += `,
+      "grammar_analysis": "Giải thích ngữ pháp (dạng HTML)"`;
         }
         jsonStructure += `
     }
@@ -2698,6 +2725,13 @@ function stopChunkedTTS() {
     window.speechSynthesis.cancel();
 }
 
+// Lắng nghe phím ESC để dừng đọc
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        stopChunkedTTS();
+    }
+});
+
 function isVietnameseText(text) {
     const vnPattern = /[àáãạảăắằẳẵặâấầẩẫậèéẹẻẽêềếểễệđìíĩỉịòóõọỏôốồổỗộơớờởỡợùúũụủưứừửữựỳýỵỷỹ]/i;
     return vnPattern.test(text);
@@ -2728,7 +2762,7 @@ function speakMeaning(event) {
             text = text.substring(1, text.length - 1);
         }
 
-        playSpeechRobust(text, 'en-US', fcPlaybackSpeed);
+        playSpeechChunked(text, 'en-US', fcPlaybackSpeed);
         return;
     }
 
@@ -3202,7 +3236,7 @@ async function handleAIHighlight(selectedEn, colorKey) {
             return !(hlLower.includes(selLower) || selLower.includes(hlLower));
         });
         saveHighlightsToCache(card);
-        renderFlashcard();
+        renderFlashcard(true);
         return;
     }
 
@@ -3211,7 +3245,7 @@ async function handleAIHighlight(selectedEn, colorKey) {
         existing.color = colorKey;
         if (existing.vi !== "..." && existing.vi !== "Lỗi AI") {
             saveHighlightsToCache(card);
-            renderFlashcard();
+            renderFlashcard(true);
             return;
         }
     }
@@ -3223,7 +3257,7 @@ async function handleAIHighlight(selectedEn, colorKey) {
     } else {
         newHl.vi = "...";
     }
-    renderFlashcard();
+    renderFlashcard(true);
 
     const prompt = `The English sentence is: "${card.aiExample.en}". The Vietnamese translation is: "${card.aiExample.vi}". The user highlighted: "${selectedEn}". What is the exact translation of the highlighted part in the Vietnamese sentence? Return ONLY the exact substring from the Vietnamese sentence, nothing else.`;
     const sysPrompt = "You are a precise translator. Provide only the exact matching substring from the given Vietnamese translation, without quotes, explanations, or any extra text.";
@@ -3233,16 +3267,16 @@ async function handleAIHighlight(selectedEn, colorKey) {
         if (result) {
             newHl.vi = result.trim().replace(/^["']|["']$/g, '');
             saveHighlightsToCache(card);
-            renderFlashcard();
+            renderFlashcard(true);
         }
     } catch (e) {
         console.error("AI Highlight Error", e);
         newHl.vi = "Lỗi AI";
-        renderFlashcard();
+        renderFlashcard(true);
     }
 }
 
-function renderFlashcard() {
+function renderFlashcard(skipAutoPlay = false) {
     if (currentFlashcards.length === 0) return;
     const card = currentFlashcards[flashcardIndex];
 
@@ -3395,7 +3429,7 @@ function renderFlashcard() {
                     }
 
                     currentStrIdx += part.length;
-                    return `<span class="${extraClass.trim()} hover:bg-slate-500/20 rounded px-0.5 cursor-pointer transition-colors inline-block" onclick="handleWordClick(event, '${part.replace(/'/g, "\\'")}')" oncontextmenu="handleWordRightClick(event, '${part.replace(/'/g, "\\'")}')">${part}</span>`;
+                    return `<span class="${extraClass.trim()} hover:bg-slate-500/20 rounded cursor-pointer transition-colors" onclick="handleWordClick(event, '${part.replace(/'/g, "\\'")}')" ondblclick="handleWordDblClick(event, ${currentStrIdx - part.length})" oncontextmenu="handleWordRightClick(event, '${part.replace(/'/g, "\\'")}')">${part}</span>`;
                 } else {
                     currentStrIdx += part.length;
                     return part.replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -3430,6 +3464,102 @@ function renderFlashcard() {
 
             document.getElementById('fcExVi').innerHTML = viHtml;
             aiExContainer.classList.remove('hidden');
+
+            const grammarContainer = document.getElementById('fcGrammarAnalysis');
+            const grammarContent = document.getElementById('fcGrammarContent');
+            if (grammarContainer && grammarContent) {
+                if (card.aiExample && card.aiExample.grammar_analysis) {
+                    try {
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = card.aiExample.grammar_analysis;
+                        
+                        const isUnicodeLetter = (ch) => ch && /\p{L}/u.test(ch);
+                        
+                        function traverseAndWrap(node) {
+                            if (node.nodeType === Node.TEXT_NODE) {
+                                if (node.parentNode && (node.parentNode.hasAttribute('onclick') || node.parentNode.onclick)) return;
+                                let text = node.textContent;
+                                let lastIndex = 0;
+                                let hasChanges = false;
+                                
+                                const fragment = document.createDocumentFragment();
+                                
+                                text.replace(/[a-zA-Z'-]+/g, (match, offset, string) => {
+                                    let beforeMatch = string.substring(lastIndex, offset);
+                                    if (beforeMatch) {
+                                        fragment.appendChild(document.createTextNode(beforeMatch));
+                                    }
+                                    
+                                    const before = string.charAt(offset - 1);
+                                    const after = string.charAt(offset + match.length);
+                                    
+                                    if (!isUnicodeLetter(before) && !isUnicodeLetter(after)) {
+                                        hasChanges = true;
+                                        const pLower = match.toLowerCase();
+                                        let isTarget = exactWords.includes(pLower);
+                                        if (!isTarget) isTarget = targetRoots.some(root => root.length > 2 && pLower.includes(root));
+                                        if (!isTarget && aiHighlightedWords.length > 0) isTarget = aiHighlightedWords.includes(pLower);
+                                        
+                                        let extraClass = isTarget ? "text-orange-400 font-bold " : "";
+                                        
+                                        const span = document.createElement('span');
+                                        span.className = extraClass + "hover:bg-slate-500/20 rounded cursor-pointer transition-colors";
+                                        span.textContent = match;
+                                        
+                                        span.addEventListener('click', (e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            if (typeof playSpeechRobust === 'function') {
+                                                const speed = typeof fcPlaybackSpeed !== 'undefined' ? fcPlaybackSpeed : 1.0;
+                                                playSpeechRobust(match, 'en-US', speed);
+                                            }
+                                        });
+                                        
+                                        span.addEventListener('contextmenu', (e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            if (typeof handleWordRightClick === 'function') handleWordRightClick(e, match);
+                                        });
+                                        
+                                        fragment.appendChild(span);
+                                    } else {
+                                        fragment.appendChild(document.createTextNode(match));
+                                    }
+                                    
+                                    lastIndex = offset + match.length;
+                                    return match;
+                                });
+                                
+                                if (hasChanges) {
+                                    let afterMatch = text.substring(lastIndex);
+                                    if (afterMatch) {
+                                        fragment.appendChild(document.createTextNode(afterMatch));
+                                    }
+                                    node.parentNode.insertBefore(fragment, node);
+                                    node.remove();
+                                }
+                            } else if (node.nodeType === Node.ELEMENT_NODE) {
+                                if (!node.hasAttribute('onclick') && !node.onclick) {
+                                    Array.from(node.childNodes).forEach(traverseAndWrap);
+                                }
+                            }
+                        }
+                        Array.from(tempDiv.childNodes).forEach(traverseAndWrap);
+                        
+                        grammarContent.innerHTML = '';
+                        while (tempDiv.firstChild) {
+                            grammarContent.appendChild(tempDiv.firstChild);
+                        }
+                    } catch (err) {
+                        console.error('Error making grammar text clickable:', err);
+                        grammarContent.innerHTML = '<div class="text-red-500 mb-2 border border-red-500 p-2 rounded"><strong>Lỗi:</strong> ' + err.toString() + '<br>Stack: ' + err.stack + '</div>' + card.aiExample.grammar_analysis;
+                    }
+                    
+                    grammarContainer.classList.remove('hidden');
+                } else {
+                    grammarContainer.classList.add('hidden');
+                }
+            }
 
             if (isListenModeEn) {
                 enEl.classList.add('blur-md', 'select-none', 'cursor-pointer', 'opacity-70');
@@ -3649,6 +3779,10 @@ function renderFlashcard() {
 }
 
 function flipFlashcard() {
+    const selection = window.getSelection();
+    if (selection && selection.toString().trim().length > 0) {
+        return; // Prevent flipping if text is selected
+    }
     const fcElement = document.getElementById('flashcard');
     if (isFlipped) {
         fcElement.classList.remove('rotate-y-180');
@@ -6187,6 +6321,23 @@ function handleWordClick(event, word) {
     speakText(word, 'en-US');
 }
 
+function handleWordDblClick(event, startIndex) {
+    event.stopPropagation();
+    const enEl = document.getElementById('fcExEn');
+    if (enEl.classList.contains('blur-md')) {
+        return;
+    }
+    const card = currentFlashcards[flashcardIndex];
+    if (card && card.aiExample && card.aiExample.en) {
+        let cleanEnText = card.aiExample.en.replace(/\[/g, '').replace(/\]/g, '');
+        let textToRead = cleanEnText.substring(startIndex).trim();
+        if (textToRead) {
+            lastTTSCallTime = 0; // Bypass debounce from the previous single clicks
+            playSpeechChunked(textToRead, 'en-US', 1.0);
+        }
+    }
+}
+
 function handleWordRightClick(event, word) {
     event.preventDefault();
     event.stopPropagation();
@@ -7301,7 +7452,7 @@ function loadFillQuestion() {
         const wrapWords = (text) => {
             return text.split(/([^a-zA-Z0-9']+)/).map(part => {
                 if (/[a-zA-Z0-9']/.test(part)) {
-                    return `<span class="hover:bg-slate-500/20 rounded px-0.5 cursor-pointer transition-colors inline-block" onclick="handleFillWordClick(event, '${part.replace(/'/g, "\\'")}')" oncontextmenu="handleFillWordRightClick(event, '${part.replace(/'/g, "\\'")}')">${part}</span>`;
+                    return `<span class="hover:bg-slate-500/20 rounded cursor-pointer transition-colors" onclick="handleFillWordClick(event, '${part.replace(/'/g, "\\'")}')" oncontextmenu="handleFillWordRightClick(event, '${part.replace(/'/g, "\\'")}')">${part}</span>`;
                 }
                 return part;
             }).join('');
@@ -7395,7 +7546,7 @@ function loadFillQuestion() {
                     card.fillTargets.push(part);
                     inputIndex++;
                 } else {
-                    html += `<span class="hover:bg-slate-500/20 rounded px-0.5 cursor-pointer transition-colors inline-block" onclick="handleFillWordClick(event, '${part.replace(/'/g, "\\'")}')" oncontextmenu="handleFillWordRightClick(event, '${part.replace(/'/g, "\\'")}')">${part}</span>`;
+                    html += `<span class="hover:bg-slate-500/20 rounded cursor-pointer transition-colors" onclick="handleFillWordClick(event, '${part.replace(/'/g, "\\'")}')" oncontextmenu="handleFillWordRightClick(event, '${part.replace(/'/g, "\\'")}')">${part}</span>`;
                 }
             } else {
                 html += part;
@@ -7816,6 +7967,7 @@ window.handleAiOptionToggle = function(checkbox, trackId, thumbId) {
     if (checkbox.id === 'aiFamToggle') localStorage.setItem('toeic_ai_fam_toggle', checkbox.checked);
     if (checkbox.id === 'aiSynToggle') localStorage.setItem('toeic_ai_syn_toggle', checkbox.checked);
     if (checkbox.id === 'aiHomToggle') localStorage.setItem('toeic_ai_hom_toggle', checkbox.checked);
+    if (checkbox.id === 'aiGrammarToggle') localStorage.setItem('toeic_ai_grammar_toggle', checkbox.checked);
     
     if (checkbox.checked) {
         track.className = 'w-9 h-5 rounded-full transition-colors duration-300 shadow-inner p-[2px] bg-emerald-500 flex items-center';
@@ -7837,6 +7989,7 @@ window.handleAiToggle = function(checkbox) {
             const aiFamToggle = document.getElementById('aiFamToggle');
             const aiSynToggle = document.getElementById('aiSynToggle');
             const aiHomToggle = document.getElementById('aiHomToggle');
+            const aiGrammarToggle = document.getElementById('aiGrammarToggle');
             if (aiFamToggle) {
                 aiFamToggle.checked = (localStorage.getItem('toeic_ai_fam_toggle_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default')) || localStorage.getItem('toeic_ai_fam_toggle')) !== 'false';
                 window.handleAiOptionToggle(aiFamToggle, 'trackFam', 'thumbFam');
@@ -7892,9 +8045,11 @@ window.closeAiContextModal = function(save) {
             const aiFamToggle = document.getElementById('aiFamToggle');
             const aiSynToggle = document.getElementById('aiSynToggle');
             const aiHomToggle = document.getElementById('aiHomToggle');
+            const aiGrammarToggle = document.getElementById('aiGrammarToggle');
             if (aiFamToggle) localStorage.setItem('toeic_ai_fam_toggle_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default'), aiFamToggle.checked);
             if (aiSynToggle) localStorage.setItem('toeic_ai_syn_toggle_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default'), aiSynToggle.checked);
             if (aiHomToggle) localStorage.setItem('toeic_ai_hom_toggle_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default'), aiHomToggle.checked);
+            if (aiGrammarToggle) localStorage.setItem('toeic_ai_grammar_toggle_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default'), aiGrammarToggle.checked);
 
             if (ctx) {
                 if (typeof showNotice === 'function') showNotice('Đã áp dụng ngữ cảnh AI!');

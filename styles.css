@@ -384,6 +384,15 @@ body {
             border-color: #cbd5e1 !important;
         }
 
+        html.light-mode #fcGrammarAnalysis {
+            background-color: #f8fafc !important;
+            border-color: #e2e8f0 !important;
+        }
+
+        html.light-mode #fcGrammarContent {
+            color: #475569 !important;
+        }
+
         html.light-mode #fcExVi {
             color: #475569 !important;
         }

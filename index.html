@@ -923,7 +923,6 @@
                                             class="text-sm text-slate-400 leading-relaxed transition-all duration-300 pr-8 pt-1"
                                             onclick="revealExampleVi(event)">Vietnamese</p>
                                     </div>
-
                                 </div>
 
                                 <p class="mt-8 text-brand-300/70 text-sm">Click để lật lại</p>
@@ -945,6 +944,14 @@
                                 class="w-14 h-14 rounded-full bg-brand-600 hover:bg-brand-500 text-white flex items-center justify-center text-xl transition-all shadow-lg hover:shadow-xl hover:translate-x-1">
                                 <i class="fa-solid fa-arrow-right"></i>
                             </button>
+                        </div>
+
+                        <!-- Grammar Analysis Panel -->
+                        <div id="fcGrammarAnalysis" class="hidden w-full max-w-2xl mt-8 bg-slate-900/60 border border-slate-800 rounded-2xl p-6 text-left shadow-lg">
+                            <div class="font-bold text-amber-500 text-sm mb-3 uppercase tracking-wider flex items-center gap-2 border-b border-slate-800 pb-3">
+                                <i class="fa-solid fa-spell-check text-base"></i> Phân tích Ngữ pháp
+                            </div>
+                            <div id="fcGrammarContent" class="text-slate-300 leading-relaxed text-sm"></div>
                         </div>
 
                         <!-- Extra Details Panel (Word Family & Collocations) -->
@@ -1299,6 +1306,13 @@
                         <div id="thumbHom" class="bg-white rounded-full h-4 w-4 transition-all duration-300 transform translate-x-4 shadow-sm"></div>
                     </div>
                     <span class="ml-3 text-sm font-medium text-slate-300 group-hover:text-white transition-colors"><i class="fa-solid fa-triangle-exclamation mr-1 text-red-400"></i> Tạo Từ dễ nhầm lẫn</span>
+                </label>
+                <label class="relative inline-flex items-center cursor-pointer group">
+                    <input type="checkbox" id="aiGrammarToggle" class="sr-only" checked onchange="handleAiOptionToggle(this, 'trackGrammar', 'thumbGrammar')">
+                    <div id="trackGrammar" class="w-9 h-5 rounded-full transition-colors duration-300 shadow-inner p-[2px] bg-emerald-500 flex items-center">
+                        <div id="thumbGrammar" class="bg-white rounded-full h-4 w-4 transition-all duration-300 transform translate-x-4 shadow-sm"></div>
+                    </div>
+                    <span class="ml-3 text-sm font-medium text-slate-300 group-hover:text-white transition-colors"><i class="fa-solid fa-spell-check mr-1 text-blue-400"></i> Phân tích Ngữ pháp</span>
                 </label>
             </div>
 
