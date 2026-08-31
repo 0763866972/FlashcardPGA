@@ -844,7 +844,7 @@
                                 </div>
                                 <div class="relative flex justify-center items-center w-full">
                                     <h2 id="fcWord"
-                                        class="text-5xl font-black text-white text-center break-words relative inline-flex items-center justify-center max-w-full"
+                                        class="text-5xl font-black text-white text-justify break-words relative inline-flex items-center justify-center max-w-full"
                                         onclick="revealFcWord(event)">
                                         <span id="fcWordText">WORD</span>
                                         <div id="fcPosContainer"
@@ -877,7 +877,7 @@
 
                             <!-- Back (Meaning) -->
                             <div id="fcBack"
-                                class="col-start-1 row-start-1 w-full h-full bg-gradient-to-br from-brand-900 to-indigo-900 border-2 border-brand-500/50 rounded-3xl shadow-[0_0_40px_rgba(99,102,241,0.2)] flex flex-col items-center justify-center p-10 backface-hidden rotate-y-180">
+                                class="col-start-1 row-start-1 w-full h-full bg-gradient-to-br from-brand-900 to-indigo-900 border-2 border-brand-500/50 rounded-3xl shadow-[0_0_40px_rgba(99,102,241,0.2)] flex flex-col items-start justify-center p-10 backface-hidden rotate-y-180">
                                 <span
                                     class="absolute top-6 left-6 text-[#2f75b5] text-sm font-bold uppercase tracking-widest"><i
                                         class="fa-solid fa-spell-check"></i> Định Nghĩa</span>
@@ -894,15 +894,15 @@
                                     </button>
                                 </div>
                                 <h2 id="fcMeaning"
-                                    class="text-4xl font-bold text-white text-center break-words w-full leading-relaxed">
+                                    class="text-4xl font-bold text-white text-justify break-words w-full leading-relaxed">
                                     MEANING</h2>
                                 <div id="fcGoogleTrans"
-                                    class="hidden text-xl text-emerald-400 mt-4 font-medium opacity-90 text-center w-full">
+                                    class="hidden text-xl text-emerald-400 mt-4 font-medium opacity-90 text-justify w-full">
                                 </div>
 
                                 <!-- AI Example Box -->
                                 <div id="fcAiExample"
-                                    class="hidden w-full max-w-[90%] mt-6 text-left p-4 bg-slate-950/40 border border-slate-700/50 rounded-xl shadow-inner relative group flex flex-col gap-2">
+                                    class="hidden w-full max-w-[90%] mt-6 text-justify p-4 bg-slate-950/40 border border-slate-700/50 rounded-xl shadow-inner relative group flex flex-col gap-2">
                                     <div class="relative">
                                         <button onclick="toggleListenModeEn(event)"
                                             class="absolute top-0 right-0 text-slate-500 hover:text-brand-400 transition-colors z-10"
@@ -949,7 +949,10 @@
                         <!-- Grammar Analysis Panel -->
                         <div id="fcGrammarAnalysis" class="hidden w-full max-w-2xl mt-8 bg-slate-900/60 border border-slate-800 rounded-2xl p-6 text-left shadow-lg">
                             <div class="font-bold text-amber-500 text-sm mb-3 uppercase tracking-wider flex items-center gap-2 border-b border-slate-800 pb-3">
-                                <i class="fa-solid fa-spell-check text-base"></i> Phân tích Ngữ pháp
+                                <span><i class="fa-solid fa-spell-check text-base"></i> Phân tích Ngữ pháp</span>
+                                <button onclick="toggleAllGrammarWriting(event)" class="text-slate-400 hover:text-brand-400 transition-colors ml-2" title="Bật/Tắt chế độ luyện viết (tất cả)">
+                                    <i class="fa-solid fa-eye" id="grammarEyeIconAll"></i>
+                                </button>
                             </div>
                             <div id="fcGrammarContent" class="text-slate-300 leading-relaxed text-sm"></div>
                         </div>
@@ -1179,7 +1182,7 @@
 
                 <!-- FILL BODY -->
                 <div class="flex-1 overflow-y-auto p-8 pt-24 flex flex-col items-center justify-start relative">
-                    <div class="w-full max-w-4xl flex flex-col items-center text-center">
+                    <div class="w-full max-w-4xl flex flex-col items-center text-justify">
 
                         <h2 id="fillSentence"
                             class="text-[2.2rem] font-medium text-white mb-6 leading-relaxed select-none">

@@ -3546,6 +3546,85 @@ function renderFlashcard(skipAutoPlay = false) {
                         }
                         Array.from(tempDiv.childNodes).forEach(traverseAndWrap);
                         
+
+                        
+                        // --- NEW: INJECT WRITING PRACTICE UI ---
+                        const enSentences = Array.from(tempDiv.querySelectorAll('b, strong, span, font')).filter(el => 
+                            el.classList.contains('text-indigo-500') || 
+                            el.classList.contains('text-indigo-400') || 
+                            (el.className && typeof el.className === 'string' && el.className.includes('indigo')) ||
+                            (el.getAttribute('style') && el.getAttribute('style').includes('color'))
+                        );
+                        
+                        enSentences.forEach((bTag, idx) => {
+                            let parentDiv = bTag.parentElement;
+                            if (!parentDiv || parentDiv.tagName === 'BODY' || parentDiv === tempDiv) {
+                                // If no suitable parent, wrap it
+                                const wrapper = document.createElement('div');
+                                wrapper.className = "mb-2 block w-full";
+                                bTag.parentNode.insertBefore(wrapper, bTag);
+                                wrapper.appendChild(bTag);
+                                parentDiv = wrapper;
+                            }
+                            
+                            // Make parent block for sure
+                            parentDiv.classList.add('block', 'w-full');
+                            
+                            bTag.id = `grammarEnSentence_${idx}`;
+                            
+                            let viTranslation = '';
+                            
+                            // Find all text after this bTag in the current LI or tempDiv
+                            const container = bTag.closest('li') || tempDiv;
+                            const containerHtml = container.innerHTML;
+                            const bTagIdIdx = containerHtml.indexOf(bTag.id);
+                            
+                            if (bTagIdIdx !== -1) {
+                                const htmlAfter = containerHtml.substring(bTagIdIdx);
+                                const divTemp = document.createElement('div');
+                                divTemp.innerHTML = htmlAfter;
+                                const textAfter = divTemp.textContent;
+                                
+                                // Match everything after "Dịch" and ":" up to the next bullet point, newline, or "Cụm"
+                                const match = textAfter.match(/Dịch[^:]*:\s*(.*?)(?=\n|•|(?:\s*-\s)|(?:\s*Cụm\s*")|$)/is);
+                                if (match && match[1]) {
+                                    viTranslation = match[1].trim();
+                                }
+                            }
+                            
+                            // Fallback if empty
+                            if (!viTranslation) {
+                                viTranslation = "Không tìm thấy nghĩa tiếng Việt.";
+                            }
+                            
+                            const eyeBtn = document.createElement('button');
+                            eyeBtn.className = "ml-2 text-slate-400 hover:text-brand-400 transition-colors inline-block align-middle";
+                            eyeBtn.title = "Luyện viết câu này";
+                            eyeBtn.onclick = function(e) {
+                                e.stopPropagation();
+                                toggleGrammarWriting(idx);
+                            };
+                            eyeBtn.innerHTML = `<i class="fa-solid fa-eye" id="grammarEyeIcon_${idx}"></i>`;
+                            
+                            bTag.insertAdjacentElement('beforebegin', eyeBtn);
+                            eyeBtn.insertAdjacentHTML('afterend', '&nbsp;');
+                            
+                            const writingHTML = `
+                                <div id="grammarWriteContainer_${idx}" data-vi="${escapeHTML(viTranslation)}" class="hidden mt-3 p-4 bg-slate-900/80 rounded-xl border border-slate-700 shadow-inner w-full block clear-both">
+                                    <textarea id="grammarWriteInput_${idx}" class="w-full bg-slate-800 text-white p-3 rounded-lg border border-slate-600 focus:border-brand-500 outline-none text-sm leading-relaxed placeholder-slate-500 resize-y" rows="2" placeholder="Viết lại câu theo cách của bạn (cùng ý nghĩa)..."></textarea>
+                                    <div class="flex justify-between items-center mt-3">
+                                        <span class="text-xs text-slate-400 italic"><i class="fa-solid fa-circle-info mr-1"></i>Đúng ngữ pháp, đúng ý là được.</span>
+                                        <button onclick="submitGrammarWriting(${idx})" class="bg-brand-600 hover:bg-brand-500 text-white text-xs px-4 py-2 rounded-lg font-bold transition-all shadow-md" id="grammarWriteSubmitBtn_${idx}">
+                                            Gửi đánh giá <i class="fa-solid fa-paper-plane ml-1"></i>
+                                        </button>
+                                    </div>
+                                    <div id="grammarWriteFeedback_${idx}" class="hidden mt-4 p-4 text-sm rounded-lg bg-slate-950/80 border border-slate-700 leading-relaxed"></div>
+                                </div>
+                            `;
+                            parentDiv.insertAdjacentHTML('afterend', writingHTML);
+                        });
+                        // ---------------------------------------
+
                         grammarContent.innerHTML = '';
                         while (tempDiv.firstChild) {
                             grammarContent.appendChild(tempDiv.firstChild);
@@ -3553,6 +3632,13 @@ function renderFlashcard(skipAutoPlay = false) {
                     } catch (err) {
                         console.error('Error making grammar text clickable:', err);
                         grammarContent.innerHTML = '<div class="text-red-500 mb-2 border border-red-500 p-2 rounded"><strong>Lỗi:</strong> ' + err.toString() + '<br>Stack: ' + err.stack + '</div>' + card.aiExample.grammar_analysis;
+                    }
+                    
+                                        // Reset 'All' button state
+                    const eyeIconAll = document.getElementById('grammarEyeIconAll');
+                    if (eyeIconAll) {
+                        eyeIconAll.classList.replace('fa-eye-slash', 'fa-eye');
+                        eyeIconAll.classList.remove('text-brand-400');
                     }
                     
                     grammarContainer.classList.remove('hidden');
@@ -8074,3 +8160,170 @@ document.addEventListener('mousedown', function(event) {
         }
     }
 });
+
+
+window.toggleGrammarWriting = function(idx) {
+    const enSentence = document.getElementById(`grammarEnSentence_${idx}`);
+    const container = document.getElementById(`grammarWriteContainer_${idx}`);
+    const icon = document.getElementById(`grammarEyeIcon_${idx}`);
+    
+    if (container.classList.contains('hidden')) {
+        container.classList.remove('hidden');
+        enSentence.classList.add('hidden');
+        icon.classList.replace('fa-eye', 'fa-eye-slash');
+        icon.classList.add('text-brand-400');
+    } else {
+        container.classList.add('hidden');
+        enSentence.classList.remove('hidden');
+        icon.classList.replace('fa-eye-slash', 'fa-eye');
+        icon.classList.remove('text-brand-400');
+    }
+}
+
+window.submitGrammarWriting = async function(idx) {
+    const container = document.getElementById(`grammarWriteContainer_${idx}`);
+    const viTranslation = container.getAttribute('data-vi');
+    const inputEl = document.getElementById(`grammarWriteInput_${idx}`);
+    const userSentence = inputEl.value.trim();
+    const btn = document.getElementById(`grammarWriteSubmitBtn_${idx}`);
+    const feedbackEl = document.getElementById(`grammarWriteFeedback_${idx}`);
+    
+    if (!userSentence) {
+        alert("Vui lòng nhập câu của bạn!");
+        return;
+    }
+    
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang chấm điểm...';
+    feedbackEl.classList.add('hidden');
+    
+    const systemPrompt = `Bạn là giáo viên tiếng Anh chấm bài. 
+Nhiệm vụ của bạn là đánh giá xem câu tiếng Anh của học sinh viết CÓ ĐÚNG NGỮ PHÁP và CÓ ĐÚNG Ý NGHĨA với câu tiếng Việt gốc hay không.
+Học sinh KHÔNG CẦN viết chính xác từng chữ giống câu mẫu ban đầu, miễn là diễn đạt đúng ý.
+- Nếu học sinh viết sai (ngữ pháp, từ vựng, hoặc sai nghĩa), hãy chỉ ra lỗi sai và giải thích ngắn gọn bằng TIẾNG VIỆT. Đưa ra một vài gợi ý sửa lại cho đúng.
+- Nếu học sinh viết đúng, hãy dành một lời khen ngắn gọn.
+TRẢ VỀ ĐỊNH DẠNG HTML ĐƠN GIẢN (dùng thẻ <b>, <i>, <span class="text-emerald-400 font-bold"> cho chữ đúng, <span class="text-rose-400 font-bold"> cho chữ sai). KHÔNG dùng markdown block (như \`\`\`html).`;
+
+    const userPrompt = `Câu tiếng Việt gốc cần truyền đạt: "${viTranslation}"
+Câu học sinh viết: "${userSentence}"
+
+Hãy đánh giá bằng tiếng Việt và định dạng HTML.`;
+
+    try {
+        const responseText = await callGeminiAPIText(systemPrompt, userPrompt);
+        feedbackEl.innerHTML = responseText.replace(/```html/g, '').replace(/```/g, '');
+        feedbackEl.classList.remove('hidden');
+    } catch (error) {
+        feedbackEl.innerHTML = `<span class="text-red-500">Lỗi kết nối AI: ${error.message}</span>`;
+        feedbackEl.classList.remove('hidden');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Gửi đánh giá <i class="fa-solid fa-paper-plane ml-1"></i>';
+    }
+}
+
+
+window.toggleGrammarWriting = function(idx) {
+    const enSentence = document.getElementById(`grammarEnSentence_${idx}`);
+    const container = document.getElementById(`grammarWriteContainer_${idx}`);
+    const icon = document.getElementById(`grammarEyeIcon_${idx}`);
+    
+    if (container.classList.contains('hidden')) {
+        container.classList.remove('hidden');
+        if (enSentence) enSentence.style.display = 'none';
+        icon.classList.replace('fa-eye', 'fa-eye-slash');
+        icon.classList.add('text-brand-400');
+    } else {
+        container.classList.add('hidden');
+        if (enSentence) enSentence.style.display = '';
+        icon.classList.replace('fa-eye-slash', 'fa-eye');
+        icon.classList.remove('text-brand-400');
+    }
+};
+
+window.toggleAllGrammarWriting = function(e) {
+    if (e) e.stopPropagation();
+    
+    const eyeIconAll = document.getElementById('grammarEyeIconAll');
+    if (!eyeIconAll) return;
+    let isOpening = eyeIconAll.classList.contains('fa-eye');
+    
+    const containers = document.querySelectorAll('[id^="grammarWriteContainer_"]');
+    
+    containers.forEach((container) => {
+        const idx = container.id.split('_')[1];
+        const eyeIcon = document.getElementById(`grammarEyeIcon_${idx}`);
+        const enSentence = document.getElementById(`grammarEnSentence_${idx}`);
+        
+        if (isOpening) {
+            container.classList.remove('hidden');
+            if (eyeIcon) {
+                eyeIcon.classList.replace('fa-eye', 'fa-eye-slash');
+                eyeIcon.classList.add('text-brand-400');
+            }
+            if (enSentence) enSentence.style.display = 'none';
+        } else {
+            container.classList.add('hidden');
+            if (eyeIcon) {
+                eyeIcon.classList.replace('fa-eye-slash', 'fa-eye');
+                eyeIcon.classList.remove('text-brand-400');
+            }
+            if (enSentence) enSentence.style.display = '';
+        }
+    });
+    
+    if (isOpening) {
+        eyeIconAll.classList.replace('fa-eye', 'fa-eye-slash');
+        eyeIconAll.classList.add('text-brand-400');
+    } else {
+        eyeIconAll.classList.replace('fa-eye-slash', 'fa-eye');
+        eyeIconAll.classList.remove('text-brand-400');
+    }
+};
+
+window.startDictation = function(idx) {
+    const input = document.getElementById(`grammarWriteInput_${idx}`);
+    const btn = document.getElementById(`grammarDictateBtn_${idx}`);
+    if (!input || !btn) return;
+    
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        alert("Trình duyệt của bạn không hỗ trợ tính năng nhận diện giọng nói. Vui lòng sử dụng Google Chrome.");
+        return;
+    }
+    
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    
+    const originalBtnHtml = btn.innerHTML;
+    const originalBtnClass = btn.className;
+    
+    recognition.onstart = function() {
+        btn.innerHTML = '<i class="fa-solid fa-microphone-slash fa-beat-fade"></i>';
+        btn.classList.add('text-red-400', 'bg-red-500/20');
+        btn.classList.remove('text-slate-400', 'hover:text-brand-400');
+    };
+    
+    recognition.onresult = function(event) {
+        const transcript = event.results[0][0].transcript;
+        if (input.value.trim() === '') {
+            input.value = transcript;
+        } else {
+            input.value = input.value + ' ' + transcript;
+        }
+    };
+    
+    recognition.onerror = function(event) {
+        console.error("Speech recognition error", event.error);
+    };
+    
+    recognition.onend = function() {
+        btn.innerHTML = originalBtnHtml;
+        btn.className = originalBtnClass;
+    };
+    
+    recognition.start();
+};
