@@ -1,7 +1,7 @@
 
 function getContextCacheSuffix() {
     let groupId = typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default';
-    let ctx = localStorage.getItem('toeic_ai_context_' + groupId) || localStorage.getItem('toeic_ai_context') || '';
+    let ctx = (localStorage.getItem('toeic_ai_context_' + groupId) ?? localStorage.getItem('toeic_ai_context') ?? '');
     if (!ctx.trim()) return '';
     return '_ctx' + Array.from(ctx).reduce((s, c) => Math.imul(31, s) + c.charCodeAt(0) | 0, 0);
 }
@@ -308,7 +308,7 @@ function changeVocabGroup() {
 
     // Load từ vựng từ localStorage theo key mới (đã được redirect)
     const savedVocab = localStorage.getItem('toeic_vocab_list');
-    document.getElementById('vocabInput').value = savedVocab || '';
+    if (document.getElementById('vocabInput')) document.getElementById('vocabInput').value = savedVocab || '';
     const viewMode = localStorage.getItem('toeic_vocab_view_mode');
     if (viewMode === 'table') {
         parseVocab(true);
@@ -469,14 +469,14 @@ window.onload = function () {
     const savedVocab = localStorage.getItem('toeic_vocab_list');
     const viewMode = localStorage.getItem('toeic_vocab_view_mode'); // 'table' hoặc null (textarea)
     if (savedVocab && savedVocab.trim() !== '') {
-        document.getElementById('vocabInput').value = savedVocab;
+        if (document.getElementById('vocabInput')) document.getElementById('vocabInput').value = savedVocab;
         if (viewMode === 'table') {
             parseVocab(true); // Render bảng xem trước ngay
         } else {
             parseVocab();     // Chỉ parse, không render bảng
         }
     } else {
-        document.getElementById('vocabInput').value = '';
+        if (document.getElementById('vocabInput')) document.getElementById('vocabInput').value = '';
         if (viewMode === 'table') {
             parseVocab(true); // Render bảng trống
         }
@@ -2042,7 +2042,7 @@ async function generateExampleForWord(event) {
 
         styleInstruction += " (LƯU Ý: Giới hạn số lượng từ chỉ áp dụng cho câu Tiếng Anh. Câu dịch Tiếng Việt KHÔNG BỊ GIỚI HẠN độ dài, phải dịch trọn vẹn và thoát ý nhất có thể!).";
 
-        let fcAiContext = localStorage.getItem('toeic_ai_context_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default')) || localStorage.getItem('toeic_ai_context') || '';
+        let fcAiContext = localStorage.getItem('toeic_ai_context_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default')) ?? localStorage.getItem('toeic_ai_context') ?? '';
         const chatInput = document.getElementById('chatInput');
         if (chatInput && chatInput.value.trim() !== '') {
             fcAiContext = chatInput.value.trim();
@@ -2062,11 +2062,7 @@ async function generateExampleForWord(event) {
         }
 
         let taskInstructions = `1. Phân tích loại từ (pos). Tạo CÂU hoặc ĐOẠN VĂN ví dụ (tùy theo yêu cầu người dùng) theo chuẩn: ${styleInstruction}
-2. Cấu trúc ngữ pháp (structures): NẾU TỪ CÓ giới từ đi kèm (vd: under + construction) HOẶC là danh từ ghép phổ biến (vd: lecture hall), hãy đưa vào đây.
-- NẾU LÀ CẤU TRÚC GIỚI TỪ/ĐỘNG TỪ: Dấu '+' CHỈ ĐƯỢC DÙNG trước các biến số (như noun, V-ing). CẤM dùng dấu '+' trước giới từ. Bọc ngoặc vuông [...] quanh TỪ KHÓA CHÍNH + GIỚI TỪ, và ngoặc nhọn {...} quanh BIẾN SỐ.
-- NẾU LÀ DANH TỪ GHÉP: CẤM DÙNG dấu '+' hay ngoặc nhọn {...}. HÃY BỌC NGOẶC VUÔNG [...] CHO TOÀN BỘ CỤM (vd: [lecture hall]). Phải thêm "(danh từ ghép)" ở cuối phần nghĩa và DỊCH THẬT TỰ NHIÊN. Mảng rỗng \`[]\` nếu không có gì đặc biệt.
-- QUY TẮC NGOẶC NÀY CHỈ ÁP DỤNG BÊN TRONG mảng 'structures'. Câu ví dụ trong structures PHẢI KHÁC HOÀN TOÀN với câu ví dụ chính!
-- VỚI trường 'en', 'vi', 'en_dictation', 'vi_dictation': BẮT BUỘC bọc ngoặc vuông [...] quanh từ vựng gốc (ở câu Anh) và phần dịch tương ứng (ở câu Việt). QUAN TRỌNG: CẤM TUYỆT ĐỐI việc nhét "Nghĩa" từ điển vào câu dịch nếu nó làm câu văn vô nghĩa! HÃY BỎ QUA NGHĨA GỐC VÀ DỊCH THẬT TỰ NHIÊN THEO ĐÚNG NGỮ CẢNH.`;
+`;
 
         if (wantSyn) taskInstructions += `\n3. TÌM TỪ ĐỒNG NGHĨA VÀ TRÁI NGHĨA: BẮT BUỘC PHẢI TÌM ÍT NHẤT 3 TỪ ĐỒNG NGHĨA VÀ 3 TỪ TRÁI NGHĨA (nếu từ điển có). Phân loại rõ bằng cách thêm "[Đồng nghĩa]" hoặc "[Trái nghĩa]" ở đầu phần nghĩa tiếng Việt. BẮT BUỘC PHẢI TRẢ VỀ TRONG KEY 'synonyms_antonyms'.`;
         if (wantFam) taskInstructions += `\n4. KHAI THÁC TỐI ĐA TỪ CÙNG GỐC (Word Family): Hãy tìm VÀ LIỆT KÊ TOÀN BỘ tất cả các biến thể của từ. BẮT BUỘC PHẢI TÌM TRẠNG TỪ (Adverb - đuôi ly) NẾU CÓ THỂ, cùng với danh từ, động từ, tính từ... BẮT BUỘC PHẢI TRẢ VỀ TRONG KEY 'family'.`;
@@ -2086,9 +2082,6 @@ YÊU CẦU MÃ HTML: Dùng danh sách bao ngoài cùng là <ul class="list-none 
       "word": "từ vựng ở trên", 
       "pos": "n/v/adj/adv/prep...",
       "p": "phiên âm IPA",
-      "structures": [
-        { "struct": "[cấu trúc] {tiếng anh}", "vi": "[nghĩa] {tiếng việt}", "example": "Câu ví dụ [có] {ngoặc}", "example_vi": "Dịch nghĩa [có] {ngoặc}" }
-      ],
       ${outputFields}`;
 
         if (wantSyn) {
@@ -2244,7 +2237,7 @@ async function generateBulkExamples(wordsArray, assignedKey, onlyExample = false
         }
         styleInstruction += " (LƯU Ý: Giới hạn số lượng từ chỉ áp dụng cho câu Tiếng Anh. Câu dịch Tiếng Việt KHÔNG BỊ GIỚI HẠN độ dài, phải dịch trọn vẹn và thoát ý nhất có thể!).";
 
-        let fcAiContext = localStorage.getItem('toeic_ai_context_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default')) || localStorage.getItem('toeic_ai_context') || '';
+        let fcAiContext = localStorage.getItem('toeic_ai_context_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default')) ?? localStorage.getItem('toeic_ai_context') ?? '';
         if (fcAiContext.trim() !== '') {
             styleInstruction += ` YÊU CẦU ĐẶC BIỆT / NGỮ CẢNH TỪ NGƯỜI DÙNG: "${fcAiContext}".\n\nBạn BẮT BUỘC phải tuân thủ NGHIÊM NGẶT yêu cầu này khi tạo câu ví dụ (ưu tiên dùng các cấu trúc, từ vựng, mẫu câu mà người dùng yêu cầu). LƯU Ý QUAN TRỌNG VỀ ĐẠI TỪ: Nếu yêu cầu tạo đoạn hội thoại Q&A hoặc bài nói (ví dụ TOEIC Speaking), trong phần Trả lời BẮT BUỘC PHẢI XƯNG TÔI ('I', 'my', 'me', 'we'). TUYỆT ĐỐI KHÔNG DÙNG 'you' hay 'customers' để nói về trải nghiệm của bản thân. Được phép bỏ qua giới hạn số từ nếu yêu cầu của người dùng đòi hỏi câu dài hơn.`;
         }
@@ -8066,7 +8059,7 @@ window.handleAiOptionToggle = function(checkbox, trackId, thumbId) {
 
 window.handleAiToggle = function(checkbox) {
     if (checkbox.checked) {
-        let currentCtx = localStorage.getItem('toeic_ai_context_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default')) || localStorage.getItem('toeic_ai_context') || '';
+        let currentCtx = localStorage.getItem('toeic_ai_context_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default')) ?? localStorage.getItem('toeic_ai_context') ?? '';
         const modal = document.getElementById('aiContextModal');
         const input = document.getElementById('aiContextInput');
         if (modal && input) {

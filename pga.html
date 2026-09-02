@@ -187,195 +187,6 @@
             </div>
         </div>
 
-<!DOCTYPE html>
-<!--
-  =============================================================
-  AUTO VOCABULARY SCANNER (AI POWERED)
-  Design & Developer: Phan Gia An
-  Version: 1.0
-  =============================================================
--->
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Scanner</title>
-    <!-- Favicon -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔍</text></svg>">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f8fafc;
-            color: #334155;
-        }
-        /* Style for the drag & drop zone */
-        /* Excel-like Table Styling */
-        .excel-table {
-            width: 100%;
-            min-width: 1200px;
-            border-collapse: collapse;
-            background: white;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
-        .excel-table th, .excel-table td {
-            border: 1px solid #94a3b8;
-            padding: 8px 12px;
-            font-size: 14px;
-            white-space: nowrap;
-        }
-        .excel-table th {
-            text-align: center;
-            font-weight: 600;
-        }
-        .col-stt { width: 50px; text-align: center; background-color: #f1f5f9; }
-        .th-noun { background-color: #fef08a; } /* Vàng nhạt */
-        .th-adj { background-color: #bae6fd; } /* Xanh nhạt */
-        .th-verb { background-color: #fef08a; } /* Vàng nhạt */
-        .th-adv { background-color: #bae6fd; } /* Xanh nhạt */
-        .th-conj { background-color: #fef08a; } /* Vàng nhạt */
-        
-        .word-text { color: #2563eb; } /* Xanh dương cho từ vựng */
-        .meaning-text { color: #dc2626; transition: color 0.2s; } /* Đỏ cho nghĩa tiếng Việt */
-
-        /* Chế độ học (Ẩn nghĩa) - Phong cách Blur mờ ảo */
-        body.hide-meanings .meaning-text:not(.meaning-revealed) {
-            color: transparent !important;
-            text-shadow: 0 0 8px #94a3b8;
-            cursor: pointer;
-            user-select: none;
-            transition: text-shadow 0.3s ease;
-        }
-        body.hide-meanings .meaning-text:not(.meaning-revealed):hover {
-            text-shadow: 0 0 5px #64748b;
-        }
-
-        /* Hide scrollbar for Chrome, Safari and Opera */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        /* Hide scrollbar for IE, Edge and Firefox */
-        .no-scrollbar {
-            -ms-overflow-style: none;  /* IE and Edge */
-            scrollbar-width: none;  /* Firefox */
-        }
-
-        /* Loading spinner */
-        .spinner {
-            border: 3px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top: 3px solid white;
-            width: 20px;
-            height: 20px;
-            -webkit-animation: spin 1s linear infinite; /* Safari */
-            animation: spin 1s linear infinite;
-        }
-        @-webkit-keyframes spin {
-            0% { -webkit-transform: rotate(0deg); }
-            100% { -webkit-transform: rotate(360deg); }
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .excel-table td.copied-cell {
-            background-color: rgba(34, 197, 94, 0.2) !important;
-            outline: 1px solid #22c55e;
-            outline-offset: -1px;
-        }
-
-        /* Cell selection styling (Defined after copied-cell so it overrides when selected) */
-        .excel-table td.selected-cell,
-        .excel-table td.copied-cell.selected-cell {
-            background-color: rgba(14, 165, 233, 0.2) !important;
-            outline: 1px solid #0ea5e9;
-            outline-offset: -1px;
-        }
-        .word-hover:hover {
-            background-color: #cbd5e1;
-            cursor: pointer;
-            border-radius: 4px;
-        }
-        #dictTooltip {
-            position: absolute;
-            z-index: 9999;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            transform: translate(-50%, calc(-100% - 10px)) scale(0.95);
-        }
-        #dictTooltip.active {
-            opacity: 1;
-            visibility: visible;
-            transform: translate(-50%, calc(-100% - 10px)) scale(1);
-        }
-    </style>
-</head>
-<body class="min-h-screen p-4 md:p-8 flex flex-col items-center">
-
-    <div class="w-full max-w-7xl mx-auto space-y-6">
-        <!-- Header -->
-        <div class="flex items-center justify-between bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-            <div>
-                <h1 class="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                    <i class="fa-solid fa-keyboard text-brand-500"></i> Auto Vocab Scanner
-                </h1>
-                <p class="text-slate-500 text-sm mt-1">Dán đoạn văn bản vào, AI sẽ tự động phân tích và lập bảng danh tính động trạng.</p>
-                <p class="text-[11px] font-bold tracking-widest mt-1.5">
-                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-500 to-cyan-500 drop-shadow-sm uppercase">
-                        Design by Phan Gia An
-                    </span>
-                </p>
-            </div>
-            <div class="flex items-center gap-3">
-                <a href="index.html" class="hidden sm:flex px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50 shadow-sm transition whitespace-nowrap items-center gap-2 active:scale-95">
-                    <i class="fa-solid fa-house"></i> <span>Trang chủ</span>
-                </a>
-                <a href="index.html" class="flex sm:hidden w-9 h-9 bg-white border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 shadow-sm transition justify-center items-center active:scale-95" title="Trang chủ">
-                    <i class="fa-solid fa-house"></i>
-                </a>
-                <select id="aiModelSelect" onchange="saveModelPref()" class="border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-500 bg-white shadow-sm font-semibold text-slate-700 cursor-pointer">
-                    <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash Lite</option>
-                    <option value="openai/gpt-oss-120b">GPT-OSS 120B (Groq)</option>
-                </select>
-                
-                <div class="relative flex items-center">
-                    <button onclick="toggleKeyConfig()" id="toggleKeyConfigBtn" title="Cấu hình API Key" class="relative bg-white hover:bg-slate-50 border border-slate-200 text-brand-500 text-sm w-9 h-9 flex justify-center items-center rounded-xl transition-all duration-300 shadow-sm hover:shadow-md shrink-0 group">
-                        <i class="fa-solid fa-key group-hover:scale-110 transition-transform"></i>
-                        <span id="activeKeyCountBadge" class="absolute -top-1.5 -right-1.5 bg-brand-500 text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full border border-white shadow-sm hidden">0</span>
-                    </button>
-
-                    <!-- Absolute Dropdown Panel -->
-                    <div id="keyConfigSection" class="hidden absolute top-full right-0 mt-3 bg-white border border-slate-200 p-5 rounded-2xl shadow-xl flex flex-col gap-5 transition-all duration-300 z-50 w-[340px] origin-top-right">
-                        <div class="flex items-center justify-between">
-                            <label class="text-sm text-slate-600 font-bold">Số lượng Key:</label>
-                            <div class="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-xl p-1 shadow-inner">
-                                <button onclick="changeKeyCount(-1)" class="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-brand-600 rounded-lg hover:bg-white transition-all shadow-sm"><i class="fa-solid fa-minus text-[10px]"></i></button>
-                                <input type="number" id="keyCountInput" value="1" min="1" max="10" readonly class="bg-transparent text-sm text-brand-600 font-black outline-none w-8 text-center select-none pointer-events-none p-0 border-none focus:ring-0" style="background: transparent !important; color: inherit !important; box-shadow: none !important;">
-                                <button onclick="changeKeyCount(1)" class="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-brand-600 rounded-lg hover:bg-white transition-all shadow-sm"><i class="fa-solid fa-plus text-[10px]"></i></button>
-                            </div>
-                        </div>
-
-                        <div id="keyInputsContainer" class="flex flex-col gap-3 max-h-[250px] overflow-y-auto pr-1">
-                            <!-- Dynamically populated inputs -->
-                        </div>
-
-                        <div class="flex items-center justify-between pt-4 border-t border-slate-100 mt-1">
-                            <a id="getKeyLink" href="https://aistudio.google.com/app/apikey" target="_blank" class="text-sm font-bold text-brand-600 hover:text-brand-500 flex items-center gap-1.5 transition-all">
-                                <i class="fa-solid fa-link text-xs"></i> Lấy API Key
-                            </a>
-                            <button onclick="saveApiKey()" class="bg-brand-600 hover:bg-brand-500 text-white text-sm px-5 py-2.5 rounded-xl font-bold transition-all flex items-center gap-2 shadow-lg shadow-brand-500/20 active:scale-95">
-                                <i class="fa-solid fa-floppy-disk"></i> Lưu
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Text Input -->
         <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
             <div class="flex justify-between items-center mb-3">
@@ -1893,12 +1704,26 @@ Hãy làm việc thật chính xác và bao dung với các lỗi nhỏ của sp
     </div>
 
     <!-- Nhúng bộ máy đọc từ file main.js -->
-    <script src="main.js">
+    <script src="main.js"></script>
+<script>
 
 // ==========================================
 // PGA WRITING MODE (FLASHCARD STYLE)
 // ==========================================
 let isWritingMode = false;
+
+window.getApiKey = function() {
+    if (typeof getStorageKeyForModel !== 'function') return null;
+    const storageKey = getStorageKeyForModel();
+    const apiKeyRaw = localStorage.getItem(storageKey);
+    if (!apiKeyRaw) return null;
+    const keysArray = apiKeyRaw.split(',').map(k => k.trim()).filter(k => k);
+    if (keysArray.length === 0) return null;
+    window.clickKeyIndex = window.clickKeyIndex || 0;
+    const apiKey = keysArray[window.clickKeyIndex % keysArray.length];
+    window.clickKeyIndex++;
+    return apiKey;
+};
 
 window.toggleWritingMode = async function() {
     const textarea = document.getElementById('textInput');
@@ -1957,26 +1782,45 @@ Không trả về bất kỳ text nào khác ngoài chuỗi JSON.
 ${rawText}`;
             
             const selectedModel = document.getElementById('aiModelSelect').value || "gemini-2.5-flash";
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`;
+            const isGroq = !selectedModel.includes('gemini');
+            const url = isGroq 
+                ? 'https://api.groq.com/openai/v1/chat/completions' 
+                : `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`;
             
-            const payload = {
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: {
+            let payload, response, data, jsonStr;
+            
+            if (isGroq) {
+                payload = {
+                    model: selectedModel,
+                    messages: [{ role: "user", content: prompt }],
                     temperature: 0.2,
-                    responseMimeType: "application/json"
-                }
-            };
-            
-            const response = await fetch(url, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-            
-            if (!response.ok) throw new Error("Lỗi kết nối đến Gemini API.");
-            const data = await response.json();
-            
-            let jsonStr = data.candidates[0].content.parts[0].text;
+                    response_format: { type: "json_object" }
+                };
+                response = await fetch(url, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) { let err = await response.text(); throw new Error(err || "Lỗi kết nối Groq API"); }
+                data = await response.json();
+                jsonStr = data.choices[0].message.content;
+            } else {
+                payload = {
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: {
+                        temperature: 0.2,
+                        responseMimeType: "application/json"
+                    }
+                };
+                response = await fetch(url, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) { let err = await response.text(); throw new Error(err || "Lỗi kết nối Gemini API"); }
+                data = await response.json();
+                jsonStr = data.candidates[0].content.parts[0].text;
+            }
             jsonStr = jsonStr.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
             let sentences = JSON.parse(jsonStr);
             
@@ -1990,13 +1834,24 @@ ${rawText}`;
     }
 }
 
+window.escapeHTML = function(str) {
+    if (!str) return '';
+    return str.replace(/[&<>'"]/g, tag => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        "'": '&#39;',
+        '"': '&quot;'
+    }[tag] || tag));
+};
+
 window.renderWritingMode = function(sentences, rawText) {
     const writingContent = document.getElementById('writingContent');
     writingContent.setAttribute('data-raw', rawText);
     
-    let html = `<div class="mb-4 flex items-center justify-between border-b border-slate-200 pb-3">
+    let html = `<div class="mb-4 flex items-center justify-start gap-4 border-b border-slate-200 pb-3">
         <h4 class="text-lg font-bold text-slate-700"><i class="fa-solid fa-pen-nib text-emerald-500 mr-2"></i>Luyện Viết Từng Câu</h4>
-        <button onclick="toggleAllPgaWriting(event)" class="text-slate-400 hover:text-brand-400 transition-colors" title="Bật/Tắt chế độ luyện viết (tất cả)">
+        <button onclick="toggleAllPgaWriting(event)" class="text-slate-400 hover:text-brand-400 transition-colors mt-0.5" title="Bật/Tắt chế độ luyện viết (tất cả)">
             <i class="fa-solid fa-eye text-xl" id="pgaEyeIconAll"></i>
         </button>
     </div>`;
@@ -2014,21 +1869,21 @@ window.renderWritingMode = function(sentences, rawText) {
                 </div>
             </div>
             
-            <div id="pgaWriteContainer_${idx}" data-vi="${escapeHTML(item.vi)}" class="hidden mt-4 p-4 bg-slate-900/90 rounded-xl w-full">
+            <div id="pgaWriteContainer_${idx}" data-vi="${escapeHTML(item.vi)}" class="hidden mt-4 p-4 bg-slate-50 border border-slate-200 rounded-xl w-full">
                 <div class="relative">
-                    <textarea id="pgaWriteInput_${idx}" class="w-full bg-slate-800 text-white p-3 pr-12 rounded-lg border border-slate-600 focus:border-brand-500 outline-none text-sm leading-relaxed placeholder-slate-500 resize-y" rows="2" placeholder="Dịch câu trên sang tiếng Anh..."></textarea>
+                    <textarea id="pgaWriteInput_${idx}" class="w-full bg-white text-slate-800 p-3 pr-12 rounded-lg border border-slate-300 focus:border-brand-500 outline-none shadow-inner text-sm leading-relaxed placeholder-slate-500 resize-y" rows="2" placeholder="Dịch câu trên sang tiếng Anh..."></textarea>
                     <button id="pgaDictateBtn_${idx}" onclick="startPgaDictation(${idx})" class="absolute right-3 bottom-3 text-slate-400 hover:text-brand-400 transition-colors" title="Đọc bằng giọng nói">
                         <i class="fa-solid fa-microphone"></i>
                     </button>
                 </div>
                 
                 <div class="flex justify-between items-center mt-3">
-                    <span class="text-xs text-slate-400 italic"><i class="fa-solid fa-circle-info mr-1"></i>Đúng ngữ pháp, đúng ý là được.</span>
+                    <span class="text-xs text-slate-500 italic"><i class="fa-solid fa-circle-info mr-1"></i>Đúng ngữ pháp, đúng ý là được.</span>
                     <button onclick="submitPgaGrammarWriting(${idx})" class="bg-brand-600 hover:bg-brand-500 text-white text-xs px-4 py-2 rounded-lg font-bold transition-all shadow-md flex items-center gap-1 active:scale-95" id="pgaWriteSubmitBtn_${idx}">
                         Gửi đánh giá <i class="fa-solid fa-paper-plane"></i>
                     </button>
                 </div>
-                <div id="pgaWriteFeedback_${idx}" class="hidden mt-4 p-4 text-sm rounded-lg bg-slate-950/80 border border-slate-700 leading-relaxed text-white"></div>
+                <div id="pgaWriteFeedback_${idx}" class="hidden mt-4 p-4 text-sm rounded-lg bg-white border border-slate-200 leading-relaxed text-slate-800 shadow-sm"></div>
             </div>
         </div>
         `;
@@ -2148,6 +2003,7 @@ window.submitPgaGrammarWriting = async function(idx) {
     const feedbackEl = document.getElementById(`pgaWriteFeedback_${idx}`);
     const containerEl = document.getElementById(`pgaWriteContainer_${idx}`);
     const viTranslation = containerEl.getAttribute('data-vi');
+    const originalEnSentence = document.getElementById('pgaEnSentence_' + idx).innerText;
     
     const userSentence = inputEl.value.trim();
     if (!userSentence) {
@@ -2163,45 +2019,153 @@ window.submitPgaGrammarWriting = async function(idx) {
     submitBtn.classList.add('opacity-70');
     
     feedbackEl.classList.remove('hidden');
-    feedbackEl.innerHTML = '<div class="flex items-center text-slate-400"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i> AI đang phân tích ngữ pháp...</div>';
+    feedbackEl.innerHTML = '<div class="flex items-center text-slate-600"><i class="fa-solid fa-circle-notch fa-spin text-brand-500 mr-2"></i> AI đang phân tích ngữ pháp...</div>';
     
     const systemPrompt = `Đóng vai một giáo viên tiếng Anh chấm bài.
-Học sinh cần viết lại một câu tiếng Anh dựa trên ý nghĩa tiếng Việt được cung cấp.
-- Đánh giá xem câu của học sinh viết có ĐÚNG NGỮ PHÁP và ĐÚNG Ý NGHĨA hay không.
-- Học sinh KHÔNG CẦN viết chính xác từng chữ giống câu gốc, miễn là diễn đạt đúng ý và chuẩn ngữ pháp.
-- Nếu học sinh viết sai (ngữ pháp, từ vựng, hoặc sai nghĩa), hãy chỉ ra lỗi sai và giải thích ngắn gọn bằng TIẾNG VIỆT. Đưa ra một vài gợi ý sửa lại cho đúng.
-- Nếu học sinh viết đúng, hãy dành một lời khen ngắn gọn.
-TRẢ VỀ ĐỊNH DẠNG HTML ĐƠN GIẢN (dùng thẻ <b>, <i>, <span class="text-emerald-400 font-bold"> cho chữ đúng, <span class="text-rose-400 font-bold"> cho chữ sai). KHÔNG dùng markdown block.`;
+Học sinh cần viết lại một câu tiếng Anh dựa trên ý nghĩa tiếng Việt.
+Nhiệm vụ của bạn là đánh giá, giải thích lỗi sai (nếu có), và sửa lại câu.
+
+LƯU Ý CỰC KỲ QUAN TRỌNG:
+- KHÔNG ĐƯỢC trừ điểm hoặc bắt lỗi từ vựng/văn phong nếu câu của học sinh đã đúng ngữ pháp và diễn đạt được ý cơ bản. 
+- Ví dụ: học sinh dùng "want to" thay vì "would love to", "play golf" thay vì "take up golf" thì VẪN PHẢI TÍNH LÀ ĐÚNG. Đừng ép học sinh dùng từ hay hơn nếu từ của họ không sai.
+- CHỈ BẮT LỖI khi sai ngữ pháp thật sự (sai thì, thiếu to be, sai trật tự từ) hoặc sai hoàn toàn về nghĩa.
+
+BẠN PHẢI TRẢ VỀ ĐÚNG CẤU TRÚC HTML SAU (tuyệt đối không dùng markdown block khối code html):
+
+<div class="mb-3">
+    <div class="text-xs text-slate-600 mb-1 uppercase tracking-wide font-bold"><i class="fa-solid fa-user-pen mr-1"></i>Câu của bạn:</div>
+    <div class="p-3 bg-slate-100 border border-slate-200 rounded-lg text-lg ai-user-text">
+        <!-- In lại câu của học sinh. Chữ nào đúng thì bọc trong <span class="text-emerald-600 font-semibold">, chữ nào sai thì bọc trong <span class="text-rose-600 line-through font-semibold">, chữ nào sửa/thêm vào thì bọc trong <span class="text-amber-600 font-bold"> -->
+    </div>
+</div>
+
+<div class="mb-3 text-slate-700 leading-relaxed">
+    <div class="text-xs text-slate-600 mb-1 uppercase tracking-wide font-bold"><i class="fa-solid fa-microscope mr-1"></i>Nhận xét chi tiết:</div>
+    <ul class="list-disc pl-5 space-y-2">
+        <!-- Với mỗi lỗi sai, tạo 1 thẻ <li>. Giảng giải ngắn gọn tại sao sai cấu trúc đó. Tuyệt đối không bắt bẻ văn phong. -->
+        <!-- Nếu câu hoàn toàn đúng ngữ pháp cơ bản, ghi <li><span class="text-emerald-600 font-bold">Tuyệt vời!</span> Câu của bạn hoàn toàn chính xác.</li> -->
+    </ul>
+</div>
+
+<div class="mb-3">
+    <div class="text-xs text-slate-600 mb-1 uppercase tracking-wide font-bold"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i>Câu đã sửa (Theo văn phong của bạn):</div>
+    <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800 font-medium ai-corrected-text">
+        <!-- Sửa lại câu cho đúng DỰA TRÊN TỪ VỰNG MÀ HỌC SINH ĐÃ DÙNG (giữ nguyên các từ vựng đúng ngữ pháp của học sinh, không thay bằng từ của câu gốc) -->
+    </div>
+</div>
+
+<div class="mb-1">
+    <div class="text-xs text-slate-600 mb-1 uppercase tracking-wide font-bold"><i class="fa-solid fa-book-open mr-1"></i>Câu mẫu gốc (Original):</div>
+    <div class="p-3 bg-indigo-50 border border-indigo-200 rounded-lg text-indigo-800 italic ai-original-text">
+        <!-- In lại Câu mẫu gốc (Original sentence) -->
+    </div>
+</div>
+
+  <div class="mt-3 text-slate-700 leading-relaxed">
+      <div class="text-xs text-slate-600 mb-1 uppercase tracking-wide font-bold"><i class="fa-solid fa-lightbulb mr-1"></i>Mở rộng & So sánh từ vựng:</div>
+      <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-900 text-sm ai-vocab-expansion">
+          <!-- So sánh từ vựng học sinh dùng và câu gốc. 
+          YÊU CẦU TRÌNH BÀY (RẤT QUAN TRỌNG):
+          1. Dùng danh sách (<ul><li>) để trình bày rành mạch, dễ đọc.
+          2. BỌC TẤT CẢ CÁC TỪ TIẾNG ANH (hoặc cụm từ tiếng Anh) trong thẻ <span class="font-bold text-amber-700">từ vựng</span> để làm nổi bật.
+          3. CHỈ giải thích NGẮN GỌN sự khác biệt về sắc thái và NÊN DÙNG MỖI TỪ TRONG TÌNH HUỐNG/NGỮ CẢNH NÀO. Tuyệt đối KHÔNG CẦN giải thích cấu trúc ngữ pháp. -->
+      </div>
+  </div>`;
 
     const userPrompt = `Câu tiếng Việt gốc cần truyền đạt: "${viTranslation}"
 Câu học sinh viết: "${userSentence}"
-Hãy chấm điểm và nhận xét.`;
+Câu mẫu gốc (để tham khảo): "${originalEnSentence}"
+Hãy chấm điểm và nhận xét chi tiết.`;
 
     try {
         const selectedModel = document.getElementById('aiModelSelect').value || "gemini-2.5-flash";
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`;
+            const isGroq = !selectedModel.includes('gemini');
+            const url = isGroq 
+                ? 'https://api.groq.com/openai/v1/chat/completions' 
+                : `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`;
         
-        const payload = {
-            contents: [{ parts: [{ text: userPrompt }] }],
-            systemInstruction: { parts: [{ text: systemPrompt }] },
-            generationConfig: { temperature: 0.2 }
-        };
-        
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-        
-        if (!response.ok) throw new Error("API Error");
-        const data = await response.json();
-        
-        let feedbackHtml = data.candidates[0].content.parts[0].text;
+        let payload, response, data, feedbackHtml;
+
+        if (isGroq) {
+            payload = {
+                model: selectedModel,
+                messages: [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: userPrompt }
+                ],
+                temperature: 0.2
+            };
+            response = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) { let err = await response.text(); throw new Error(err || "Lỗi Groq API"); }
+            data = await response.json();
+            feedbackHtml = data.choices[0].message.content;
+        } else {
+            payload = {
+                contents: [{ parts: [{ text: userPrompt }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                generationConfig: { temperature: 0.2 }
+            };
+            
+            response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            if (!response.ok) { let err = await response.text(); throw new Error(err || "Lỗi Gemini API"); }
+            data = await response.json();
+            feedbackHtml = data.candidates[0].content.parts[0].text;
+        }
         
         // Remove markdown code blocks if AI still adds them
-        feedbackHtml = feedbackHtml.replace(/```html\n?/g, '').replace(/```/g, '');
+        feedbackHtml = feedbackHtml.replace(/khối code HTML\n?/g, '').replace(/```/g, '');
         
         feedbackEl.innerHTML = `<div class="border-l-4 border-brand-500 pl-3 py-1">${feedbackHtml}</div>`;
+        
+        // Bắt đầu xử lý cho phép click từ vựng
+        setTimeout(() => {
+            const targetNodes = feedbackEl.querySelectorAll('.ai-corrected-text, .ai-original-text, .ai-user-text, .ai-vocab-expansion');
+            // If they don't have the classes for some reason, fallback to query by bg colors
+            const allTargets = targetNodes.length > 0 ? targetNodes : feedbackEl.querySelectorAll('div.bg-emerald-50, div.bg-indigo-50, div.bg-slate-800\\/80, div.bg-slate-100, div.bg-amber-50');
+            
+            allTargets.forEach(node => {
+                const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT, null, false);
+                const textNodes = [];
+                let n;
+                while(n = walker.nextNode()) textNodes.push(n);
+                
+                textNodes.forEach(textNode => {
+                    const text = textNode.nodeValue;
+                    if (!text.trim() || !/[a-zA-Z]/.test(text)) return; // Bỏ qua nếu chỉ là dấu cách hoặc không có tiếng Anh
+                    
+                    const tokens = text.match(/[\w'-]+|[^\w\s]+|\s+/g) || [];
+                    const fragment = document.createDocumentFragment();
+                    
+                    tokens.forEach(token => {
+                        if (/[a-zA-Z]/.test(token)) {
+                            const span = document.createElement('span');
+                            span.className = "cursor-pointer hover:bg-emerald-200 hover:text-emerald-800 rounded px-[2px] transition-colors duration-200";
+                            span.innerText = token;
+                            span.onclick = (e) => {
+                                e.stopPropagation();
+                                if(typeof speakText === 'function') speakText(token);
+                            };
+                            span.oncontextmenu = (e) => {
+                                if(typeof handleDictRightClick === 'function') handleDictRightClick(e, token, span);
+                            };
+                            fragment.appendChild(span);
+                        } else {
+                            fragment.appendChild(document.createTextNode(token));
+                        }
+                    });
+                    textNode.parentNode.replaceChild(fragment, textNode);
+                });
+            });
+        }, 100);
     } catch (err) {
         feedbackEl.innerHTML = `<div class="text-red-400"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Lỗi: ${err.message}</div>`;
     } finally {

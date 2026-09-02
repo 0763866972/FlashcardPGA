@@ -1,60 +1,24 @@
-﻿const fs = require('fs');
+const fs = require('fs');
+
 let content = fs.readFileSync('main.js', 'utf8');
 
-// Replace getContextCacheSuffix
-content = content.replace(
-    /function getContextCacheSuffix\(\) \{\r?\n    let ctx = localStorage\.getItem\('toeic_ai_context'\) \|\| '';/,
-    "function getContextCacheSuffix() {\n    let groupId = typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default';\n    let ctx = localStorage.getItem('toeic_ai_context_' + groupId) || localStorage.getItem('toeic_ai_context') || '';"
-);
+// The two patterns to replace:
+const pattern1 = "localStorage.getItem('toeic_ai_context_' + groupId) || localStorage.getItem('toeic_ai_context') || ''";
+const replace1 = "(localStorage.getItem('toeic_ai_context_' + groupId) ?? localStorage.getItem('toeic_ai_context') ?? '')";
 
-// Replace fcAiContext 1
-content = content.replace(
-    /let fcAiContext = localStorage\.getItem\('toeic_ai_context'\) \|\| '';/g,
-    "let fcAiContext = localStorage.getItem('toeic_ai_context_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default')) || localStorage.getItem('toeic_ai_context') || '';"
-);
+const pattern2 = "localStorage.getItem('toeic_ai_context_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default')) || localStorage.getItem('toeic_ai_context') || ''";
+const replace2 = "(localStorage.getItem('toeic_ai_context_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default')) ?? localStorage.getItem('toeic_ai_context') ?? '')";
 
-// Replace AI toggles in dictation / quizzes
-content = content.replace(
-    /localStorage\.getItem\('toeic_ai_fam_toggle'\)/g,
-    "(localStorage.getItem('toeic_ai_fam_toggle_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default')) || localStorage.getItem('toeic_ai_fam_toggle'))"
-);
-content = content.replace(
-    /localStorage\.getItem\('toeic_ai_syn_toggle'\)/g,
-    "(localStorage.getItem('toeic_ai_syn_toggle_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default')) || localStorage.getItem('toeic_ai_syn_toggle'))"
-);
-content = content.replace(
-    /localStorage\.getItem\('toeic_ai_hom_toggle'\)/g,
-    "(localStorage.getItem('toeic_ai_hom_toggle_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default')) || localStorage.getItem('toeic_ai_hom_toggle'))"
-);
+const pattern3 = "localStorage.getItem('toeic_ai_context_' + (typeof activeVocabGroupId !== 'undefined' ? \nactiveVocabGroupId : 'default')) || localStorage.getItem('toeic_ai_context') || ''";
 
-// handleAiToggle replacements
-content = content.replace(
-    /let currentCtx = localStorage\.getItem\('toeic_ai_context'\) \|\| '';/g,
-    "let currentCtx = localStorage.getItem('toeic_ai_context_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default')) || localStorage.getItem('toeic_ai_context') || '';"
-);
+// We'll use split and join to safely replace all instances regardless of formatting,
+// or better yet, a regex that handles whitespace if needed.
 
-content = content.replace(
-    /localStorage\.setItem\('toeic_ai_context', result\.trim\(\)\);/g,
-    "localStorage.setItem('toeic_ai_context_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default'), result.trim());"
-);
+// Actually, looking at the previous output, pattern2 sometimes has a newline.
+// So let's use a regex:
+const regex = /localStorage\.getItem\('toeic_ai_context_' \+ ([^)]+)\)\s*\|\|\s*localStorage\.getItem\('toeic_ai_context'\)\s*\|\|\s*''/g;
 
-content = content.replace(
-    /localStorage\.setItem\('toeic_ai_context', ctx\);/g,
-    "localStorage.setItem('toeic_ai_context_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default'), ctx);"
-);
+content = content.replace(regex, "(localStorage.getItem('toeic_ai_context_' + $1) ?? localStorage.getItem('toeic_ai_context') ?? '')");
 
-content = content.replace(
-    /localStorage\.setItem\('toeic_ai_fam_toggle', aiFamToggle\.checked\);/g,
-    "localStorage.setItem('toeic_ai_fam_toggle_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default'), aiFamToggle.checked);"
-);
-content = content.replace(
-    /localStorage\.setItem\('toeic_ai_syn_toggle', aiSynToggle\.checked\);/g,
-    "localStorage.setItem('toeic_ai_syn_toggle_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default'), aiSynToggle.checked);"
-);
-content = content.replace(
-    /localStorage\.setItem\('toeic_ai_hom_toggle', aiHomToggle\.checked\);/g,
-    "localStorage.setItem('toeic_ai_hom_toggle_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default'), aiHomToggle.checked);"
-);
-
-fs.writeFileSync('main.js', content, 'utf8');
-console.log('Script executed.');
+fs.writeFileSync('main.js', content);
+console.log("Replaced nullish coalescing logic for toeic_ai_context");

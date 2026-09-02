@@ -51,47 +51,62 @@
     </script>
     <style>
         /* macOS Dock style IPA Popup */
-        
-        .ipa-item { font-size: inherit; display: inline-block;
+
+        .ipa-item {
+            font-size: inherit;
+            display: inline-block;
             font-weight: 500;
             cursor: pointer;
             padding: 0 2px;
             transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1), margin 0.2s, color 0.2s;
             transform-origin: bottom center;
-            color: #64748b; /* slate-500 */
+            color: #64748b;
+            /* slate-500 */
             position: relative;
         }
+
         .dark .ipa-item {
-            color: #94a3b8; /* slate-400 */
+            color: #94a3b8;
+            /* slate-400 */
         }
+
         .ipa-item:not(.vowel) {
-            color: #0ea5e9; /* sky-500 for consonants */
+            color: #0ea5e9;
+            /* sky-500 for consonants */
         }
+
         .dark .ipa-item:not(.vowel) {
-            color: #38bdf8; /* sky-400 for consonants in dark mode */
+            color: #38bdf8;
+            /* sky-400 for consonants in dark mode */
         }
+
         .ipa-item.vowel {
-            color: #facc15; /* yellow-400 */
+            color: #facc15;
+            /* yellow-400 */
         }
+
         /* Dock scaling effect using modern :has selector */
         .ipa-item:hover {
             transform: scale(1.6);
             margin: 0 10px !important;
-            color: #3b82f6; /* brand-500 when hovered for consonants */
+            color: #3b82f6;
+            /* brand-500 when hovered for consonants */
         }
+
         .ipa-item.vowel:hover {
-            color: #eab308; /* darker yellow when hovered */
+            color: #eab308;
+            /* darker yellow when hovered */
         }
+
         .ipa-item:has(+ .ipa-item:hover) {
             transform: scale(1.3);
             margin: 0 5px !important;
         }
-        .ipa-item:hover + .ipa-item {
+
+        .ipa-item:hover+.ipa-item {
             transform: scale(1.3);
             margin: 0 5px !important;
         }
-        
-
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
 </head>
@@ -112,7 +127,8 @@
                     class="text-xl font-extrabold tracking-tight bg-gradient-to-r from-blue-400 to-indigo-300 bg-clip-text text-transparent group-hover:from-blue-300 group-hover:to-indigo-200 transition-colors">
                     VOCABULARY MASTERCLASS</h1>
                 <p class="text-[11px] font-bold tracking-widest mt-1">
-                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-500 to-cyan-500 drop-shadow-sm group-hover:from-brand-400 group-hover:to-cyan-400 transition-all uppercase">
+                    <span
+                        class="text-transparent bg-clip-text bg-gradient-to-r from-brand-500 to-cyan-500 drop-shadow-sm group-hover:from-brand-400 group-hover:to-cyan-400 transition-all uppercase">
                         Design by Phan Gia An
                     </span>
                 </p>
@@ -121,10 +137,14 @@
 
         <!-- API KEY & CONFIGURATION FORM -->
         <div class="flex flex-wrap items-center gap-3">
-            <a href="tudongnghia.html" class="hidden sm:flex bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-sm font-bold px-4 py-2 rounded-xl shadow-lg shadow-emerald-500/20 transition-all items-center gap-2 active:scale-95" title="Chuyển sang trang Từ Đồng Nghĩa">
+            <a href="tudongnghia.html"
+                class="hidden sm:flex bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-sm font-bold px-4 py-2 rounded-xl shadow-lg shadow-emerald-500/20 transition-all items-center gap-2 active:scale-95"
+                title="Chuyển sang trang Từ Đồng Nghĩa">
                 <i class="fa-solid fa-link text-xs"></i> <span>Từ Đồng Nghĩa</span>
             </a>
-            <a href="tudongnghia.html" class="flex sm:hidden bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-sm w-9 h-9 justify-center items-center rounded-xl shadow-lg shadow-emerald-500/20 transition-all active:scale-95" title="Chuyển sang trang Từ Đồng Nghĩa">
+            <a href="tudongnghia.html"
+                class="flex sm:hidden bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-sm w-9 h-9 justify-center items-center rounded-xl shadow-lg shadow-emerald-500/20 transition-all active:scale-95"
+                title="Chuyển sang trang Từ Đồng Nghĩa">
                 <i class="fa-solid fa-link text-sm"></i>
             </a>
 
@@ -424,7 +444,8 @@
                             <span class="text-[9px] font-bold text-emerald-100 uppercase opacity-90"><i
                                     class="fa-solid fa-wand-magic-sparkles text-amber-300 mr-0.5"></i>AI</span>
                             <div class="relative">
-                                <input type="checkbox" id="aiExampleToggle" class="sr-only peer" onchange="handleAiToggle(this)">
+                                <input type="checkbox" id="aiExampleToggle" class="sr-only peer"
+                                    onchange="handleAiToggle(this)">
                                 <div
                                     class="w-6 h-3.5 bg-emerald-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-2.5 after:w-2.5 after:transition-all peer-checked:bg-amber-400 shadow-inner">
                                 </div>
@@ -438,7 +459,8 @@
                 </button>
                 <button onclick="window.location.href='pga.html'" id="pgaBtn"
                     class="w-full relative overflow-hidden group bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 px-5 rounded-xl shadow-[0_0_20px_rgba(8,145,178,0.25)] hover:shadow-[0_0_30px_rgba(8,145,178,0.4)] active:scale-[0.98] transition-all duration-300 flex items-center justify-start gap-3 border border-cyan-400/30 mt-1">
-                    <i class="fa-solid fa-magnifying-glass-chart"></i> <span class="tracking-wide">Quét Từ Vựng AI</span>
+                    <i class="fa-solid fa-magnifying-glass-chart"></i> <span class="tracking-wide">Quét Từ Vựng
+                        AI</span>
                 </button>
             </div>
         </section>
@@ -772,16 +794,22 @@
                     </div>
                     <div class="flex items-center gap-2 sm:gap-3">
                         <div id="fcSpeedControl" class="hidden flex items-center gap-2">
-                            <select id="fcExampleReadMode" onchange="changeExampleReadMode()" class="bg-white border border-slate-200 text-slate-700 hover:border-brand-400 hover:text-brand-600 px-2 py-2 rounded-xl transition-all text-sm font-semibold outline-none shadow-sm cursor-pointer text-center" title="Chế độ đọc ví dụ">
+                            <select id="fcExampleReadMode" onchange="changeExampleReadMode()"
+                                class="bg-white border border-slate-200 text-slate-700 hover:border-brand-400 hover:text-brand-600 px-2 py-2 rounded-xl transition-all text-sm font-semibold outline-none shadow-sm cursor-pointer text-center"
+                                title="Chế độ đọc ví dụ">
                                 <option value="none" class="bg-white text-slate-700" selected>Tắt Đọc VD</option>
                                 <option value="en" class="bg-white text-slate-700">Đọc VD (Anh)</option>
                                 <option value="en_vi" class="bg-white text-slate-700">Đọc VD (Anh+Việt)</option>
                                 <option value="en_no_meaning" class="bg-white text-slate-700">Chỉ VD (Anh)</option>
-                                <option value="en_vi_no_meaning" class="bg-white text-slate-700">Chỉ VD (Anh+Việt)</option>
+                                <option value="en_vi_no_meaning" class="bg-white text-slate-700">Chỉ VD (Anh+Việt)
+                                </option>
                                 <option value="back_en" class="bg-white text-slate-700">Chỉ Mặt Sau (Anh)</option>
-                                <option value="back_en_vi" class="bg-white text-slate-700">Chỉ Mặt Sau (Anh+Việt)</option>
+                                <option value="back_en_vi" class="bg-white text-slate-700">Chỉ Mặt Sau (Anh+Việt)
+                                </option>
                             </select>
-                            <select id="fcPlaybackSpeed" onchange="changePlaybackSpeed()" class="bg-white border border-slate-200 text-slate-700 hover:border-brand-400 hover:text-brand-600 px-2 py-2 rounded-xl transition-all text-sm font-semibold outline-none shadow-sm cursor-pointer text-center" title="Tốc độ tự động đọc">
+                            <select id="fcPlaybackSpeed" onchange="changePlaybackSpeed()"
+                                class="bg-white border border-slate-200 text-slate-700 hover:border-brand-400 hover:text-brand-600 px-2 py-2 rounded-xl transition-all text-sm font-semibold outline-none shadow-sm cursor-pointer text-center"
+                                title="Tốc độ tự động đọc">
                                 <option value="0.7" class="bg-white text-slate-700">0.7x</option>
                                 <option value="0.8" class="bg-white text-slate-700">0.8x</option>
                                 <option value="0.9" class="bg-white text-slate-700">0.9x</option>
@@ -795,13 +823,17 @@
                         <button onclick="toggleSlideshow()" id="fcSlideshowBtn"
                             class="bg-slate-100 text-slate-500 hover:bg-amber-50 hover:text-amber-500 px-4 py-2 rounded-xl transition-all text-sm font-bold flex items-center gap-2"
                             title="Tự động lướt thẻ và đọc (Anh - Việt)">
-                            <i id="fcSlideshowIcon" class="fa-solid fa-play"></i> <span class="hidden sm:inline">Học rảnh tay</span>
+                            <i id="fcSlideshowIcon" class="fa-solid fa-play"></i> <span class="hidden sm:inline">Học
+                                rảnh tay</span>
                         </button>
-                        <input type="text" id="fcAutoPlaySequenceInput" placeholder="Thứ tự (vd: 1-5, 8)" class="w-24 sm:w-32 bg-white border border-slate-200 text-slate-700 hover:border-brand-400 focus:border-brand-500 hover:text-brand-600 px-3 py-2 rounded-xl transition-all text-sm font-semibold outline-none shadow-sm text-center" title="Nhập thứ tự các thẻ muốn đọc (ví dụ: 1-5, 8)">
+                        <input type="text" id="fcAutoPlaySequenceInput" placeholder="Thứ tự (vd: 1-5, 8)"
+                            class="w-24 sm:w-32 bg-white border border-slate-200 text-slate-700 hover:border-brand-400 focus:border-brand-500 hover:text-brand-600 px-3 py-2 rounded-xl transition-all text-sm font-semibold outline-none shadow-sm text-center"
+                            title="Nhập thứ tự các thẻ muốn đọc (ví dụ: 1-5, 8)">
                         <button onclick="toggleAutoPlay()" id="fcAutoPlayBtn"
                             class="bg-sky-100 text-sky-500 hover:bg-sky-200 px-4 py-2 rounded-xl transition-all text-sm font-bold flex items-center gap-2"
                             title="Tự động đọc từ vựng khi chuyển thẻ">
-                            <i id="fcAutoPlayIcon" class="fa-solid fa-volume-high"></i> <span class="hidden sm:inline">Tự động đọc</span>
+                            <i id="fcAutoPlayIcon" class="fa-solid fa-volume-high"></i> <span
+                                class="hidden sm:inline">Tự động đọc</span>
                         </button>
                     </div>
                 </div>
@@ -815,7 +847,9 @@
                             <!-- Front (Word) -->
                             <div id="fcFront"
                                 class="col-start-1 row-start-1 w-full h-full bg-slate-800 border-2 border-slate-700 rounded-3xl shadow-2xl flex flex-col items-center justify-center p-10 backface-hidden">
-                                <span id="fcGenPhoneticBtn" onclick="generatePhoneticForWord(event)" title="Nhấn để AI tạo phiên âm" class="absolute top-6 left-6 text-slate-500 text-sm font-bold uppercase tracking-widest cursor-pointer hover:text-brand-400 transition-colors"><i
+                                <span id="fcGenPhoneticBtn" onclick="generatePhoneticForWord(event)"
+                                    title="Nhấn để AI tạo phiên âm"
+                                    class="absolute top-6 left-6 text-slate-500 text-sm font-bold uppercase tracking-widest cursor-pointer hover:text-brand-400 transition-colors"><i
                                         class="fa-regular fa-lightbulb text-brand-400"></i> Thuật Ngữ</span>
                                 <div class="absolute top-6 right-6 flex items-center gap-2">
                                     <div class="relative flex items-center justify-center">
@@ -881,7 +915,8 @@
                                 <span
                                     class="absolute top-6 left-6 text-[#2f75b5] text-sm font-bold uppercase tracking-widest"><i
                                         class="fa-solid fa-spell-check"></i> Định Nghĩa</span>
-                                <div class="absolute top-6 right-6 flex items-center gap-2 z-10" onclick="event.stopPropagation()">
+                                <div class="absolute top-6 right-6 flex items-center gap-2 z-10"
+                                    onclick="event.stopPropagation()">
                                     <button onclick="toggleFcStar(event)"
                                         class="text-brand-300/70 hover:text-amber-400 text-2xl transition-colors p-2"
                                         title="Đánh dấu từ này">
@@ -947,12 +982,12 @@
                         </div>
 
                         <!-- Grammar Analysis Panel -->
-                        <div id="fcGrammarAnalysis" class="hidden w-full max-w-2xl mt-8 bg-slate-900/60 border border-slate-800 rounded-2xl p-6 text-left shadow-lg">
-                            <div class="font-bold text-amber-500 text-sm mb-3 uppercase tracking-wider flex items-center gap-2 border-b border-slate-800 pb-3">
+                        <div id="fcGrammarAnalysis"
+                            class="hidden w-full max-w-2xl mt-8 bg-slate-900/60 border border-slate-800 rounded-2xl p-6 text-left shadow-lg">
+                            <div
+                                class="font-bold text-amber-500 text-sm mb-3 uppercase tracking-wider flex items-center gap-2 border-b border-slate-800 pb-3">
                                 <span><i class="fa-solid fa-spell-check text-base"></i> Phân tích Ngữ pháp</span>
-                                <button onclick="toggleAllGrammarWriting(event)" class="text-slate-400 hover:text-brand-400 transition-colors ml-2" title="Bật/Tắt chế độ luyện viết (tất cả)">
-                                    <i class="fa-solid fa-eye" id="grammarEyeIconAll"></i>
-                                </button>
+
                             </div>
                             <div id="fcGrammarContent" class="text-slate-300 leading-relaxed text-sm"></div>
                         </div>
@@ -965,7 +1000,9 @@
                                     class="font-bold text-indigo-400 text-sm mb-3 uppercase tracking-wider flex items-center justify-between gap-1.5 border-b border-slate-800 pb-3">
                                     <span class="flex items-center gap-2">
                                         <i class="fa-solid fa-sitemap"></i> Word Family
-                                        <span class="text-[10px] text-slate-500 font-medium normal-case tracking-normal hidden sm:inline">(Vàng: Dễ nhầm, Đỏ: Khác nghĩa)</span>
+                                        <span
+                                            class="text-[10px] text-slate-500 font-medium normal-case tracking-normal hidden sm:inline">(Vàng:
+                                            Dễ nhầm, Đỏ: Khác nghĩa)</span>
                                     </span>
                                     <span id="fcFamilyCount"
                                         class="text-xs bg-indigo-500/20 text-indigo-300 px-2 py-1 rounded-md font-bold"></span>
@@ -986,16 +1023,7 @@
                                 </table>
                             </div>
 
-                            <div id="fcUsage"
-                                class="hidden bg-slate-900/60 border border-slate-800 rounded-2xl p-6 text-left w-full shadow-lg">
-                                <div
-                                    class="font-bold text-[#2f75b5] text-sm mb-3 uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-800 pb-3">
-                                    <i class="fa-solid fa-lightbulb"></i> Chú ý Cách dùng
-                                </div>
-                                <table class="w-full text-left text-sm text-slate-300 border-collapse mt-2">
-                                    <tbody id="fcUsageList" class="divide-y divide-slate-800/50"></tbody>
-                                </table>
-                            </div>
+
 
                             <div id="fcHomophones"
                                 class="hidden bg-slate-900/60 border border-slate-800 rounded-2xl p-6 text-left w-full shadow-lg">
@@ -1274,54 +1302,119 @@
             class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl border-b border-r border-slate-200/60 dark:border-slate-700 rotate-45 rounded-sm">
         </div>
     </div>
-    
+
     <!-- IPA Popup macOS Dock -->
 
 
     <!-- AI Context Modal -->
-    <div id="aiContextModal" class="hidden fixed z-[9999] transition-opacity">
-        <div class="bg-slate-900 border border-slate-700 shadow-2xl shadow-black/50 rounded-2xl w-[380px] p-5 transform transition-all relative">
-            <div class="absolute left-[-8px] top-8 w-4 h-4 bg-slate-900 border-l border-b border-slate-700 transform rotate-45"></div>
-            <h3 class="text-xl font-bold text-white mb-2 flex items-center gap-2">
-                <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i> Ngữ cảnh AI
-            </h3>
-            <p class="text-slate-400 text-sm mb-4">Nhập ngữ cảnh để AI tạo ví dụ (VD: Chủ đề giao tiếp, TOEIC, kinh doanh...). Nếu để trống, AI sẽ tạo tự do.</p>
-            <textarea id="aiContextInput" rows="8" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow resize-y min-h-[150px] custom-scrollbar" placeholder="Nhập ngữ cảnh tại đây..."></textarea>
-            
-            <div class="mt-4 flex flex-col gap-3 border-t border-slate-700 pt-4">
-                <label class="relative inline-flex items-center cursor-pointer group">
-                    <input type="checkbox" id="aiFamToggle" class="sr-only" checked onchange="handleAiOptionToggle(this, 'trackFam', 'thumbFam')">
-                    <div id="trackFam" class="w-9 h-5 rounded-full transition-colors duration-300 shadow-inner p-[2px] bg-emerald-500 flex items-center">
-                        <div id="thumbFam" class="bg-white rounded-full h-4 w-4 transition-all duration-300 transform translate-x-4 shadow-sm"></div>
+    <div id="aiContextModal"
+        class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm transition-opacity">
+        <div
+            class="bg-slate-900 border border-slate-700/60 shadow-2xl shadow-black/80 rounded-2xl w-[850px] max-w-[95vw] transform transition-all flex flex-col md:flex-row overflow-hidden relative">
+
+            <!-- Nút đóng nhanh (X) ở góc phải trên -->
+            <button onclick="closeAiContextModal(false)"
+                class="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors z-10 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-800">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <!-- Bên trái: Context Input -->
+            <div class="flex-1 p-6 border-b md:border-b-0 md:border-r border-slate-700/60 flex flex-col">
+                <h3 class="text-2xl font-bold text-white mb-2 flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center">
+                        <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i>
                     </div>
-                    <span class="ml-3 text-sm font-medium text-slate-300 group-hover:text-white transition-colors"><i class="fa-solid fa-sitemap mr-1"></i> Tạo Word Family</span>
-                </label>
-                <label class="relative inline-flex items-center cursor-pointer group">
-                    <input type="checkbox" id="aiSynToggle" class="sr-only" checked onchange="handleAiOptionToggle(this, 'trackSyn', 'thumbSyn')">
-                    <div id="trackSyn" class="w-9 h-5 rounded-full transition-colors duration-300 shadow-inner p-[2px] bg-emerald-500 flex items-center">
-                        <div id="thumbSyn" class="bg-white rounded-full h-4 w-4 transition-all duration-300 transform translate-x-4 shadow-sm"></div>
-                    </div>
-                    <span class="ml-3 text-sm font-medium text-slate-300 group-hover:text-white transition-colors"><i class="fa-solid fa-right-left mr-1"></i> Tạo Đồng nghĩa & Trái nghĩa</span>
-                </label>
-                <label class="relative inline-flex items-center cursor-pointer group">
-                    <input type="checkbox" id="aiHomToggle" class="sr-only" checked onchange="handleAiOptionToggle(this, 'trackHom', 'thumbHom')">
-                    <div id="trackHom" class="w-9 h-5 rounded-full transition-colors duration-300 shadow-inner p-[2px] bg-emerald-500 flex items-center">
-                        <div id="thumbHom" class="bg-white rounded-full h-4 w-4 transition-all duration-300 transform translate-x-4 shadow-sm"></div>
-                    </div>
-                    <span class="ml-3 text-sm font-medium text-slate-300 group-hover:text-white transition-colors"><i class="fa-solid fa-triangle-exclamation mr-1 text-red-400"></i> Tạo Từ dễ nhầm lẫn</span>
-                </label>
-                <label class="relative inline-flex items-center cursor-pointer group">
-                    <input type="checkbox" id="aiGrammarToggle" class="sr-only" checked onchange="handleAiOptionToggle(this, 'trackGrammar', 'thumbGrammar')">
-                    <div id="trackGrammar" class="w-9 h-5 rounded-full transition-colors duration-300 shadow-inner p-[2px] bg-emerald-500 flex items-center">
-                        <div id="thumbGrammar" class="bg-white rounded-full h-4 w-4 transition-all duration-300 transform translate-x-4 shadow-sm"></div>
-                    </div>
-                    <span class="ml-3 text-sm font-medium text-slate-300 group-hover:text-white transition-colors"><i class="fa-solid fa-spell-check mr-1 text-blue-400"></i> Phân tích Ngữ pháp</span>
-                </label>
+                    Ngữ cảnh AI
+                </h3>
+                <p class="text-slate-400 text-sm mb-5">Nhập ngữ cảnh để AI tạo ví dụ (VD: Giao tiếp hằng ngày, Luyện thi
+                    TOEIC, Viết email công sở...). Nếu để trống, AI sẽ tạo tự do.</p>
+                <textarea id="aiContextInput"
+                    class="w-full flex-1 bg-slate-800/80 border border-slate-600/60 rounded-xl p-4 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-shadow resize-none custom-scrollbar text-[15px] leading-relaxed min-h-[250px]"
+                    placeholder="Nhập ngữ cảnh tại đây..."></textarea>
             </div>
 
-            <div class="mt-5 flex justify-end gap-3">
-                <button onclick="closeAiContextModal(false)" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-700 dark:text-white rounded-lg font-medium transition-colors">Hủy</button>
-                <button onclick="closeAiContextModal(true)" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-emerald-900 dark:text-white rounded-lg font-bold shadow-lg shadow-emerald-600/30 transition-colors">Áp dụng</button>
+            <!-- Bên phải: Tùy chỉnh (Options & Actions) -->
+            <div class="w-full md:w-[320px] p-6 bg-slate-800/30 flex flex-col justify-between">
+                <div>
+                    <h4 class="text-xs font-bold text-slate-400 mb-4 uppercase tracking-widest flex items-center gap-2">
+                        <i class="fa-solid fa-sliders text-slate-500"></i> Tùy chỉnh nâng cao
+                    </h4>
+                    <div class="flex flex-col gap-3">
+                        <label
+                            class="relative flex items-center cursor-pointer group bg-slate-800/60 hover:bg-slate-700/60 p-3.5 rounded-xl border border-slate-700/50 hover:border-slate-600 transition-all">
+                            <input type="checkbox" id="aiFamToggle" class="sr-only" checked
+                                onchange="handleAiOptionToggle(this, 'trackFam', 'thumbFam')">
+                            <div id="trackFam"
+                                class="w-10 h-6 rounded-full transition-colors duration-300 shadow-inner p-[2px] bg-emerald-500 flex items-center shrink-0">
+                                <div id="thumbFam"
+                                    class="bg-white rounded-full h-5 w-5 transition-all duration-300 transform translate-x-4 shadow-sm">
+                                </div>
+                            </div>
+                            <span
+                                class="ml-3 text-sm font-medium text-slate-200 group-hover:text-white transition-colors flex-1 flex items-center gap-2"><i
+                                    class="fa-solid fa-sitemap w-5 text-center text-slate-400"></i> Word Family</span>
+                        </label>
+
+                        <label
+                            class="relative flex items-center cursor-pointer group bg-slate-800/60 hover:bg-slate-700/60 p-3.5 rounded-xl border border-slate-700/50 hover:border-slate-600 transition-all">
+                            <input type="checkbox" id="aiSynToggle" class="sr-only" checked
+                                onchange="handleAiOptionToggle(this, 'trackSyn', 'thumbSyn')">
+                            <div id="trackSyn"
+                                class="w-10 h-6 rounded-full transition-colors duration-300 shadow-inner p-[2px] bg-emerald-500 flex items-center shrink-0">
+                                <div id="thumbSyn"
+                                    class="bg-white rounded-full h-5 w-5 transition-all duration-300 transform translate-x-4 shadow-sm">
+                                </div>
+                            </div>
+                            <span
+                                class="ml-3 text-sm font-medium text-slate-200 group-hover:text-white transition-colors flex-1 flex items-center gap-2"><i
+                                    class="fa-solid fa-right-left w-5 text-center text-slate-400"></i> Đồng & Trái
+                                nghĩa</span>
+                        </label>
+
+                        <label
+                            class="relative flex items-center cursor-pointer group bg-slate-800/60 hover:bg-slate-700/60 p-3.5 rounded-xl border border-slate-700/50 hover:border-slate-600 transition-all">
+                            <input type="checkbox" id="aiHomToggle" class="sr-only" checked
+                                onchange="handleAiOptionToggle(this, 'trackHom', 'thumbHom')">
+                            <div id="trackHom"
+                                class="w-10 h-6 rounded-full transition-colors duration-300 shadow-inner p-[2px] bg-emerald-500 flex items-center shrink-0">
+                                <div id="thumbHom"
+                                    class="bg-white rounded-full h-5 w-5 transition-all duration-300 transform translate-x-4 shadow-sm">
+                                </div>
+                            </div>
+                            <span
+                                class="ml-3 text-sm font-medium text-slate-200 group-hover:text-white transition-colors flex-1 flex items-center gap-2"><i
+                                    class="fa-solid fa-triangle-exclamation w-5 text-center text-red-400"></i> Từ dễ
+                                nhầm lẫn</span>
+                        </label>
+
+                        <label
+                            class="relative flex items-center cursor-pointer group bg-slate-800/60 hover:bg-slate-700/60 p-3.5 rounded-xl border border-slate-700/50 hover:border-slate-600 transition-all">
+                            <input type="checkbox" id="aiGrammarToggle" class="sr-only" checked
+                                onchange="handleAiOptionToggle(this, 'trackGrammar', 'thumbGrammar')">
+                            <div id="trackGrammar"
+                                class="w-10 h-6 rounded-full transition-colors duration-300 shadow-inner p-[2px] bg-emerald-500 flex items-center shrink-0">
+                                <div id="thumbGrammar"
+                                    class="bg-white rounded-full h-5 w-5 transition-all duration-300 transform translate-x-4 shadow-sm">
+                                </div>
+                            </div>
+                            <span
+                                class="ml-3 text-sm font-medium text-slate-200 group-hover:text-white transition-colors flex-1 flex items-center gap-2"><i
+                                    class="fa-solid fa-spell-check w-5 text-center text-blue-400"></i> Phân tích Ngữ
+                                pháp</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="mt-8 flex flex-col gap-3">
+                    <button onclick="closeAiContextModal(true)"
+                        class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-emerald-950 rounded-xl font-bold shadow-lg shadow-emerald-600/20 transition-all active:scale-[0.98] flex justify-center items-center gap-2">
+                        <i class="fa-solid fa-check"></i> Áp dụng cài đặt
+                    </button>
+                    <button onclick="closeAiContextModal(false)"
+                        class="w-full py-3 bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white rounded-xl font-medium transition-all active:scale-[0.98]">
+                        Đóng (Không lưu)
+                    </button>
+                </div>
             </div>
         </div>
     </div>
