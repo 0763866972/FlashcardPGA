@@ -6192,7 +6192,7 @@ async function callGeminiAPIText(systemPrompt, userPrompt, overrideModel = null,
             apiUrl = `https://api.groq.com/openai/v1/chat/completions`;
             headers['Authorization'] = `Bearer ${currentKey}`;
             payload = { model: selectedModel, messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }] };
-            if (!selectedModel.includes('compound')) payload.max_tokens = 3000;
+            if (!selectedModel.includes('compound')) payload.max_tokens = 5000;
         } else {
             apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${currentKey}`;
             payload = { contents: [{ parts: [{ text: userPrompt }] }], systemInstruction: { parts: [{ text: systemPrompt }] } };

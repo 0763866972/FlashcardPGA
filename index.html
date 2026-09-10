@@ -7,7 +7,6 @@
   =============================================================
 -->
 <html lang="vi" class="h-full bg-slate-900 text-slate-100">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -51,7 +50,6 @@
     </script>
     <style>
         /* macOS Dock style IPA Popup */
-
         .ipa-item {
             font-size: inherit;
             display: inline-block;
@@ -64,27 +62,22 @@
             /* slate-500 */
             position: relative;
         }
-
         .dark .ipa-item {
             color: #94a3b8;
             /* slate-400 */
         }
-
         .ipa-item:not(.vowel) {
             color: #0ea5e9;
             /* sky-500 for consonants */
         }
-
         .dark .ipa-item:not(.vowel) {
             color: #38bdf8;
             /* sky-400 for consonants in dark mode */
         }
-
         .ipa-item.vowel {
             color: #facc15;
             /* yellow-400 */
         }
-
         /* Dock scaling effect using modern :has selector */
         .ipa-item:hover {
             transform: scale(1.6);
@@ -92,17 +85,14 @@
             color: #3b82f6;
             /* brand-500 when hovered for consonants */
         }
-
         .ipa-item.vowel:hover {
             color: #eab308;
             /* darker yellow when hovered */
         }
-
         .ipa-item:has(+ .ipa-item:hover) {
             transform: scale(1.3);
             margin: 0 5px !important;
         }
-
         .ipa-item:hover+.ipa-item {
             transform: scale(1.3);
             margin: 0 5px !important;
@@ -110,9 +100,7 @@
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
 </head>
-
 <body class="h-full flex flex-col overflow-hidden">
-
     <!-- TOP NAVIGATION -->
     <header id="mainHeader"
         class="bg-slate-800 border-b border-slate-700 px-6 py-4 flex flex-wrap items-center justify-between gap-4 z-40 shrink-0 relative">
@@ -134,7 +122,6 @@
                 </p>
             </div>
         </div>
-
         <!-- API KEY & CONFIGURATION FORM -->
         <div class="flex flex-wrap items-center gap-3">
             <a href="tudongnghia.html"
@@ -147,7 +134,6 @@
                 title="Chuyển sang trang Từ Đồng Nghĩa">
                 <i class="fa-solid fa-link text-sm"></i>
             </a>
-
             <select id="aiModelSelect" onchange="handleModelChange()"
                 class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-brand-600 dark:text-brand-400 text-xs font-bold rounded-xl focus:ring-2 focus:ring-brand-500/30 outline-none block px-3 py-2 transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer">
                 <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash Lite</option>
@@ -161,7 +147,6 @@
                     <span id="activeKeyCountBadge"
                         class="absolute -top-1.5 -right-1.5 bg-brand-500 text-white keep-white text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full border border-white dark:border-slate-800 shadow-sm hidden">0</span>
                 </button>
-
                 <!-- Absolute Dropdown Panel -->
                 <div id="keyConfigSection"
                     class="hidden absolute top-full right-0 mt-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-5 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] dark:shadow-2xl flex flex-col gap-5 transition-all duration-300 z-50 w-[340px] origin-top-right">
@@ -180,12 +165,10 @@
                                     class="fa-solid fa-plus text-[10px]"></i></button>
                         </div>
                     </div>
-
                     <div id="keyInputsContainer"
                         class="flex flex-col gap-3 max-h-[250px] overflow-y-auto pr-1 scrollbar-thin">
                         <!-- Dynamically populated inputs -->
                     </div>
-
                     <div
                         class="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-700/60 mt-1">
                         <a id="getKeyLink" href="https://aistudio.google.com/app/apikey" target="_blank"
@@ -203,7 +186,6 @@
                     </button>
                 </div>
             </div>
-
             <!-- LIGHT/DARK TOGGLE -->
             <button onclick="toggleTheme()" id="themeToggleBtn" title="Chuyển chế độ sáng/tối"
                 class="bg-white dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-amber-500 dark:text-amber-400 text-sm w-9 h-9 flex justify-center items-center rounded-xl transition-all duration-300 shadow-sm hover:shadow-md shrink-0 group">
@@ -211,15 +193,12 @@
             </button>
         </div>
     </header>
-
     <!-- MAIN CONTENT FRAME -->
     <main class="flex-1 flex overflow-hidden">
-
         <!-- SIDEBAR CONTROLS -->
         <section id="sidebar"
             class="w-80 bg-slate-850 border-r border-slate-800 flex flex-col justify-between overflow-y-auto [&::-webkit-scrollbar]:hidden shrink-0 bg-slate-900/50 transition-all duration-300 relative">
             <div class="p-6 space-y-6 flex-1 flex flex-col">
-
                 <!-- GROUP SELECTOR -->
                 <div class="flex flex-col mb-4">
                     <label class="block text-sm font-semibold text-slate-300 mb-2">Thư mục Từ vựng</label>
@@ -238,7 +217,6 @@
                             title="Xóa"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 </div>
-
                 <!-- VOCAB INPUT AREA -->
                 <div class="flex flex-col">
                     <label class="block text-sm font-semibold text-slate-300 mb-2">Nhập / Dán từ Excel</label>
@@ -247,7 +225,6 @@
                         <textarea id="vocabInput"
                             class="w-full h-full bg-transparent resize-none outline-none text-xs text-slate-300 p-3 placeholder-slate-600 custom-scrollbar z-10 relative"
                             placeholder="✨ CHÀO MỪNG BẠN ĐẾN VỚI VOCABULARY MASTERCLASS! ✨&#10;&#10;💡 CÁCH NHẬP TỪ VỰNG NHANH CHÓNG:&#10;1️⃣ Copy từ Excel: Bôi đen 2 cột (Từ vựng và Nghĩa) rồi dán trực tiếp vào đây!&#10;2️⃣ Kéo thả file: Ném thẳng file .txt, .csv vào ô này.&#10;3️⃣ Gõ thủ công: Dùng gạch ngang (-), hai chấm (:), hoặc bằng (=) để ngăn cách từ và nghĩa. Dùng dấu phẩy (,) nếu có nhiều nghĩa.&#10;&#10;Ví dụ:&#10;apple - quả táo&#10;banana = quả chuối, trái chuối&#10;cherry : quả anh đào&#10;&#10;🚀 Nhập từ vựng của bạn để bắt đầu nhé!"></textarea>
-
                         <div id="vocabPreview"
                             class="hidden absolute inset-0 bg-transparent z-20 overflow-auto custom-scrollbar group p-2"
                             title="Bấm trực tiếp vào chữ để sửa, hoặc bấm vào hình sao để đánh dấu">
@@ -257,7 +234,6 @@
                                 </tbody>
                             </table>
                         </div>
-
                         <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none opacity-20"
                             id="dropHint">
                             <i class="fa-solid fa-file-excel text-4xl mb-2"></i>
@@ -267,7 +243,6 @@
                     <div class="mt-2 flex flex-col items-start gap-2">
                         <div class="flex items-center gap-4 w-full justify-between">
                             <span id="wordCountLabel" class="text-xs text-brand-400 font-bold shrink-0">0 từ vựng</span>
-
                             <!-- Premium Toggle Switch -->
                             <label for="onlyStarredToggle"
                                 class="relative flex items-center gap-2.5 px-3 py-2 rounded-xl border border-slate-700/60 bg-slate-800/40 hover:bg-slate-800/80 cursor-pointer transition-all duration-300 select-none shadow-sm overflow-hidden w-[165px]">
@@ -279,7 +254,6 @@
                                         class="w-9 h-5 bg-slate-400 dark:bg-slate-700 rounded-full transition-colors duration-300 shadow-inner after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4 shadow-sm">
                                     </div>
                                 </div>
-
                                 <!-- Text & Badge -->
                                 <div class="flex items-center justify-between w-full z-10"
                                     id="starredToggleTextContainer">
@@ -311,11 +285,7 @@
                         </div>
                     </div>
                 </div>
-
-
-
             </div>
-
             <!-- GENERATE BUTTON AREA -->
             <div class="p-6 pt-4 border-t border-slate-800/60 bg-slate-850 mt-auto flex flex-col gap-3">
                 <label for="saveSessionToggle"
@@ -348,14 +318,12 @@
                         opacity: 0;
                         pointer-events: none;
                     }
-
                     /* Ẩn mũi tên lên xuống của input số */
                     #customSizeInput::-webkit-inner-spin-button,
                     #customSizeInput::-webkit-outer-spin-button {
                         -webkit-appearance: none;
                         margin: 0;
                     }
-
                     #customSizeInput {
                         -moz-appearance: textfield;
                         appearance: textfield;
@@ -464,7 +432,6 @@
                 </button>
             </div>
         </section>
-
         <!-- WORKSPACE AREA -->
         <section class="flex-1 flex flex-col overflow-hidden bg-slate-950 relative z-30">
             <!-- TOGGLE SIDEBAR BUTTON -->
@@ -481,7 +448,6 @@
                     <span id="statusMessage">Vui lòng nhập API Key để kích hoạt dịch vụ của Giáo viên AI.</span>
                 </div>
             </div>
-
             <!-- WELCOME SCREEN -->
             <div id="welcomeScreen"
                 class="flex-1 overflow-y-auto p-12 flex flex-col items-center justify-center text-center space-y-6">
@@ -494,7 +460,6 @@
                     <p class="text-sm text-slate-400 mt-4 leading-relaxed">Hãy tạo flash card ngay!</p>
                 </div>
             </div>
-
             <!-- LOADING SCREEN -->
             <div id="loadingScreen"
                 class="hidden flex-1 flex flex-col items-center justify-center p-8 relative overflow-hidden">
@@ -502,7 +467,6 @@
                 <div
                     class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-brand-600/10 blur-[100px] rounded-full pointer-events-none">
                 </div>
-
                 <!-- Hiệu ứng Icon AI Premium -->
                 <div class="relative flex items-center justify-center mb-8">
                     <!-- Vòng sáng lan toả -->
@@ -517,13 +481,11 @@
                             class="fa-solid fa-microchip text-brand-500 text-3xl drop-shadow-[0_0_10px_rgba(59,130,246,0.8)] animate-pulse"></i>
                     </div>
                 </div>
-
                 <!-- Text & Progress -->
                 <div class="text-center space-y-2 max-w-md w-full relative z-10">
                     <h3 class="text-xl font-bold text-slate-100 tracking-wide" id="loadingStage">Đang khởi động AI...
                     </h3>
                     <p id="loadingSubText" class="text-sm font-medium text-slate-400 h-5"></p>
-
                     <div class="relative mt-6 pt-2">
                         <!-- Thanh Progress Bar Xịn -->
                         <div
@@ -538,10 +500,8 @@
                     </div>
                 </div>
             </div>
-
             <!-- EXAM ENVIRONMENT -->
             <div id="examContainer" class="hidden flex-1 flex overflow-hidden h-full">
-
                 <div id="questionPanel" class="flex-1 flex flex-col overflow-hidden">
                     <!-- EXAM STATUS HEADER -->
                     <div
@@ -556,7 +516,6 @@
                                 Câu hỏi: 1 / 30
                             </span>
                         </div>
-
                         <!-- Mini Question Grid Navigator -->
                         <div class="flex items-center gap-2">
                             <button onclick="navigateQuestion('prev')" id="prevBtn"
@@ -577,10 +536,8 @@
                             </button>
                         </div>
                     </div>
-
                     <!-- EXAM BODY -->
                     <div class="flex-1 overflow-y-auto p-8 space-y-6" id="examBodyContainer">
-
                         <!-- Question Card -->
                         <div
                             class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4 max-w-4xl mx-auto">
@@ -590,7 +547,6 @@
                                     id="activeQNum">1</span>
                                 <span id="activeQText" class="leading-relaxed">Loading question text...</span>
                             </h3>
-
                             <!-- Interactive Options Area -->
                             <div id="optionsGridContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
                                 <button onclick="selectAnswer('A')" id="optionBtn_A"
@@ -619,18 +575,15 @@
                                 </button>
                             </div>
                         </div>
-
                         <!-- AI TEACHER EXPLANATION BOARD -->
                         <div id="explanationBoard"
                             class="hidden transition-all duration-500 space-y-4 max-w-4xl mx-auto">
-
                             <!-- Main Section Title -->
                             <div class="flex items-center gap-2 text-slate-400 border-b border-slate-800 pb-2">
                                 <i class="fa-solid fa-graduation-cap text-lg text-indigo-400"></i>
                                 <h4 class="text-sm font-bold uppercase tracking-wider">Phân Tích Sâu Từ Giáo Viên AI
                                 </h4>
                             </div>
-
                             <!-- Sentence Structure Breakdown Component -->
                             <div
                                 class="bg-indigo-950/30 border border-indigo-500/20 rounded-2xl p-6 shadow-lg space-y-4">
@@ -647,7 +600,6 @@
                                     class="mt-4 text-sm text-slate-200 leading-relaxed italic border-l-4 border-indigo-500 bg-indigo-950/40 p-4 rounded-r-xl">
                                 </div>
                             </div>
-
                             <!-- Detailed Option Analysis Layout -->
                             <div id="analysisGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <!-- Grammar core rule and Why correct card -->
@@ -671,7 +623,6 @@
                                         </p>
                                     </div>
                                 </div>
-
                                 <!-- Trap warning & memo card -->
                                 <div id="trapWarningCard"
                                     class="bg-amber-950/20 border border-amber-500/20 rounded-2xl p-6 space-y-3">
@@ -684,7 +635,6 @@
                                     </p>
                                 </div>
                             </div>
-
                             <!-- Wrong options analysis list card -->
                             <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-4">
                                 <div class="flex items-center gap-2 text-rose-400 font-bold text-sm">
@@ -694,7 +644,6 @@
                                 <div class="divide-y divide-slate-800/80 space-y-4" id="wrongOptionsContainer">
                                 </div>
                             </div>
-
                             <!-- Word Family & Collocations card -->
                             <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-4">
                                 <div class="flex items-center gap-2 text-brand-400 font-bold text-sm">
@@ -705,7 +654,6 @@
                                     class="text-sm text-slate-300 leading-relaxed overflow-x-auto">
                                 </div>
                             </div>
-
                             <!-- DEEP DIVE AI TUTOR SECTION -->
                             <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-4">
                                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -737,7 +685,6 @@
                                     </div>
                                 </div>
                             </div>
-
                             <!-- AI Q&A CHATBOT SECTION -->
                             <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-4">
                                 <div
@@ -753,11 +700,9 @@
                                         <option value="openai/gpt-oss-120b">GPT-OSS 120B (Groq)</option>
                                     </select>
                                 </div>
-
                                 <div id="chatHistory"
                                     class="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar text-sm">
                                 </div>
-
                                 <div class="flex gap-2 mt-2">
                                     <input type="text" id="chatInput" placeholder="Nhập tin nhắn..."
                                         class="flex-1 bg-slate-950/60 border border-slate-700 rounded-xl px-4 py-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
@@ -768,7 +713,6 @@
                                     </button>
                                 </div>
                             </div>
-
                         </div>
                     </div>
                 </div>
@@ -837,7 +781,6 @@
                         </button>
                     </div>
                 </div>
-
                 <div class="flex-1 overflow-y-auto p-4 lg:p-8 flex flex-col items-center relative perspective-1000">
                     <div class="w-full flex flex-col items-center justify-center my-auto min-h-max shrink-0 py-4">
                         <!-- Flashcard UI -->
@@ -908,7 +851,6 @@
                                     Click để
                                     lật thẻ</p>
                             </div>
-
                             <!-- Back (Meaning) -->
                             <div id="fcBack"
                                 class="col-start-1 row-start-1 w-full h-full bg-gradient-to-br from-brand-900 to-indigo-900 border-2 border-brand-500/50 rounded-3xl shadow-[0_0_40px_rgba(99,102,241,0.2)] flex flex-col items-start justify-center p-10 backface-hidden rotate-y-180">
@@ -934,7 +876,6 @@
                                 <div id="fcGoogleTrans"
                                     class="hidden text-xl text-emerald-400 mt-4 font-medium opacity-90 text-justify w-full">
                                 </div>
-
                                 <!-- AI Example Box -->
                                 <div id="fcAiExample"
                                     class="hidden w-full max-w-[90%] mt-6 text-justify p-4 bg-slate-950/40 border border-slate-700/50 rounded-xl shadow-inner relative group flex flex-col gap-2">
@@ -959,11 +900,9 @@
                                             onclick="revealExampleVi(event)">Vietnamese</p>
                                     </div>
                                 </div>
-
                                 <p class="mt-8 text-brand-300/70 text-sm">Click để lật lại</p>
                             </div>
                         </div>
-
                         <!-- Controls -->
                         <div class="mt-10 flex items-center gap-6">
                             <button onclick="prevFlashcard()"
@@ -980,18 +919,15 @@
                                 <i class="fa-solid fa-arrow-right"></i>
                             </button>
                         </div>
-
                         <!-- Grammar Analysis Panel -->
                         <div id="fcGrammarAnalysis"
                             class="hidden w-full max-w-2xl mt-8 bg-slate-900/60 border border-slate-800 rounded-2xl p-6 text-left shadow-lg">
                             <div
                                 class="font-bold text-amber-500 text-sm mb-3 uppercase tracking-wider flex items-center gap-2 border-b border-slate-800 pb-3">
                                 <span><i class="fa-solid fa-spell-check text-base"></i> Phân tích Ngữ pháp</span>
-
                             </div>
                             <div id="fcGrammarContent" class="text-slate-300 leading-relaxed text-sm"></div>
                         </div>
-
                         <!-- Extra Details Panel (Word Family & Collocations) -->
                         <div id="fcExtraDetails" class="hidden w-full max-w-2xl mt-10 flex flex-col gap-4 pb-12">
                             <div id="fcWordFamily"
@@ -1011,7 +947,6 @@
                                     <tbody id="fcFamilyList" class="divide-y divide-slate-800/50"></tbody>
                                 </table>
                             </div>
-
                             <div id="fcSynonyms"
                                 class="hidden bg-slate-900/60 border border-slate-800 rounded-2xl p-6 text-left w-full shadow-lg">
                                 <div
@@ -1022,9 +957,6 @@
                                     <tbody id="fcSynList" class="divide-y divide-slate-800/50"></tbody>
                                 </table>
                             </div>
-
-
-
                             <div id="fcHomophones"
                                 class="hidden bg-slate-900/60 border border-slate-800 rounded-2xl p-6 text-left w-full shadow-lg">
                                 <div
@@ -1039,7 +971,6 @@
                     </div>
                 </div>
             </div>
-
             <!-- QUIZ ENVIRONMENT -->
             <div id="quizContainer"
                 class="hidden flex-1 flex flex-col overflow-hidden h-full bg-[#1e293b] z-40 relative">
@@ -1079,7 +1010,6 @@
                         </button>
                     </div>
                 </div>
-
                 <!-- QUIZ BODY -->
                 <div
                     class="flex-1 overflow-y-auto p-4 md:p-8 flex flex-col items-center justify-start pt-10 md:pt-16 relative">
@@ -1088,18 +1018,15 @@
                         <h2 id="quizQuestion" class="text-[2.5rem] font-medium text-white mb-6 leading-tight">
                             thuận tiện tốt
                         </h2>
-
                         <!-- Feedback Message -->
                         <div id="quizFeedbackMsg"
                             class="font-bold text-sm mb-4 min-h-[20px] opacity-0 transition-opacity">
                             Đừng lo, bạn vẫn đang học mà!
                         </div>
-
                         <!-- Options Grid -->
                         <div id="quizOptionsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <!-- Options generated dynamically -->
                         </div>
-
                         <!-- AI Info (hidden by default) -->
                         <div id="quizAiDetails" class="hidden mt-6 w-full space-y-4">
                             <div id="quizAiExample"
@@ -1148,7 +1075,6 @@
                                 </div>
                             </div>
                         </div>
-
                         <!-- Footer actions -->
                         <div class="mt-12 flex items-center justify-between h-12">
                             <span id="quizContinueHint" class="text-slate-400 font-medium opacity-0 transition-opacity">
@@ -1162,7 +1088,6 @@
                     </div>
                 </div>
             </div>
-
             <!-- FILL IN THE BLANKS ENVIRONMENT -->
             <div id="fillContainer"
                 class="hidden flex-1 flex flex-col overflow-hidden h-full bg-[#1e293b] z-40 relative">
@@ -1207,23 +1132,18 @@
                         </button>
                     </div>
                 </div>
-
                 <!-- FILL BODY -->
                 <div class="flex-1 overflow-y-auto p-8 pt-24 flex flex-col items-center justify-start relative">
                     <div class="w-full max-w-4xl flex flex-col items-center text-justify">
-
                         <h2 id="fillSentence"
                             class="text-[2.2rem] font-medium text-white mb-6 leading-relaxed select-none">
                         </h2>
-
                         <p id="fillVietnamese" onclick="revealFillVietnamese()" title="Nhấn để xem nghĩa tiếng Việt"
                             class="text-slate-400 text-xl mb-8 italic cursor-pointer blur-md hover:blur-sm transition-all duration-300 select-none">
                         </p>
-
                         <div id="fillFeedbackMsg"
                             class="font-bold text-lg mb-4 min-h-[30px] opacity-0 transition-opacity">
                         </div>
-
                         <!-- AI Info (hidden by default) -->
                         <div id="fillAiDetails" class="hidden mt-4 w-full space-y-4">
                             <div class="flex flex-col gap-4 w-full">
@@ -1259,7 +1179,6 @@
                                 </div>
                             </div>
                         </div>
-
                         <button id="fillContinueBtn" onclick="nextFillQuestion()"
                             class="hidden bg-teal-600 hover:bg-teal-500 text-white font-bold py-3 px-8 rounded-xl transition-all shadow-lg mt-4 outline-none focus:outline-none focus:ring-4 focus:ring-teal-500/50">
                             Câu tiếp theo <i class="fa-solid fa-arrow-right ml-2"></i>
@@ -1270,9 +1189,7 @@
             </div>
         </section>
     </main>
-
     <script src="main.js"></script>
-
     <!-- Popup UI -->
     <div id="wordPopup"
         class="hidden fixed z-50 bg-slate-800 border border-slate-600 shadow-2xl rounded-lg p-4 w-64 text-sm text-slate-200">
@@ -1302,22 +1219,17 @@
             class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl border-b border-r border-slate-200/60 dark:border-slate-700 rotate-45 rounded-sm">
         </div>
     </div>
-
     <!-- IPA Popup macOS Dock -->
-
-
     <!-- AI Context Modal -->
     <div id="aiContextModal"
         class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm transition-opacity">
         <div
             class="bg-slate-900 border border-slate-700/60 shadow-2xl shadow-black/80 rounded-2xl w-[850px] max-w-[95vw] transform transition-all flex flex-col md:flex-row overflow-hidden relative">
-
             <!-- Nút đóng nhanh (X) ở góc phải trên -->
             <button onclick="closeAiContextModal(false)"
                 class="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors z-10 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-800">
                 <i class="fa-solid fa-xmark text-lg"></i>
             </button>
-
             <!-- Bên trái: Context Input -->
             <div class="flex-1 p-6 border-b md:border-b-0 md:border-r border-slate-700/60 flex flex-col">
                 <h3 class="text-2xl font-bold text-white mb-2 flex items-center gap-3">
@@ -1332,7 +1244,6 @@
                     class="w-full flex-1 bg-slate-800/80 border border-slate-600/60 rounded-xl p-4 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-shadow resize-none custom-scrollbar text-[15px] leading-relaxed min-h-[250px]"
                     placeholder="Nhập ngữ cảnh tại đây..."></textarea>
             </div>
-
             <!-- Bên phải: Tùy chỉnh (Options & Actions) -->
             <div class="w-full md:w-[320px] p-6 bg-slate-800/30 flex flex-col justify-between">
                 <div>
@@ -1354,7 +1265,6 @@
                                 class="ml-3 text-sm font-medium text-slate-200 group-hover:text-white transition-colors flex-1 flex items-center gap-2"><i
                                     class="fa-solid fa-sitemap w-5 text-center text-slate-400"></i> Word Family</span>
                         </label>
-
                         <label
                             class="relative flex items-center cursor-pointer group bg-slate-800/60 hover:bg-slate-700/60 p-3.5 rounded-xl border border-slate-700/50 hover:border-slate-600 transition-all">
                             <input type="checkbox" id="aiSynToggle" class="sr-only" checked
@@ -1370,7 +1280,6 @@
                                     class="fa-solid fa-right-left w-5 text-center text-slate-400"></i> Đồng & Trái
                                 nghĩa</span>
                         </label>
-
                         <label
                             class="relative flex items-center cursor-pointer group bg-slate-800/60 hover:bg-slate-700/60 p-3.5 rounded-xl border border-slate-700/50 hover:border-slate-600 transition-all">
                             <input type="checkbox" id="aiHomToggle" class="sr-only" checked
@@ -1386,7 +1295,6 @@
                                     class="fa-solid fa-triangle-exclamation w-5 text-center text-red-400"></i> Từ dễ
                                 nhầm lẫn</span>
                         </label>
-
                         <label
                             class="relative flex items-center cursor-pointer group bg-slate-800/60 hover:bg-slate-700/60 p-3.5 rounded-xl border border-slate-700/50 hover:border-slate-600 transition-all">
                             <input type="checkbox" id="aiGrammarToggle" class="sr-only" checked
@@ -1404,7 +1312,6 @@
                         </label>
                     </div>
                 </div>
-
                 <div class="mt-8 flex flex-col gap-3">
                     <button onclick="closeAiContextModal(true)"
                         class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-emerald-950 rounded-xl font-bold shadow-lg shadow-emerald-600/20 transition-all active:scale-[0.98] flex justify-center items-center gap-2">
@@ -1419,44 +1326,35 @@
         </div>
     </div>
 </body>
-
 <!-- 
 =============================================================================
 [SESSION HISTORY LOG - AI ASSISTANT]
 Những thay đổi chính đã thực hiện trong phiên làm việc này:
-
 1. FIX BUG TRÌNH DUYỆT CHẶN ÂM THANH (TTS AUTO-PLAY WEDGE):
    - Xóa bỏ hack `pause()/resume()` bị lỗi trên Chrome Windows khiến API SpeechSynthesis bị kẹt cứng (Wedge Error).
    - Tăng `setTimeout` chờ khi lật thẻ/tạo thẻ lên 600ms để đảm bảo bộ máy Audio Context của Chrome khởi tạo kịp thời cho các luồng xử lý đồng bộ (khi không tạo thẻ bằng AI).
    - Bổ sung cơ chế Audio Priming (phát âm thanh rỗng) lúc ấn tạo thẻ Flashcard để mở khóa vĩnh viễn quyền phát âm thanh tự động của trình duyệt.
    - Xóa lớp `hidden sm:inline` ở chữ "Tự động đọc" để chữ này luôn hiển thị, tránh người dùng tưởng nhầm mất tính năng trên màn hình hẹp.
-
 2. CẬP NHẬT GIAO DIỆN (FLAT DESIGN & BORDERLESS):
    - Xóa toàn bộ viền (border) ở nút "Tạo Đề Từ Vựng" và "Nghe & Điền (Dictation)", giữ lại đúng một vạch trắng nhỏ phân cách với nút dropdown.
    - Xóa viền của nút "Hủy" trong popup xóa thẻ để giao diện phẳng và hiện đại hơn.
-
 3. CẬP NHẬT LOGIC AI VÀ SỬA LỖI (FLASHCARD & DICTATION):
    - Tách biệt hoàn toàn câu lệnh Prompt của Flashcard khỏi độ khó của Dictation. Flashcard sẽ luôn sinh ra câu ví dụ độ dài từ 15-25 từ, không bị ảnh hưởng bởi tùy chọn "Khó" (chỉ tạo định nghĩa) của Dictation.
    - Sửa lỗi `shouldResume` khiến hệ thống phớt lờ lệnh tạo AI: Nếu người dùng bật AI nhưng thẻ hiện tại chưa có dữ liệu AI, hệ thống sẽ tự động phá vỡ lệnh Resume để ép chạy luồng tạo AI mới.
    - Tối ưu hóa API: Sửa lỗi hệ thống luôn gọi API cho toàn bộ danh sách khi bật "Lưu tiến độ". Giờ đây, hệ thống sẽ nạp dữ liệu từ `localStorage` vào RAM trước khi kiểm tra, chỉ gọi API cho những từ chưa có thực sự.
-
 4. FIX BUG HIỂN THỊ AI Ở QUIZ MODE:
    - Cập nhật hàm `startQuizMode`: Tự động tìm kiếm và đồng bộ dữ liệu trong `toeic_ai_cache` cho từ vựng trước khi bắt đầu Quiz.
    - Cập nhật hàm `selectQuizAnswer`: Hỗ trợ fallback lấy dữ liệu ví dụ từ `en_dictation`/`vi_dictation` (từ chế độ Nghe Điền) nếu thẻ gốc bị thiếu `en`/`vi`, giúp thông tin Word Family và Collocation luôn hiện đủ trong Quiz.
-
 2. FIX LỖI GÁN NHẦM DỮ LIỆU AI (AI MAPPING BUG):
    - Nâng cấp bộ phân tích kết quả JSON API ở `generateBulkExamples` với logic đối chiếu 3 tầng (1: Khớp ID, 2: Khớp Tên từ, 3: Khớp Index).
    - Ngăn chặn tình trạng AI không trả về ID khiến dữ liệu của từ sau đè lên từ trước.
-
 3. NÂNG CẤP SYSTEM PROMPT CHO AI:
    - Thêm chỉ thị gắt gao (Hardcode) yêu cầu AI: "TÌM ĐƯỢC BAO NHIÊU GHI HẾT BẤY NHIÊU, TUYỆT ĐỐI KHÔNG ĐƯỢC LƯỢC BỎ" đối với các từ cùng gốc (Word Family).
    - Tăng số lượng object ví dụ mẫu trong prompt template để mồi AI trả về danh sách đầy đủ.
-
 4. CẢI TIẾN GIAO DIỆN UI BẢNG ĐIỀU KHIỂN (SIDEBAR):
    - Đổi màu nút "Nghe & Điền" sang Cam (bg-orange-600) thay vì Đỏ/Vàng cam (Amber) để tránh xung đột với mã CSS Light Mode cũ (làm nền bị nhạt, mất chữ).
    - Đổi màu nút "Chế độ Học (Quiz)" sang Tím đậm (bg-violet-600) để nổi bật và tách biệt hoàn toàn.
    - Thêm đường kẻ phân cách màu trắng mờ (`border-l-white/40`) giữa nút chính và mũi tên đổ xuống của "Tạo Đề Từ Vựng" và "Nghe & Điền" cho sắc nét.
 =============================================================================
 -->
-
 </html>
