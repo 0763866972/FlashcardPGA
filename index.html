@@ -1357,4 +1357,14 @@ Những thay đổi chính đã thực hiện trong phiên làm việc này:
    - Thêm đường kẻ phân cách màu trắng mờ (`border-l-white/40`) giữa nút chính và mũi tên đổ xuống của "Tạo Đề Từ Vựng" và "Nghe & Điền" cho sắc nét.
 =============================================================================
 -->
+
+<script>
+document.addEventListener('click', (e) => {
+    const keyBtn = document.getElementById('toggleKeyConfigBtn');
+    const keyPanel = document.getElementById('keyConfigSection');
+    if (keyBtn && keyPanel && !keyBtn.contains(e.target) && !keyPanel.contains(e.target)) {
+        keyPanel.classList.add('hidden');
+    }
+});
+</script>
 </html>
