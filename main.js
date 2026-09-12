@@ -6366,13 +6366,13 @@ function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
     const icon = document.getElementById('sidebarToggleIcon');
 
-    if (sidebar.classList.contains('w-80')) {
-        sidebar.classList.remove('w-80', 'border-r');
+    if (sidebar.classList.contains('w-[360px]')) {
+        sidebar.classList.remove('w-[360px]', 'border-r');
         sidebar.classList.add('w-0', 'overflow-hidden', 'border-transparent');
         icon.classList.remove('fa-chevron-left');
         icon.classList.add('fa-chevron-right');
     } else {
-        sidebar.classList.add('w-80', 'border-r');
+        sidebar.classList.add('w-[360px]', 'border-r');
         sidebar.classList.remove('w-0', 'overflow-hidden', 'border-transparent');
         icon.classList.remove('fa-chevron-right');
         icon.classList.add('fa-chevron-left');
