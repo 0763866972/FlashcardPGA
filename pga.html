@@ -560,7 +560,7 @@ Nếu một nhóm không có từ nào, hãy trả về mảng rỗng [].`;
                                         { role: "user", content: prompt + `\n\nĐoạn văn bản tiếng Anh cần phân tích:\n${currentChunk}` }
                                     ],
                                     temperature: 0.1,
-                                      max_tokens: 5000,
+                                      max_tokens: 8000,
                                       response_format: { type: "json_object" }
                                   };
                                 const response = await fetch(url, {
@@ -1490,7 +1490,7 @@ TIÊU CHÍ CHỌN CẤU TRÚC NGỮ PHÁP ĐỂ PHÂN TÍCH: Hãy ưu tiên ch�
 LƯU Ý ĐẶC BIỆT: TUYỆT ĐỐI KHÔNG phân tích "Cấu trúc song song" (Parallel Structure / Parallelism) dưới bất kỳ hình thức nào. Bỏ qua hoàn toàn các điểm ngữ pháp liên quan đến việc nối liệt kê bằng "and", "or", "but". Chỉ chọn những cấu trúc đã liệt kê ở trên!
 
 YÊU CẦU QUAN TRỌNG NHẤT: Phần phân tích ngữ pháp phải CỰC KỲ KỸ LƯỠNG. Tuy nhiên, KHÔNG ĐƯỢC VIẾT THÀNH MỘT CỤC VĂN BẢN DÀI THÒNG KHÓ ĐỌC. BẮT BUỘC PHẢI CHIA NHỎ Ý RA THÀNH CÁC BULLET POINTS (<ul><li>) ĐỂ DỄ NHÌN. 
-Đặc biệt, trong phần giải thích chi tiết, BẤT CỨ KHI NÀO BẠN TRÍCH DẪN từ vựng, cấu trúc, chữ cái tiếng Anh (ví dụ: "allows", "To seek advice...", "V-ing"), BẮT BUỘC phải bôi đậm và tô màu vàng bằng thẻ <strong class="text-amber-600 bg-amber-50 px-1 rounded">"từ tiếng anh"</strong>. TUYỆT ĐỐI KHÔNG ĐƯỢC ĐỂ BẤT KỲ TỪ TIẾNG ANH NÀO TRONG NGOẶC KÉP MÀ KHÔNG CÓ THẺ MÀU VÀNG NÀY!
+Đặc biệt, trong phần giải thích chi tiết, BẤT CỨ KHI NÀO BẠN TRÍCH DẪN từ vựng, cấu trúc, chữ cái tiếng Anh (ví dụ: "allows", "To seek advice...", "V-ing"), BẮT BUỘC phải bôi đậm và tô màu vàng bằng thẻ <strong class="text-amber-600 bg-amber-50 px-1 rounded whitespace-nowrap">"từ tiếng anh"</strong>. TUYỆT ĐỐI KHÔNG ĐƯỢC ĐỂ BẤT KỲ TỪ TIẾNG ANH NÀO TRONG NGOẶC KÉP MÀ KHÔNG CÓ THẺ MÀU VÀNG NÀY!
 
 TRÌNH BÀY DƯỚI DẠNG HTML (không dùng code block \`\`\`). Hãy tuân thủ NGHIÊM NGẶT cấu trúc 3 phần sau:
 
@@ -1524,7 +1524,7 @@ TRÌNH BÀY DƯỚI DẠNG HTML (không dùng code block \`\`\`). Hãy tuân th�
     <strong style="color: [MÀU KHỚP PHẦN 1]; text-xl">[Từ/Cụm từ vựng tiếng Anh]</strong> <span class="text-slate-600 text-base">([Loại từ] - [Cấp độ B2/C1/C2 nếu có])</span>
     <ul class="list-disc ml-6 mt-1 text-slate-700 space-y-1">
       <li><strong>Nghĩa:</strong> [Nghĩa tiếng Việt].</li>
-      <li><strong>Cách dùng:</strong> [Giải thích cặn kẽ cách dùng tự nhiên của cụm từ này, tác dụng trong văn cảnh].</li>
+      <li><strong>Cách dùng & Cấu trúc:</strong> [GIẢI THÍCH CẶN KẼ cách dùng của cụm từ này. ĐỐI VỚI CỤM ĐỘNG TỪ/GIỚI TỪ: (1) BẮT BUỘC PHẢI GỘP CHUNG tất cả công thức theo sau vào 1 dấu ngoặc kép duy nhất (ví dụ: "allow for + Noun / Noun Phrase / V-ing"). (2) SAU ĐÓ, BẮT BUỘC PHẢI SO SÁNH với các cấu trúc dễ nhầm lẫn (ví dụ: so sánh với "allow + O + to V") và giải thích chi tiết sự khác biệt ý nghĩa].</li>
     </ul>
   </div>
   (Lặp lại template cho các cụm từ khác)
@@ -1552,7 +1552,7 @@ window.prefetchGrammarAnalysis = async function(rawText) {
             
         let payload, response, data, htmlResult;
         if (isGroq) {
-            payload = { model: selectedModel, messages: [{ role: "user", content: prompt }], temperature: 0.2, max_tokens: 5000 };
+            payload = { model: selectedModel, messages: [{ role: "user", content: prompt }], temperature: 0.2, max_tokens: 8000 };
             response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` }, body: JSON.stringify(payload) });
             if (!response.ok) return;
             data = await response.json();
@@ -1622,7 +1622,7 @@ window.toggleGrammarMode = async function() {
                     model: selectedModel,
                     messages: [{ role: "user", content: prompt }],
                     temperature: 0.2,
-                    max_tokens: 5000
+                    max_tokens: 8000
                 };
                 response = await fetch(url, {
                     method: "POST",
@@ -1721,7 +1721,7 @@ ${rawText}`;
                     model: selectedModel,
                     messages: [{ role: "user", content: prompt }],
                     temperature: 0.2,
-                      max_tokens: 5000,
+                      max_tokens: 8000,
                       response_format: { type: "json_object" }
                   };
                 response = await fetch(url, {
@@ -1992,7 +1992,7 @@ Hãy chấm điểm và nhận xét chi tiết.`;
                     { role: "user", content: userPrompt }
                 ],
                 temperature: 0.2,
-                  max_tokens: 5000
+                  max_tokens: 8000
               };
             response = await fetch(url, {
                 method: "POST",
