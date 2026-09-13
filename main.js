@@ -8047,6 +8047,7 @@ window.handleAiOptionToggle = function(checkbox, trackId, thumbId) {
     if (checkbox.id === 'aiSynToggle') localStorage.setItem('toeic_ai_syn_toggle', checkbox.checked);
     if (checkbox.id === 'aiHomToggle') localStorage.setItem('toeic_ai_hom_toggle', checkbox.checked);
     if (checkbox.id === 'aiGrammarToggle') localStorage.setItem('toeic_ai_grammar_toggle', checkbox.checked);
+    if (checkbox.id === 'aiGrammarToggle') localStorage.setItem('toeic_ai_grammar_toggle', checkbox.checked);
     
     if (checkbox.checked) {
         track.className = 'w-9 h-5 rounded-full transition-colors duration-300 shadow-inner p-[2px] bg-emerald-500 flex items-center';
@@ -8068,6 +8069,7 @@ window.handleAiToggle = function(checkbox) {
             const aiFamToggle = document.getElementById('aiFamToggle');
             const aiSynToggle = document.getElementById('aiSynToggle');
             const aiHomToggle = document.getElementById('aiHomToggle');
+            const aiGrammarToggle = document.getElementById('aiGrammarToggle');
             const aiGrammarToggle = document.getElementById('aiGrammarToggle');
             if (aiFamToggle) {
                 aiFamToggle.checked = (localStorage.getItem('toeic_ai_fam_toggle_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default')) || localStorage.getItem('toeic_ai_fam_toggle')) !== 'false';
@@ -8125,9 +8127,11 @@ window.closeAiContextModal = function(save) {
             const aiSynToggle = document.getElementById('aiSynToggle');
             const aiHomToggle = document.getElementById('aiHomToggle');
             const aiGrammarToggle = document.getElementById('aiGrammarToggle');
+            const aiGrammarToggle = document.getElementById('aiGrammarToggle');
             if (aiFamToggle) localStorage.setItem('toeic_ai_fam_toggle_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default'), aiFamToggle.checked);
             if (aiSynToggle) localStorage.setItem('toeic_ai_syn_toggle_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default'), aiSynToggle.checked);
             if (aiHomToggle) localStorage.setItem('toeic_ai_hom_toggle_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default'), aiHomToggle.checked);
+            if (aiGrammarToggle) localStorage.setItem('toeic_ai_grammar_toggle_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default'), aiGrammarToggle.checked);
             if (aiGrammarToggle) localStorage.setItem('toeic_ai_grammar_toggle_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default'), aiGrammarToggle.checked);
 
             if (ctx) {
