@@ -15,9 +15,9 @@ content = content.replace(
     /if \(aiHomToggle\) \{\n *aiHomToggle\.checked = [^;]+;\n *window\.handleAiOptionToggle\(aiHomToggle, 'trackHom', 'thumbHom'\);\n *\}/,
     "$&" + 
             if (aiGrammarToggle) {
-                aiGrammarToggle.checked = (localStorage.getItem('toeic_ai_grammar_toggle_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default')) || localStorage.getItem('toeic_ai_grammar_toggle')) !== 'false';
-                window.handleAiOptionToggle(aiGrammarToggle, 'trackGrammar', 'thumbGrammar');
-            }
+    aiGrammarToggle.checked = (localStorage.getItem('toeic_ai_grammar_toggle_' + (typeof activeVocabGroupId !== 'undefined' ? activeVocabGroupId : 'default')) || localStorage.getItem('toeic_ai_grammar_toggle')) !== 'false';
+    window.handleAiOptionToggle(aiGrammarToggle, 'trackGrammar', 'thumbGrammar');
+}
 );
 
 content = content.replace(
