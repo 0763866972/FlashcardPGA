@@ -231,6 +231,9 @@
             <button onclick="readPgaText()" id="readPgaBtn" class="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-6 py-3 rounded-xl font-bold shadow-sm transition-all hidden items-center gap-2 border border-indigo-100 active:scale-95">
                 <i class="fa-solid fa-volume-high"></i> <span>Đọc</span>
             </button>
+            <button onclick="togglePgaLoop()" id="loopPgaBtn" class="bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600 px-4 py-3 rounded-xl font-bold shadow-sm transition-all hidden items-center gap-2 border border-slate-200 active:scale-95" title="Bật/tắt đọc lặp lại">
+                <i class="fa-solid fa-repeat"></i>
+            </button>
             <button onclick="toggleSpeakPractice()" id="speakPracticeBtn" class="bg-teal-50 text-teal-600 hover:bg-teal-100 px-6 py-3 rounded-xl font-bold shadow-sm transition-all flex items-center gap-2 border border-teal-100 active:scale-95">
                 <i class="fa-solid fa-microphone"></i> <span id="speakPracticeBtnText">Luyện Speak</span>
             </button>
@@ -967,48 +970,8 @@ Nếu một nhóm không có từ nào, hãy trả về mảng rỗng [].`;
                     } catch(e) {
                         console.error('Lỗi Google Translate API:', e);
                     }
-                    const fetchDictPhonetic = async (w) => {
-                        try {
-                            let dRes = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(w)}`);
-                            let dData = await dRes.json();
-                            if (dData && dData[0]) {
-                                if (dData[0].phonetic) return dData[0].phonetic;
-                                if (dData[0].phonetics) {
-                                    const p = dData[0].phonetics.find(x => x.text);
-                                    if (p) return p.text;
-                                }
-                            }
-                        } catch (e) {
-                            console.error('Lỗi Dictionary API:', e);
-                        }
-                        return null;
-                    };
-                    if (savedPhonetics[wLower]) {
-                        phonetic = savedPhonetics[wLower];
-                    } else {
-                        phonetic = await fetchDictPhonetic(word);
-                        if (!phonetic) {
-                            let bases = [];
-                            if (wLower.endsWith('ies')) bases.push(wLower.slice(0, -3) + 'y');
-                            else if (wLower.endsWith('ves')) bases.push(wLower.slice(0, -3) + 'f', wLower.slice(0, -3) + 'fe');
-                            else if (wLower.endsWith('es')) { bases.push(wLower.slice(0, -1)); bases.push(wLower.slice(0, -2)); }
-                            else if (wLower.endsWith('s') && !wLower.endsWith('ss')) bases.push(wLower.slice(0, -1));
-                            else if (wLower.endsWith('ed')) { bases.push(wLower.slice(0, -1)); bases.push(wLower.slice(0, -2)); }
-                            else if (wLower.endsWith('ing')) { bases.push(wLower.slice(0, -3)); bases.push(wLower.slice(0, -3) + 'e'); }
-                            for (let base of bases) {
-                                let bp = await fetchDictPhonetic(base);
-                                if (bp) {
-                                    phonetic = bp;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                    if (!phonetic) {
-                        phonetic = googlePhonetic;
-                    } else {
-                        phonetic = phonetic.replace(/\//g, '');
-                    }
+                    phonetic = googlePhonetic || '';
+                    if (phonetic) phonetic = phonetic.replace(/\//g, '');
                     return { meaning, phonetic };
                 };
                 getPhoneticAndMeaning(word).then(result => {
@@ -1037,6 +1000,11 @@ Nếu một nhóm không có từ nào, hãy trả về mảng rỗng [].`;
                 if (typeof stopPgaText === 'function') stopPgaText();
                 document.getElementById('readPgaBtn').classList.add('hidden');
                 document.getElementById('readPgaBtn').classList.remove('flex');
+                document.getElementById('loopPgaBtn').classList.add('hidden');
+                document.getElementById('loopPgaBtn').classList.remove('flex');
+                window.isAutoLoopPga = false;
+                document.getElementById('loopPgaBtn').classList.remove('bg-brand-100', 'text-brand-600', 'border-brand-200');
+                document.getElementById('loopPgaBtn').classList.add('bg-slate-50', 'text-slate-400', 'border-slate-200');
             } else {
                 // Bật
                 const rawText = textarea.value.trim();
@@ -1049,6 +1017,8 @@ Nếu một nhóm không có từ nào, hãy trả về mảng rỗng [].`;
                 document.getElementById('aiDictBtn').classList.add('flex');
                 document.getElementById('readPgaBtn').classList.remove('hidden');
                 document.getElementById('readPgaBtn').classList.add('flex');
+                document.getElementById('loopPgaBtn').classList.remove('hidden');
+                document.getElementById('loopPgaBtn').classList.add('flex');
                 renderDictContent(rawText);
             }
         }
@@ -1098,6 +1068,12 @@ Nếu một nhóm không có từ nào, hãy trả về mảng rỗng [].`;
                     span.className = 'cursor-pointer hover:bg-brand-100 hover:text-brand-600 rounded transition-colors duration-200';
                     span.setAttribute('data-start', start);
                     span.setAttribute('data-end', end);
+                    span.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        if (typeof playSpeechRobust === 'function') {
+                            playSpeechRobust(token, 'en-US');
+                        }
+                    });
                     span.addEventListener('dblclick', (e) => {
                         e.preventDefault();
                         window.getSelection().removeAllRanges();
@@ -1146,6 +1122,18 @@ Nếu một nhóm không có từ nào, hãy trả về mảng rỗng [].`;
         // ==========================================
         let isReadingPga = false;
         let isPausedPga = false;
+        window.isAutoLoopPga = false;
+        window.togglePgaLoop = function() {
+            window.isAutoLoopPga = !window.isAutoLoopPga;
+            const btn = document.getElementById('loopPgaBtn');
+            if (window.isAutoLoopPga) {
+                btn.classList.remove('bg-slate-50', 'text-slate-400', 'border-slate-200');
+                btn.classList.add('bg-brand-100', 'text-brand-600', 'border-brand-200');
+            } else {
+                btn.classList.add('bg-slate-50', 'text-slate-400', 'border-slate-200');
+                btn.classList.remove('bg-brand-100', 'text-brand-600', 'border-brand-200');
+            }
+        };
         function readPgaText(forceText = null, forceOffset = null) {
             let textToRead = "";
             let globalStartOffset = 0;
@@ -1195,6 +1183,9 @@ Nếu một nhóm không có từ nào, hãy trả về mảng rỗng [].`;
                 document.getElementById('pausePgaBtn').classList.add('hidden');
                 document.getElementById('stopPgaBtn').classList.add('hidden');
                 clearHighlights();
+                if (window.isAutoLoopPga) {
+                    setTimeout(() => readPgaText(forceText, forceOffset), 500);
+                }
             }, (chunkText, start, end) => {
                 highlightTextRange(globalStartOffset + start, globalStartOffset + end);
             });
@@ -1774,7 +1765,7 @@ window.renderWritingMode = function(sentences, rawText) {
     writingContent.setAttribute('data-raw', rawText);
     
     // Header with Toggle
-    let html = `<div class="mb-4 flex items-center justify-between border-b border-slate-200 pb-3">
+    let html = `<div class="sticky top-0 z-50 bg-white/95 backdrop-blur flex items-center justify-between border-b border-slate-200 pt-4 pb-3 mb-4 -mt-4">
         <div class="flex items-center gap-4">
             <h4 class="text-lg font-bold text-slate-700"><i class="fa-solid fa-pen-nib text-emerald-500 mr-2"></i>Luyện Viết</h4>
             <div class="bg-slate-100 p-1 rounded-lg inline-flex items-center">
@@ -1997,18 +1988,45 @@ window.submitParagraphWriting = async function() {
     submitBtn.classList.add('opacity-70', 'cursor-not-allowed');
 
     const systemPrompt = `Bạn là một giáo viên dạy viết tiếng Anh IELTS/TOEIC khó tính nhưng tận tâm. Nhiệm vụ của bạn là nhận xét đoạn văn tiếng Anh mà học sinh vừa viết (được dịch từ một đoạn tiếng Việt).
-Yêu cầu phân tích:
-1. TRÍCH DẪN ĐOẠN VĂN CỦA HỌC SINH (BẮT BUỘC ĐẦU TIÊN): Trích dẫn lại nguyên văn đoạn tiếng Anh mà học sinh đã viết. Dùng thẻ <mark class="bg-red-200 text-red-900 px-1 rounded font-semibold">...</mark> để bôi màu các từ/cụm từ sai lỗi nặng, dùng thẻ <mark class="bg-amber-200 text-amber-900 px-1 rounded font-semibold">...</mark> cho các lỗi dùng từ chưa hay, và thẻ <mark class="bg-emerald-200 text-emerald-900 px-1 rounded font-semibold">...</mark> cho những cụm từ xuất sắc.
-2. Đánh giá tổng thể độ tự nhiên, trôi chảy và cấu trúc đoạn văn.
-3. So sánh với đoạn gốc tiếng Anh. Chỉ ra những chỗ học sinh dịch word-by-word sai ngữ cảnh, hoặc những chỗ học sinh dùng từ hay.
-4. Chỉ ra các lỗi chi tiết (dựa trên các phần đã đánh dấu ở mục 1) và cách sửa.
-5. Đưa ra phiên bản nâng cấp (nếu có).
+Yêu cầu phân tích và Trình bày (BẮT BUỘC TUÂN THỦ ĐÚNG CẤU TRÚC SAU BẰNG HTML & Tailwind CSS, KHÔNG DÙNG MARKDOWN BLOCK):
 
-TRÌNH BÀY BẰNG HTML (Sử dụng Tailwind CSS classes) KHÔNG DÙNG MARKDOWN BLOCK.
-- Khung bài làm của học sinh chứa các phần đánh dấu (dùng bg-slate-50, border border-slate-200, p-4, rounded-lg, mb-4, leading-relaxed, text-slate-700).
-- Khung nhận xét tổng quan (bg-blue-50, text-blue-800, p-4, rounded-lg, mb-4).
-- Các lỗi chi tiết dùng ul, li (với icon dấu x màu đỏ hoặc dấu chấm than vàng).
-- Những chỗ hay dùng icon tick xanh.`;
+<div class="mb-8">
+  <h2 class="text-xl font-bold text-slate-800 mb-4 border-b pb-2">PHẦN 1: SỬA LỖI CƠ BẢN (So sánh với bản gốc)</h2>
+  
+  <h3 class="font-semibold text-slate-700 mb-2">1. Bài viết của bạn:</h3>
+  <div class="bg-slate-50 border border-slate-200 p-4 rounded-lg mb-4 leading-relaxed text-slate-700">
+    <!-- Trích dẫn lại nguyên văn bài của học sinh. Dùng thẻ <mark class="bg-red-200 text-red-900 px-1 rounded font-semibold">...</mark> cho lỗi nặng, bg-amber-200 cho lỗi nhẹ. BẮT BUỘC gắn thêm thẻ <sup class="text-xs ml-0.5">số thứ tự</sup> bên trong thẻ mark. -->
+  </div>
+
+  <h3 class="font-semibold text-slate-700 mb-2">2. Bản gốc (Mẫu chuẩn):</h3>
+  <div class="bg-slate-50 border border-slate-200 p-4 rounded-lg mb-4 leading-relaxed text-slate-700">
+    <!-- Trích dẫn lại bản gốc. TÔ MÀU VÀ ĐÁNH SỐ TƯƠNG ỨNG với các lỗi của học sinh ở mục 1 để đối chiếu (cùng thẻ mark màu đó, cùng số thứ tự). -->
+  </div>
+
+  <h3 class="font-semibold text-slate-700 mb-2">3. Phân tích lỗi chi tiết:</h3>
+  <ul class="space-y-3">
+    <!-- Giải thích lỗi dựa trên phần 1 và 2. KHÔNG DÙNG NGOẶC KÉP để trích dẫn từ vựng. Mọi từ/cụm từ tiếng Anh được nhắc đến BẮT BUỘC phải đặt trong thẻ <mark> có màu và số thứ tự tương ứng y như trên. -->
+  </ul>
+</div>
+
+<div class="mb-4">
+  <h2 class="text-xl font-bold text-emerald-800 mb-4 border-b border-emerald-200 pb-2">PHẦN 2: NÂNG CẤP CẤU TRÚC & TỪ VỰNG C1/C2 (Band 9.0 IELTS)</h2>
+  
+  <h3 class="font-semibold text-slate-700 mb-2">4. Bài viết của bạn (Phân tích điểm yếu):</h3>
+  <div class="bg-slate-50 border border-slate-200 p-4 rounded-lg mb-4 leading-relaxed text-slate-700">
+    <!-- Trích dẫn lại bài của học sinh. Ở mục này, HÃY TÔ MÀU XÁM VÀ ĐÁNH SỐ BẰNG THẺ <mark class="bg-slate-200 text-slate-800 px-1 rounded font-semibold"> NHỮNG TỪ/CỤM TỪ BÌNH DÂN (chưa được Band 9.0) mà bạn dự định sẽ nâng cấp. Ví dụ: <mark class="bg-slate-200 text-slate-800 px-1 rounded font-semibold">I hope<sup class="text-xs ml-0.5">1</sup></mark>. TẤT CẢ các điểm đánh dấu ở mục này phải được tô màu xám và đánh số từ 1 trở đi. -->
+  </div>
+
+  <h3 class="font-semibold text-emerald-700 mb-2">5. Phiên bản nâng cấp (Band 9.0 - Từ vựng C1/C2):</h3>
+  <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-lg mb-4 leading-relaxed text-emerald-900">
+    <!-- Đưa ra bản Band 9.0. BẮT BUỘC sử dụng từ vựng trình độ C1/C2 và NÂNG CẤP CẤU TRÚC CÂU (đảo ngữ, câu phức, mệnh đề rút gọn...). TÔ MÀU XANH (<mark class="bg-emerald-200 text-emerald-900 px-1 rounded font-semibold">) VÀ ĐÁNH SỐ TƯƠNG ỨNG KHỚP VỚI MỤC 4. Ví dụ: <mark class="bg-emerald-200 text-emerald-900 px-1 rounded font-semibold">Trust<sup class="text-xs ml-0.5">1</sup></mark>. (Số 1 màu xanh tương ứng với số 1 màu xám ở mục 4 để khoe cấu trúc xịn). -->
+  </div>
+
+  <h3 class="font-semibold text-emerald-700 mb-2">6. Giải thích cấu trúc nâng cấp:</h3>
+  <ul class="space-y-3">
+    <!-- Giải thích chi tiết các từ vựng C1/C2 và cấu trúc ngữ pháp nâng cao vừa được sử dụng ở mục 5. KHÔNG DÙNG NGOẶC KÉP để trích dẫn từ vựng. Mọi từ/cụm từ tiếng Anh được nhắc đến BẮT BUỘC phải đặt trong thẻ <mark> có màu và số thứ tự tương ứng y như trên. -->
+  </ul>
+</div>`;
 
     const userPrompt = `Đoạn tiếng Việt gốc: "${fullOriginalVi}"
 Đoạn tiếng Anh gốc (mẫu chuẩn): "${fullOriginalEn}"
