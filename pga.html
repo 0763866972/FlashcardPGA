@@ -1772,12 +1772,23 @@ window.escapeHTML = function(str) {
 window.renderWritingMode = function(sentences, rawText) {
     const writingContent = document.getElementById('writingContent');
     writingContent.setAttribute('data-raw', rawText);
-    let html = `<div class="mb-4 flex items-center justify-start gap-4 border-b border-slate-200 pb-3">
-        <h4 class="text-lg font-bold text-slate-700"><i class="fa-solid fa-pen-nib text-emerald-500 mr-2"></i>Luyện Viết Từng Câu</h4>
-        <button onclick="toggleAllPgaWriting(event)" class="text-slate-400 hover:text-brand-400 transition-colors mt-0.5" title="Bật/Tắt chế độ luyện viết (tất cả)">
+    
+    // Header with Toggle
+    let html = `<div class="mb-4 flex items-center justify-between border-b border-slate-200 pb-3">
+        <div class="flex items-center gap-4">
+            <h4 class="text-lg font-bold text-slate-700"><i class="fa-solid fa-pen-nib text-emerald-500 mr-2"></i>Luyện Viết</h4>
+            <div class="bg-slate-100 p-1 rounded-lg inline-flex items-center">
+                <button id="btnSentenceMode" onclick="toggleWritingModeType('sentence')" class="px-4 py-1.5 rounded-md text-sm font-semibold transition-all bg-white shadow-sm text-brand-600">Từng Câu</button>
+                <button id="btnParagraphMode" onclick="toggleWritingModeType('paragraph')" class="px-4 py-1.5 rounded-md text-sm font-semibold transition-all text-slate-500 hover:text-slate-700">Nguyên Đoạn</button>
+            </div>
+        </div>
+        <button id="btnToggleAllSentence" onclick="toggleAllPgaWriting(event)" class="text-slate-400 hover:text-brand-400 transition-colors mt-0.5" title="Bật/Tắt chế độ luyện viết (tất cả)">
             <i class="fa-solid fa-eye text-xl" id="pgaEyeIconAll"></i>
         </button>
     </div>`;
+
+    // --- SENTENCE MODE CONTAINER ---
+    html += `<div id="sentenceWritingContainer" class="block">`;
     sentences.forEach((item, idx) => {
         html += `
         <div class="mb-6 p-4 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-shadow">
@@ -1808,8 +1819,256 @@ window.renderWritingMode = function(sentences, rawText) {
         </div>
         `;
     });
+    html += `</div>`;
+
+    // --- PARAGRAPH MODE CONTAINER ---
+    window.pgaSentencesData = sentences; // Save for evaluation
+    
+    let viParagraphHtml = "";
+    let currentIndexInRaw = 0;
+    sentences.forEach((s, idx) => {
+        viParagraphHtml += `<span id="viParaSentence_${idx}" class="transition-colors duration-300 p-0.5 rounded cursor-pointer hover:bg-amber-50" onclick="window.selectParaSentence(${idx})">${escapeHTML(s.vi)}</span>`;
+        
+        if (idx < sentences.length - 1) {
+            let getSearchStr = (text) => text.replace(/[^a-zA-Z0-9 ]/g, '').trim().substring(0, 30).toLowerCase();
+            let search1 = getSearchStr(s.en);
+            let search2 = getSearchStr(sentences[idx+1].en);
+            
+            let pos1 = -1;
+            if (search1.length > 2) pos1 = rawText.toLowerCase().indexOf(search1, currentIndexInRaw);
+            
+            let pos2 = -1;
+            if (search2.length > 2) {
+                if (pos1 !== -1) {
+                    let startSearch2 = pos1 + Math.floor(s.en.length * 0.4);
+                    pos2 = rawText.toLowerCase().indexOf(search2, startSearch2);
+                } else {
+                    pos2 = rawText.toLowerCase().indexOf(search2, currentIndexInRaw);
+                }
+            }
+            
+            if (pos1 !== -1 && pos2 !== -1 && pos2 >= pos1) {
+                let between = rawText.substring(pos1, pos2);
+                let newlines = between.match(/\n/g);
+                if (newlines) {
+                    viParagraphHtml += '<br>'.repeat(newlines.length);
+                } else {
+                    viParagraphHtml += ' ';
+                }
+                currentIndexInRaw = pos2;
+            } else {
+                viParagraphHtml += ' ';
+            }
+        }
+    });
+    
+    html += `<div id="paragraphWritingContainer" class="hidden">
+        <div class="mb-4 p-4 bg-white border border-slate-200 rounded-xl shadow-sm text-slate-700 leading-relaxed text-lg">
+            ${viParagraphHtml}
+        </div>
+        <div class="relative mb-4">
+            <textarea id="pgaParaWriteInput" oninput="trackParagraphProgress(this)" class="w-full bg-white text-slate-800 p-4 rounded-xl border border-slate-300 focus:border-brand-500 outline-none shadow-inner text-base leading-relaxed placeholder-slate-500 resize-y" rows="8" placeholder="Dịch toàn bộ đoạn văn sang tiếng Anh..."></textarea>
+        </div>
+        <div class="flex justify-between items-center">
+            <span class="text-sm text-slate-500 italic"><i class="fa-solid fa-circle-info mr-1"></i>Dịch thoáng, đúng ngữ pháp và ý chính. Đoạn gốc tiếng Anh sẽ được dùng để chấm điểm.</span>
+            <button onclick="submitParagraphWriting()" class="bg-brand-600 hover:bg-brand-500 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-md flex items-center gap-2 active:scale-95" id="pgaParaWriteSubmitBtn">
+                Gửi đánh giá toàn bài <i class="fa-solid fa-paper-plane"></i>
+            </button>
+        </div>
+        <div id="pgaParaWriteFeedback" class="hidden mt-6 p-5 text-base rounded-xl bg-white border border-slate-200 leading-relaxed text-slate-800 shadow-sm"></div>
+    </div>`;
+
     writingContent.innerHTML = html;
+    
+    // Auto highlight first sentence
+    setTimeout(() => {
+        const firstSentence = document.getElementById('viParaSentence_0');
+        if (firstSentence) firstSentence.classList.add('bg-amber-100', 'font-semibold', 'text-amber-900');
+    }, 100);
 }
+
+window.toggleWritingModeType = function(mode) {
+    const btnSentence = document.getElementById('btnSentenceMode');
+    const btnPara = document.getElementById('btnParagraphMode');
+    const containerSentence = document.getElementById('sentenceWritingContainer');
+    const containerPara = document.getElementById('paragraphWritingContainer');
+    const btnToggleAll = document.getElementById('btnToggleAllSentence');
+
+    if (mode === 'sentence') {
+        btnSentence.className = "px-4 py-1.5 rounded-md text-sm font-semibold transition-all bg-white shadow-sm text-brand-600";
+        btnPara.className = "px-4 py-1.5 rounded-md text-sm font-semibold transition-all text-slate-500 hover:text-slate-700";
+        containerSentence.classList.remove('hidden');
+        containerPara.classList.add('hidden');
+        btnToggleAll.classList.remove('hidden');
+    } else {
+        btnPara.className = "px-4 py-1.5 rounded-md text-sm font-semibold transition-all bg-white shadow-sm text-brand-600";
+        btnSentence.className = "px-4 py-1.5 rounded-md text-sm font-semibold transition-all text-slate-500 hover:text-slate-700";
+        containerPara.classList.remove('hidden');
+        containerSentence.classList.add('hidden');
+        btnToggleAll.classList.add('hidden');
+    }
+};
+
+window.manualParaIdx = -1;
+
+window.selectParaSentence = function(idx) {
+    window.manualParaIdx = idx;
+    const textarea = document.getElementById('pgaParaWriteInput');
+    if (textarea) window.trackParagraphProgress(textarea);
+};
+
+window.trackParagraphProgress = function(textarea) {
+    const text = textarea.value;
+    const sentences = window.pgaSentencesData;
+    if (!sentences || sentences.length === 0) return;
+
+    let currentIdx = 0;
+    
+    if (window.manualParaIdx !== -1) {
+        currentIdx = window.manualParaIdx;
+    } else {
+        let textRemaining = text;
+        for (let i = 0; i < sentences.length; i++) {
+            let enText = sentences[i].en.trim();
+            let lastChar = enText.slice(-1);
+            let isShort = enText.length < 50;
+            
+            let regex;
+            if (lastChar === ',' && isShort) {
+                regex = /,[ \n]/;
+            } else if (lastChar === ':' && isShort) {
+                regex = /:[ \n]/;
+            } else if (lastChar === ';' && isShort) {
+                regex = /;[ \n]/;
+            } else {
+                regex = /[.?!](\s|\n|$)|(\n\n)/;
+            }
+            
+            let match = textRemaining.match(regex);
+            if (match) {
+                currentIdx++;
+                textRemaining = textRemaining.slice(match.index + match[0].length);
+            } else {
+                break;
+            }
+        }
+    }
+    
+    if (currentIdx >= sentences.length) currentIdx = sentences.length - 1;
+
+    for (let i = 0; i < sentences.length; i++) {
+        const el = document.getElementById('viParaSentence_' + i);
+        if (el) {
+            if (i === currentIdx) {
+                el.classList.add('bg-amber-200', 'font-bold', 'text-amber-900', 'shadow-sm');
+                el.classList.remove('bg-amber-100', 'font-semibold');
+            } else {
+                el.classList.remove('bg-amber-200', 'font-bold', 'text-amber-900', 'shadow-sm', 'bg-amber-100', 'font-semibold');
+            }
+        }
+    }
+};
+
+window.submitParagraphWriting = async function() {
+    const textarea = document.getElementById('pgaParaWriteInput');
+    const feedbackEl = document.getElementById('pgaParaWriteFeedback');
+    const submitBtn = document.getElementById('pgaParaWriteSubmitBtn');
+    
+    const userText = textarea.value.trim();
+    if (!userText) {
+        alert('Vui lòng viết đoạn văn của bạn trước khi gửi.');
+        return;
+    }
+    
+    const apiKey = typeof getApiKey === 'function' ? getApiKey() : null;
+    if (!apiKey) {
+        alert("Vui lòng nhập API Key ở góc trên bên phải.");
+        return;
+    }
+
+    if (!window.pgaSentencesData || window.pgaSentencesData.length === 0) return;
+    
+    const fullOriginalEn = window.pgaSentencesData.map(s => s.en).join(' ');
+    const fullOriginalVi = window.pgaSentencesData.map(s => s.vi).join(' ');
+
+    feedbackEl.classList.remove('hidden');
+    feedbackEl.innerHTML = '<div class="flex items-center gap-3 text-brand-600 font-medium"><i class="fa-solid fa-spinner fa-spin"></i> AI đang phân tích và chấm điểm đoạn văn của bạn...</div>';
+    submitBtn.disabled = true;
+    submitBtn.classList.add('opacity-70', 'cursor-not-allowed');
+
+    const systemPrompt = `Bạn là một giáo viên dạy viết tiếng Anh IELTS/TOEIC khó tính nhưng tận tâm. Nhiệm vụ của bạn là nhận xét đoạn văn tiếng Anh mà học sinh vừa viết (được dịch từ một đoạn tiếng Việt).
+Yêu cầu phân tích:
+1. TRÍCH DẪN ĐOẠN VĂN CỦA HỌC SINH (BẮT BUỘC ĐẦU TIÊN): Trích dẫn lại nguyên văn đoạn tiếng Anh mà học sinh đã viết. Dùng thẻ <mark class="bg-red-200 text-red-900 px-1 rounded font-semibold">...</mark> để bôi màu các từ/cụm từ sai lỗi nặng, dùng thẻ <mark class="bg-amber-200 text-amber-900 px-1 rounded font-semibold">...</mark> cho các lỗi dùng từ chưa hay, và thẻ <mark class="bg-emerald-200 text-emerald-900 px-1 rounded font-semibold">...</mark> cho những cụm từ xuất sắc.
+2. Đánh giá tổng thể độ tự nhiên, trôi chảy và cấu trúc đoạn văn.
+3. So sánh với đoạn gốc tiếng Anh. Chỉ ra những chỗ học sinh dịch word-by-word sai ngữ cảnh, hoặc những chỗ học sinh dùng từ hay.
+4. Chỉ ra các lỗi chi tiết (dựa trên các phần đã đánh dấu ở mục 1) và cách sửa.
+5. Đưa ra phiên bản nâng cấp (nếu có).
+
+TRÌNH BÀY BẰNG HTML (Sử dụng Tailwind CSS classes) KHÔNG DÙNG MARKDOWN BLOCK.
+- Khung bài làm của học sinh chứa các phần đánh dấu (dùng bg-slate-50, border border-slate-200, p-4, rounded-lg, mb-4, leading-relaxed, text-slate-700).
+- Khung nhận xét tổng quan (bg-blue-50, text-blue-800, p-4, rounded-lg, mb-4).
+- Các lỗi chi tiết dùng ul, li (với icon dấu x màu đỏ hoặc dấu chấm than vàng).
+- Những chỗ hay dùng icon tick xanh.`;
+
+    const userPrompt = `Đoạn tiếng Việt gốc: "${fullOriginalVi}"
+Đoạn tiếng Anh gốc (mẫu chuẩn): "${fullOriginalEn}"
+Đoạn tiếng Anh học sinh viết: "${userText}"
+
+Hãy chấm điểm và nhận xét chi tiết.`;
+
+    try {
+        const aiModelSelect = document.getElementById('aiModelSelect');
+        const selectedModel = aiModelSelect ? aiModelSelect.value : "gemini-2.5-flash";
+        const isGroq = !selectedModel.includes('gemini');
+        const url = isGroq 
+            ? 'https://api.groq.com/openai/v1/chat/completions' 
+            : `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`;
+        
+        let payload, response, data, feedbackHtml;
+        
+        if (isGroq) {
+            payload = {
+                model: selectedModel,
+                messages: [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: userPrompt }
+                ],
+                temperature: 0.2,
+                max_tokens: 5000
+            };
+            response = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) { let err = await response.text(); throw new Error(err || "Lỗi Groq API"); }
+            data = await response.json();
+            feedbackHtml = data.choices[0].message.content;
+        } else {
+            payload = {
+                contents: [{ parts: [{ text: userPrompt }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                generationConfig: { temperature: 0.2 }
+            };
+            response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) { let err = await response.text(); throw new Error(err || "Lỗi Gemini API"); }
+            data = await response.json();
+            feedbackHtml = data.candidates[0].content.parts[0].text;
+        }
+        
+        feedbackHtml = feedbackHtml.replace(/\`\`\`html\n?/g, '').replace(/\`\`\`/g, '');
+        feedbackEl.innerHTML = feedbackHtml;
+    } catch (error) {
+        feedbackEl.innerHTML = `<div class="text-rose-600 font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Lỗi: ${error.message}</div>`;
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+    }
+};
 window.toggleAllPgaWriting = function(e) {
     if (e) e.stopPropagation();
     const eyeIconAll = document.getElementById('pgaEyeIconAll');
