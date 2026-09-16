@@ -8,6 +8,7 @@
 -->
 <html lang="vi">
 <head>
+    <meta name="referrer" content="no-referrer">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Scanner</title>
@@ -909,6 +910,15 @@ Nếu một nhóm không có từ nào, hãy trả về mảng rỗng [].`;
                     // Xóa toàn bộ vùng chọn hiện tại và các ô đã copy khi ấn ESC
                     clearSelection();
                     document.querySelectorAll('.copied-cell').forEach(td => td.classList.remove('copied-cell'));
+                } else if (e.key === ' ' || e.code === 'Space') {
+                    // Space to pause/play reading in dict mode
+                    if (typeof isDictMode !== 'undefined' && isDictMode && typeof isReadingPga !== 'undefined' && isReadingPga) {
+                        const activeTag = document.activeElement ? document.activeElement.tagName.toUpperCase() : '';
+                        if (activeTag !== 'INPUT' && activeTag !== 'TEXTAREA') {
+                            e.preventDefault();
+                            if (typeof pausePgaText === 'function') pausePgaText();
+                        }
+                    }
                 }
             });
             function fallbackCopy(text) {
