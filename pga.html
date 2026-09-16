@@ -279,6 +279,8 @@
                         <th class="th-verb" colspan="2">Động từ</th>
                         <th class="th-adv" colspan="2">Trạng từ</th>
                         <th class="th-conj" colspan="2">Liên từ</th>
+                        <th class="th-prep" colspan="2">Giới từ</th>
+                        <th class="th-phrase" colspan="2">Cụm từ</th>
                     </tr>
                 </thead>
                 <tbody id="vocabTableBody">
@@ -485,7 +487,7 @@
                 if (window.lastDictText === textInput && window.lastDictObj) {
                     let hasPosData = Object.values(window.lastDictObj).some(item => item.pos && item.pos !== "");
                     if (hasPosData) {
-                        let finalData = { nouns: [], adjectives: [], verbs: [], adverbs: [], conjunctions: [] };
+                        let finalData = { nouns: [], adjectives: [], verbs: [], adverbs: [], conjunctions: [], prepositions: [], phrases: [] };
                         for (let k in window.lastDictObj) {
                             let item = window.lastDictObj[k];
                             let pos = item.pos;
@@ -508,22 +510,28 @@
                 const keysArray = apiKeyRaw.split(',').map(k => k.trim()).filter(k => k);
                 window.clickKeyIndex = window.clickKeyIndex || 0;
                 let prompt = `Nhiệm vụ của bạn là trích xuất TOÀN BỘ các từ vựng tiếng Anh có ý nghĩa trong đoạn văn bản được cung cấp. BẠN PHẢI QUÉT THẬT KỸ VÀ KHÔNG ĐƯỢC BỎ SÓT BẤT KỲ TỪ NÀO (như retractable, refracting, aperture,...).
-Tuyệt đối BỎ QUA các mạo từ và giới từ cơ bản (ví dụ: a, an, the, in, on, at, of, to, for, with...).
+Tuyệt đối BỎ QUA các mạo từ cơ bản (ví dụ: a, an, the).
+Các giới từ đơn (in, on, at, of, with...) và ĐẶC BIỆT LÀ CÁC GIỚI TỪ GHÉP (ví dụ: as to, as for, according to, on behalf of, regardless of, by means of, ahead of, due to, because of, on account of, prior to, as well as, in addition to, with regard to, in regard to, in spite of, rather than, adhere to, comply with, aside from, apart from, in contrast with, notwithstanding, along with, together with, as opposed to, except for, instead of, depending on, in advance, along side, without, beyond, via, per, given, in light of, as a result of, owing to, other than...) thì BẮT BUỘC TRÍCH XUẤT VÀO NHÓM "prepositions" (CHỨ KHÔNG PHẢI "phrases").
+ĐẶC BIỆT 1: NẾU có các cụm từ ghép, phrasal verbs, collocations (ví dụ: abide by, take care of, in charge of...) thì trích xuất vào nhóm "phrases", KHÔNG TÁCH RỜI.
+ĐẶC BIỆT 2: NẾU là DANH TỪ GHÉP (Compound Nouns) tạo từ 2 danh từ trở lên (ví dụ: assembly line, filing cabinet, wooden crate...) thì trích xuất NGUYÊN CỤM ĐÓ vào nhóm "nouns" chứ ĐỪNG TÁCH THÀNH 2 TỪ ĐƠN.
+ĐẶC BIỆT 3: Đối với các từ (however, meanwhile, instead, if so, moreover, furthermore, therefore, thus, besides, in addition, otherwise, then, nevertheless, on the other hand, in fact, finally, ultimately, likewise, similarly, nonetheless, consequently, as a consequence, subsequently, meantime, accordingly, after all, even so, conversely, so far, before long, as a result, to this end, as such, hence, at once, on the contrary, while, beforehand, in advance...), HÃY XÉT NGỮ CẢNH: Nếu phía sau chúng là một mệnh đề (clause) hoặc chúng đóng vai trò nối các câu/mệnh đề lại với nhau thì mới xếp vào nhóm "conjunctions" (Liên từ). Còn nếu không, hãy xếp vào trạng từ hoặc giới từ tuỳ ngữ cảnh.
 Tuyệt đối BỎ QUA các danh từ riêng (tên người, tên địa danh, tên công ty, model sản phẩm, ví dụ: Carol, Barger, Makatasi, Belter, BTR-1483...).
-Hãy chuyển các từ về dạng nguyên thể, NHƯNG NẾU từ đó đang đóng vai trò là một tính từ/danh từ đặc thù trong câu (ví dụ: "retractable", "refracting") thì hãy giữ nguyên form của nó để dịch cho chuẩn xác.
-Dịch từng từ tiếng Anh đã tìm thấy sang tiếng Việt sao cho sát nghĩa nhất với ngữ cảnh của đoạn văn. 
-Sau đó, phân loại TẤT CẢ các từ vựng này vào 5 nhóm từ loại cơ bản: Danh từ, Tính từ, Động từ, Trạng từ, Liên từ.
+Hãy chuyển các từ về dạng nguyên thể, NHƯNG NẾU từ đó đang đóng vai trò là một tính từ/danh từ đặc thù trong câu thì hãy giữ nguyên form.
+Dịch từng từ/cụm từ tiếng Anh đã tìm thấy sang tiếng Việt sao cho sát nghĩa nhất với ngữ cảnh của đoạn văn. 
+Sau đó, phân loại TẤT CẢ vào 7 nhóm: Danh từ, Tính từ, Động từ, Trạng từ, Liên từ, Giới từ, Cụm từ.
 QUAN TRỌNG: CHỈ TRẢ VỀ DUY NHẤT 1 ĐỐI TƯỢNG JSON (KHÔNG bọc trong markdown \`\`\`json, KHÔNG giải thích thêm).
 Cấu trúc JSON bắt buộc phải giống chính xác như sau:
 {
-  "nouns": [{"w": "từ", "m": "nghĩa", "p": "phiên âm"}],
+  "nouns": [{"w": "từ hoặc cụm danh từ ghép", "m": "nghĩa", "p": "phiên âm"}],
   "adjectives": [{"w": "từ", "m": "nghĩa", "p": "phiên âm"}],
   "verbs": [{"w": "từ", "m": "nghĩa", "p": "phiên âm"}],
   "adverbs": [{"w": "từ", "m": "nghĩa", "p": "phiên âm"}],
-  "conjunctions": [{"w": "từ", "m": "nghĩa", "p": "phiên âm"}]
+  "conjunctions": [{"w": "từ", "m": "nghĩa", "p": "phiên âm"}],
+  "prepositions": [{"w": "từ", "m": "nghĩa", "p": "phiên âm"}],
+  "phrases": [{"w": "cụm từ", "m": "nghĩa", "p": "phiên âm"}]
 }
 Nếu một nhóm không có từ nào, hãy trả về mảng rỗng [].`;
-                let finalData = { nouns: [], adjectives: [], verbs: [], adverbs: [], conjunctions: [] };
+                let finalData = { nouns: [], adjectives: [], verbs: [], adverbs: [], conjunctions: [], prepositions: [], phrases: [] };
                 // ==========================================
                 // 1. CƠ CHẾ CHIA ĐOẠN VĂN BẢN (CHUNKING)
                 // ==========================================
@@ -560,7 +568,7 @@ Nếu một nhóm không có từ nào, hãy trả về mảng rỗng [].`;
                                 const payload = {
                                     model: selectedModel,
                                     messages: [
-                                        { role: "system", content: "You are a meticulous AI that carefully extracts ALL meaningful English vocabulary (excluding basic articles/prepositions, and excluding proper nouns/names/models), translates it accurately to Vietnamese based on context, and strictly classifies it into nouns, adjectives, verbs, adverbs, and conjunctions. You must not miss any vocabulary. Strictly follow the required JSON output schema." },
+                                        { role: "system", content: "You are a meticulous AI that carefully extracts ALL meaningful English vocabulary (excluding basic articles/prepositions, and excluding proper nouns/names/models), translates it accurately to Vietnamese based on context, and strictly classifies it into nouns, adjectives, verbs, adverbs, conjunctions, prepositions, and phrases. You must not miss any vocabulary. Strictly follow the required JSON output schema." },
                                         { role: "user", content: prompt + `\n\nĐoạn văn bản tiếng Anh cần phân tích:\n${currentChunk}` }
                                     ],
                                     temperature: 0.1,
@@ -622,7 +630,7 @@ Nếu một nhóm không có từ nào, hãy trả về mảng rỗng [].`;
             }
         }
         function parseAIResponse(aiText) {
-            if (!aiText) return { nouns: [], adjectives: [], verbs: [], adverbs: [], conjunctions: [] };
+            if (!aiText) return { nouns: [], adjectives: [], verbs: [], adverbs: [], conjunctions: [], prepositions: [], phrases: [] };
             let cleanJson = aiText.trim();
             if (cleanJson.startsWith('```json')) cleanJson = cleanJson.substring(7);
             else if (cleanJson.startsWith('```')) cleanJson = cleanJson.substring(3);
@@ -631,11 +639,11 @@ Nếu một nhóm không có từ nào, hãy trả về mảng rỗng [].`;
                 return JSON.parse(cleanJson.trim());
             } catch (e) {
                 console.error("JSON parse error:", e);
-                return { nouns: [], adjectives: [], verbs: [], adverbs: [], conjunctions: [] };
+                return { nouns: [], adjectives: [], verbs: [], adverbs: [], conjunctions: [], prepositions: [], phrases: [] };
             }
         }
         function mergeResults(finalData, parsed) {
-            ['nouns', 'adjectives', 'verbs', 'adverbs', 'conjunctions'].forEach(pos => {
+            ['nouns', 'adjectives', 'verbs', 'adverbs', 'conjunctions', 'prepositions', 'phrases'].forEach(pos => {
                 if (parsed[pos]) {
                     finalData[pos].push(...parsed[pos]);
                     // Lưu luôn vào aiDict để dùng chung
@@ -661,11 +669,13 @@ Nếu một nhóm không có từ nào, hãy trả về mảng rỗng [].`;
             const verbs = data.verbs || [];
             const adverbs = data.adverbs || [];
             const conjunctions = data.conjunctions || [];
-            const maxRows = Math.max(nouns.length, adjectives.length, verbs.length, adverbs.length, conjunctions.length);
+            const prepositions = data.prepositions || [];
+            const phrases = data.phrases || [];
+            const maxRows = Math.max(nouns.length, adjectives.length, verbs.length, adverbs.length, conjunctions.length, prepositions.length, phrases.length);
             const tbody = document.getElementById('vocabTableBody');
             tbody.innerHTML = '';
             if (maxRows === 0) {
-                tbody.innerHTML = `<tr><td colspan="11" class="text-center text-slate-500 italic py-4">Không tìm thấy từ vựng tiếng Anh nào hợp lệ.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="15" class="text-center text-slate-500 italic py-4">Không tìm thấy từ vựng tiếng Anh nào hợp lệ.</td></tr>`;
                 document.getElementById('resultContainer').classList.remove('hidden');
                 return;
             }
@@ -675,6 +685,8 @@ Nếu một nhóm không có từ nào, hãy trả về mảng rỗng [].`;
                 const v = verbs[i] || { w: '', m: '' };
                 const adv = adverbs[i] || { w: '', m: '' };
                 const conj = conjunctions[i] || { w: '', m: '' };
+                const prep = prepositions[i] || { w: '', m: '' };
+                const phrase = phrases[i] || { w: '', m: '' };
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td class="col-stt font-semibold text-slate-500">${i + 1}</td>
@@ -693,6 +705,12 @@ Nếu một nhóm không có từ nào, hãy trả về mảng rỗng [].`;
                     <!-- Liên từ -->
                     <td class="word-text cursor-pointer hover:bg-brand-50 hover:text-brand-600 transition-colors" oncontextmenu="window.handleDictRightClick(event, '${conj.w.replace(/'/g, "\\'")}')">${conj.w}</td>
                     <td class="meaning-text">${conj.m}</td>
+                    <!-- Giới từ -->
+                    <td class="word-text cursor-pointer hover:bg-brand-50 hover:text-brand-600 transition-colors" oncontextmenu="window.handleDictRightClick(event, '${prep.w.replace(/'/g, "\\'")}')">${prep.w}</td>
+                    <td class="meaning-text">${prep.m}</td>
+                    <!-- Cụm từ -->
+                    <td class="word-text cursor-pointer hover:bg-brand-50 hover:text-brand-600 transition-colors" oncontextmenu="window.handleDictRightClick(event, '${phrase.w.replace(/'/g, "\\'")}')">${phrase.w}</td>
+                    <td class="meaning-text">${phrase.m}</td>
                 `;
                 tbody.appendChild(tr);
             }
@@ -702,18 +720,17 @@ Nếu một nhóm không có từ nào, hãy trả về mảng rỗng [].`;
                 document.getElementById('resultContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 100);
         }
-        function copyTableData() {
+                function copyTableData() {
             const table = document.getElementById('vocabTable');
             let text = "";
             // Add Header
-            text += "STT\tDanh từ\t\tTính từ\t\tĐộng từ\t\tTrạng từ\t\tLiên từ\n";
+            text += "STT\tDanh từ\t\tTính từ\t\tĐộng từ\t\tTrạng từ\t\tLiên từ\t\tGiới từ\t\tCụm từ\n";
             // Add rows
             for (let i = 1; i < table.rows.length; i++) {
                 const row = table.rows[i];
-                // Bỏ qua các dòng đang bị ẩn do search
                 if (row.style.display === "none") continue;
                 const cols = row.cells;
-                if (cols.length === 1) continue; // Skip empty message
+                if (cols.length === 1) continue; 
                 const stt = cols[0].innerText;
                 const nW = cols[1].innerText;
                 const nM = cols[2].innerText;
@@ -725,7 +742,11 @@ Nếu một nhóm không có từ nào, hãy trả về mảng rỗng [].`;
                 const advM = cols[8].innerText;
                 const conjW = cols[9].innerText;
                 const conjM = cols[10].innerText;
-                text += `${stt}\t${nW}\t${nM}\t${adjW}\t${adjM}\t${vW}\t${vM}\t${advW}\t${advM}\t${conjW}\t${conjM}\n`;
+                const prepW = cols[11] ? cols[11].innerText : '';
+                const prepM = cols[12] ? cols[12].innerText : '';
+                const phraseW = cols[13] ? cols[13].innerText : '';
+                const phraseM = cols[14] ? cols[14].innerText : '';
+                text += `${stt}\t${nW}\t${nM}\t${adjW}\t${adjM}\t${vW}\t${vM}\t${advW}\t${advM}\t${conjW}\t${conjM}\t${prepW}\t${prepM}\t${phraseW}\t${phraseM}\n`;
             }
             navigator.clipboard.writeText(text).then(() => {
                 alert("Đã copy toàn bộ dữ liệu bảng (có thể dán trực tiếp vào Excel)!");
