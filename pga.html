@@ -1587,7 +1587,9 @@ window.toggleGrammarMode = async function() {
         grammarContent.classList.add('hidden');
         textarea.classList.remove('hidden');
         btnText.innerText = 'Phân tích Ngữ pháp';
-                            } else {
+        if (toggleDictBtn) toggleDictBtn.classList.remove('hidden');
+        if (toggleWritingBtn) toggleWritingBtn.classList.remove('hidden');
+    } else {
         const rawText = textarea.value.trim();
         if (!rawText) return alert("Vui lòng nhập văn bản trước!");
         
@@ -1598,6 +1600,8 @@ window.toggleGrammarMode = async function() {
         textarea.classList.add('hidden');
                         grammarContent.classList.remove('hidden');
         btnText.innerText = 'Đóng Phân tích';
+        if (toggleDictBtn) toggleDictBtn.classList.add('hidden');
+        if (toggleWritingBtn) toggleWritingBtn.classList.add('hidden');
 
         if (grammarContent.getAttribute('data-raw') === rawText) return;
 
@@ -1672,7 +1676,10 @@ window.toggleWritingMode = async function() {
         writingContent.classList.add('hidden');
         textarea.classList.remove('hidden');
         btnText.innerText = 'Bật chế độ Viết';
-            } else {
+        if (toggleDictBtn) toggleDictBtn.classList.remove('hidden');
+        const toggleGrammarBtn = document.getElementById('toggleGrammarBtn');
+        if (toggleGrammarBtn) toggleGrammarBtn.classList.remove('hidden');
+    } else {
         // Bật chế độ viết
         const rawText = textarea.value.trim();
         if (!rawText) return alert("Vui lòng nhập văn bản trước!");
@@ -1687,6 +1694,9 @@ window.toggleWritingMode = async function() {
         textarea.classList.add('hidden');
                         writingContent.classList.remove('hidden');
         btnText.innerText = 'Tắt chế độ Viết';
+        if (toggleDictBtn) toggleDictBtn.classList.add('hidden');
+        const toggleGrammarBtn = document.getElementById('toggleGrammarBtn');
+        if (toggleGrammarBtn) toggleGrammarBtn.classList.add('hidden');
         // Kiểm tra xem đã render chưa (dựa vào text gốc, nếu đổi text thì render lại)
         if (writingContent.getAttribute('data-raw') === rawText) {
             return; // Đã render rồi
