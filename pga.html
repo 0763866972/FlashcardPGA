@@ -1905,13 +1905,17 @@ window.manualParaIdx = -1;
 window.selectParaSentence = function(idx) {
     window.manualParaIdx = idx;
     const textarea = document.getElementById('pgaParaWriteInput');
-    if (textarea) window.trackParagraphProgress(textarea);
+    if (textarea) window.trackParagraphProgress(textarea, true);
 };
 
-window.trackParagraphProgress = function(textarea) {
+window.trackParagraphProgress = function(textarea, isManual = false) {
+    if (!isManual) {
+        window.manualParaIdx = -1;
+    }
     const text = textarea.value;
     const sentences = window.pgaSentencesData;
     if (!sentences || sentences.length === 0) return;
+
 
     let currentIdx = 0;
     
